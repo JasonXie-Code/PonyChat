@@ -1,0 +1,587 @@
+[
+  {
+    "season": 1,
+    "episode": 1,
+    "code": "S1E01",
+    "cn_title": "友谊的魔力（上）",
+    "en_title": "Friendship is Magic, part 1",
+    "filename": "S1E01.txt",
+    "content_hash": "5e85f2c2326de7cef63bd05e9ad88f485f625cd2cde544b10ee6282a4ea68b85"
+  },
+  {
+    "season": 1,
+    "episode": 2,
+    "code": "S1E02",
+    "cn_title": "友谊的魔力（下）",
+    "en_title": "Friendship is Magic, part 2",
+    "filename": "S1E02.txt",
+    "content_hash": "3c3754835325226ae654410bf5c500aff0085828c7ea1785127ed9f8391832eb"
+  },
+  {
+    "season": 1,
+    "episode": 3,
+    "code": "S1E03",
+    "cn_title": "票落谁家",
+    "en_title": "The Ticket Master",
+    "filename": "S1E03.txt",
+    "content_hash": "133f29dcb61c86c3acee985e05b4002be6519fd13a367a7516165e0625298a57"
+  },
+  {
+    "season": 1,
+    "episode": 4,
+    "code": "S1E04",
+    "cn_title": "踢苹时节",
+    "en_title": "Applebuck Season",
+    "filename": "S1E04.txt",
+    "content_hash": "33a78e2b5d6caf05f83f72a7bde3ee667e3d2df66edde091f11ad89705f305bc"
+  },
+  {
+    "season": 1,
+    "episode": 5,
+    "code": "S1E05",
+    "cn_title": "目中无马",
+    "en_title": "Griffon the Brush Off",
+    "filename": "S1E05.txt",
+    "content_hash": "ce067db1161f355fc7d7349b6e7a62469a3e36d0e4026fca20a82b5dbcdcc302"
+  },
+  {
+    "season": 1,
+    "episode": 6,
+    "code": "S1E06",
+    "cn_title": "牛皮克星",
+    "en_title": "Boast Busters",
+    "filename": "S1E06.txt",
+    "content_hash": "10bf07fd736be13d2a817d5a173cd324acf57b807476ef08eeac73ef7f15ffd9"
+  },
+  {
+    "season": 1,
+    "episode": 7,
+    "code": "S1E07",
+    "cn_title": "驯龙高蹄",
+    "en_title": "Dragonshy",
+    "filename": "S1E07.txt",
+    "content_hash": "a7b70bb82e025ae86021f948afdf1554d592e8477a1129c8979a834a6784888e"
+  },
+  {
+    "season": 1,
+    "episode": 8,
+    "code": "S1E08",
+    "cn_title": "睡前聚会",
+    "en_title": "Look Before You Sleep",
+    "filename": "S1E08.txt",
+    "content_hash": "e83523c4492ff11e41cf7b019a8f88e09c895820130e6cb2bc8b519fbccc54ff"
+  },
+  {
+    "season": 1,
+    "episode": 9,
+    "code": "S1E09",
+    "cn_title": "流言蜚语",
+    "en_title": "Bridle Gossip",
+    "filename": "S1E09.txt",
+    "content_hash": "0fc833f40e4424b89a5162b5f70f047b68e744260707a5b12746aa94eafe47d6"
+  },
+  {
+    "season": 1,
+    "episode": 10,
+    "code": "S1E10",
+    "cn_title": "世纪浩劫",
+    "en_title": "Swarm of the Century",
+    "filename": "S1E10.txt",
+    "content_hash": "c521887b9e1f46f4b6f8157e378a798a75b832cbfbd0c1abbaa14a022a9da70d"
+  },
+  {
+    "season": 1,
+    "episode": 11,
+    "code": "S1E11",
+    "cn_title": "送冬清扫",
+    "en_title": "Winter Wrap Up",
+    "filename": "S1E11.txt",
+    "content_hash": "22eff4b0900b0fb1c111f785cecd9c958bcf21f68584de4206810e190123a469"
+  },
+  {
+    "season": 1,
+    "episode": 12,
+    "code": "S1E12",
+    "cn_title": "可爱召唤",
+    "en_title": "Call of the Cutie",
+    "filename": "S1E12.txt",
+    "content_hash": "41c245e97cbfdd8b3d754f36625c9f358bead685b657a9a806dd434427970db5"
+  },
+  {
+    "season": 1,
+    "episode": 13,
+    "code": "S1E13",
+    "cn_title": "覆叶之交",
+    "en_title": "Fall Weather Friends",
+    "filename": "S1E13.txt",
+    "content_hash": "801fd869b2911429dea280d36a7571c68ee8c914f9cbd32d03afd16fb33aecd4"
+  },
+  {
+    "season": 1,
+    "episode": 14,
+    "code": "S1E14",
+    "cn_title": "节日盛装",
+    "en_title": "Suited For Success",
+    "filename": "S1E14.txt",
+    "content_hash": "354deb33fef86a84823f9cac8b440b8b5513444947751710196af3cd3b8fa703"
+  },
+  {
+    "season": 1,
+    "episode": 15,
+    "code": "S1E15",
+    "cn_title": "萍琪超感",
+    "en_title": "Feeling Pinkie Keen",
+    "filename": "S1E15.txt",
+    "content_hash": "96666b783663ee12e8e75cd8d1cf7f6b221ad291b5a5a4263ceb42f645b7a185"
+  },
+  {
+    "season": 1,
+    "episode": 16,
+    "code": "S1E16",
+    "cn_title": "彩虹音爆",
+    "en_title": "Sonic Rainboom",
+    "filename": "S1E16.txt",
+    "content_hash": "9aad17a66f7b5bc075e14eb331dbda6f891ba7efab23f754989d8e886c334425"
+  },
+  {
+    "season": 1,
+    "episode": 17,
+    "code": "S1E17",
+    "cn_title": "瞪眼大师",
+    "en_title": "Stare Master",
+    "filename": "S1E17.txt",
+    "content_hash": "c45463595c4bc92979fa35fb4507dd5e756f7afc98cce9210ea9307b9938b671"
+  },
+  {
+    "season": 1,
+    "episode": 18,
+    "code": "S1E18",
+    "cn_title": "搅局行家",
+    "en_title": "The Show Stoppers",
+    "filename": "S1E18.txt",
+    "content_hash": "e776757df94f39bbaa74b209c8e7ef6f53f330e5c7601299de90e6b412f5cd39"
+  },
+  {
+    "season": 1,
+    "episode": 19,
+    "code": "S1E19",
+    "cn_title": "犬马闹剧",
+    "en_title": "A Dog and Pony Show",
+    "filename": "S1E19.txt",
+    "content_hash": "cba31ec895c5878159f71f7b1c8ed15b16f6e10e968f837d9861d79b0e6f2300"
+  },
+  {
+    "season": 1,
+    "episode": 20,
+    "code": "S1E20",
+    "cn_title": "本无妒忌",
+    "en_title": "Green Isn't Your Color",
+    "filename": "S1E20.txt",
+    "content_hash": "6d9a5f6ea9672d168ec80b5ed18b1d19515ecdb673700105da12967131806afb"
+  },
+  {
+    "season": 1,
+    "episode": 21,
+    "code": "S1E21",
+    "cn_title": "身不由己",
+    "en_title": "Over a Barrel",
+    "filename": "S1E21.txt",
+    "content_hash": "5d2ac36457f59a532c61ce57fd3fe84b5c95b710014184eed6f4c327ba76d557"
+  },
+  {
+    "season": 1,
+    "episode": 22,
+    "code": "S1E22",
+    "cn_title": "一鸟在蹄",
+    "en_title": "A Bird in the Hoof",
+    "filename": "S1E22.txt",
+    "content_hash": "a36f95a921a300dbbd52d761953cae4b1f41b1f2fc5479f3e8750f35b3becf35"
+  },
+  {
+    "season": 1,
+    "episode": 23,
+    "code": "S1E23",
+    "cn_title": "可爱纪元",
+    "en_title": "The Cutie Mark Chronicles",
+    "filename": "S1E23.txt",
+    "content_hash": "59e130fe3b1342d7fa729818905d26e81fbc41f928928f5f5058d1989cc41e45"
+  },
+  {
+    "season": 1,
+    "episode": 24,
+    "code": "S1E24",
+    "cn_title": "头号助手",
+    "en_title": "Owl's Well That Ends Well",
+    "filename": "S1E24.txt",
+    "content_hash": "fe764fd6c18369fdfd140f29f97185d9557c906b541caf2d3e7c5d7e3da34f06"
+  },
+  {
+    "season": 1,
+    "episode": 25,
+    "code": "S1E25",
+    "cn_title": "独马派对",
+    "en_title": "Party of One",
+    "filename": "S1E25.txt",
+    "content_hash": "e80fd21196fd4a9c86f5afd04488f5ac7a7e17421940468e1de30cd781f6d1d5"
+  },
+  {
+    "season": 1,
+    "episode": 26,
+    "code": "S1E26",
+    "cn_title": "最佳良宵",
+    "en_title": "The Best Night Ever",
+    "filename": "S1E26.txt",
+    "content_hash": "5854db3b94ded336c10013a4e4982ff9e60e3945aa43b7eb8ebd798ce0929ee9"
+  },
+  {
+    "season": 2,
+    "episode": 1,
+    "code": "S2E01",
+    "cn_title": "谐律再临（上）",
+    "en_title": "The Return of Harmony Part 1",
+    "filename": "S2E01.txt",
+    "content_hash": "09d5bc3ef6bba387ace8763ca537d03022078af8b9b528839a0689b15ef0e5d6"
+  },
+  {
+    "season": 2,
+    "episode": 2,
+    "code": "S2E02",
+    "cn_title": "谐律再临（下）",
+    "en_title": "The Return of Harmony Part 2",
+    "filename": "S2E02.txt",
+    "content_hash": "56e970434031ccd5b131ffd61e6a0905c8f3b30dced2cf23ee3bc5fa0c56bb2f"
+  },
+  {
+    "season": 2,
+    "episode": 3,
+    "code": "S2E03",
+    "cn_title": "学无所成",
+    "en_title": "Lesson Zero",
+    "filename": "S2E03.txt",
+    "content_hash": "ff4f1bf6643a804e9541c4f7bfaa8b749339c487c46ecab090620ddacb27818b"
+  },
+  {
+    "season": 2,
+    "episode": 4,
+    "code": "S2E04",
+    "cn_title": "噩梦之夜",
+    "en_title": "Luna Eclipsed",
+    "filename": "S2E04.txt",
+    "content_hash": "59544f6768eb94c7ce09610a4514aee272d7aefc11eb9deab9f89157174b73b5"
+  },
+  {
+    "season": 2,
+    "episode": 5,
+    "code": "S2E05",
+    "cn_title": "姐妹情深",
+    "en_title": "Sisterhooves Social",
+    "filename": "S2E05.txt",
+    "content_hash": "97847c1805db4455cc006a64d9791846fa84e008d5a3b267dd05c4249f3c091a"
+  },
+  {
+    "season": 2,
+    "episode": 6,
+    "code": "S2E06",
+    "cn_title": "可爱谜痘",
+    "en_title": "The Cutie Pox",
+    "filename": "S2E06.txt",
+    "content_hash": "10ff09287009906a30ad4dea379e9dc0d44bb2a54a92609422d5e6e35d48fc0e"
+  },
+  {
+    "season": 2,
+    "episode": 7,
+    "code": "S2E07",
+    "cn_title": "胜者为宠",
+    "en_title": "May the Best Pet Win!",
+    "filename": "S2E07.txt",
+    "content_hash": "99e8b5fe2f5f97846c1bef4f403360a67c4d06e018c1c473340459c2402c96b4"
+  },
+  {
+    "season": 2,
+    "episode": 8,
+    "code": "S2E08",
+    "cn_title": "神秘救星",
+    "en_title": "The Mysterious Mare Do Well",
+    "filename": "S2E08.txt",
+    "content_hash": "95ceb6b4c781cd61c7291a83064bcb78c02648eb2227fb22b05be00d284926b7"
+  },
+  {
+    "season": 2,
+    "episode": 9,
+    "code": "S2E09",
+    "cn_title": "社交名马",
+    "en_title": "Sweet and Elite",
+    "filename": "S2E09.txt",
+    "content_hash": "519a75673b83d531a0311c0abfe7d3fc637edd0e3544ad6c1cbfd59e434e0938"
+  },
+  {
+    "season": 2,
+    "episode": 10,
+    "code": "S2E10",
+    "cn_title": "生日馈赠",
+    "en_title": "Secret of My Excess",
+    "filename": "S2E10.txt",
+    "content_hash": "3f60b9cb9eef88db63362ffe1a00e1d0f61a1d78a9f64b7df23ee980753b8885"
+  },
+  {
+    "season": 2,
+    "episode": 11,
+    "code": "S2E11",
+    "cn_title": "驱寒之夜",
+    "en_title": "Hearth's Warming Eve",
+    "filename": "S2E11.txt",
+    "content_hash": "ceb4dce53e5473fb42afb28ec64d3215cd42e7a153af7f75486a14ca0b212ec2"
+  },
+  {
+    "season": 2,
+    "episode": 12,
+    "code": "S2E12",
+    "cn_title": "家族荣耀",
+    "en_title": "Family Appreciation Day",
+    "filename": "S2E12.txt",
+    "content_hash": "06d0ebe38eec0a6869f63dff6bc1a0786920bd4c60d0afae54b8f6717b5a6dda"
+  },
+  {
+    "season": 2,
+    "episode": 13,
+    "code": "S2E13",
+    "cn_title": "保姆萍琪",
+    "en_title": "Baby Cakes",
+    "filename": "S2E13.txt",
+    "content_hash": "57b502f74f60cf5f53ecb37699c8fba11ca5b15a25e7dcecfebf36e587305e53"
+  },
+  {
+    "season": 2,
+    "episode": 14,
+    "code": "S2E14",
+    "cn_title": "千里寻踪",
+    "en_title": "The Last Roundup",
+    "filename": "S2E14.txt",
+    "content_hash": "c77f9a0e3b914df02be63f275af58225d6272b932e164cf0e0a808f18dd75b79"
+  },
+  {
+    "season": 2,
+    "episode": 15,
+    "code": "S2E15",
+    "cn_title": "奸商兄弟",
+    "en_title": "The Super Speedy Cider Squeezy 6000",
+    "filename": "S2E15.txt",
+    "content_hash": "854980eecbdcf6e67f17c70953d270331a161810c0ef4e28520184ba6fab6d53"
+  },
+  {
+    "season": 2,
+    "episode": 16,
+    "code": "S2E16",
+    "cn_title": "欲罢不能",
+    "en_title": "Read It and Weep",
+    "filename": "S2E16.txt",
+    "content_hash": "9c005a307dada3f6578a606211a4963689034f7955b8e4f6107d7621a134c3d2"
+  },
+  {
+    "season": 2,
+    "episode": 17,
+    "code": "S2E17",
+    "cn_title": "连理风波",
+    "en_title": "Hearts and Hooves Day",
+    "filename": "S2E17.txt",
+    "content_hash": "9ef04c443fc67679916a8738d31c0ad8e5642b246f91ae9142dbdea4d2a6d4a3"
+  },
+  {
+    "season": 2,
+    "episode": 18,
+    "code": "S2E18",
+    "cn_title": "真心朋友",
+    "en_title": "A Friend in Deed",
+    "filename": "S2E18.txt",
+    "content_hash": "dbf090931e3fc4dc013b692b882e23204514a037ab093a0883313dd96a3a2a40"
+  },
+  {
+    "season": 2,
+    "episode": 19,
+    "code": "S2E19",
+    "cn_title": "毋需客气",
+    "en_title": "Putting Your Hoof Down",
+    "filename": "S2E19.txt",
+    "content_hash": "d0ac507573fe2218af7b4819b06160a3ffa30c60cbd84ad368ab410a711c47cb"
+  },
+  {
+    "season": 2,
+    "episode": 20,
+    "code": "S2E20",
+    "cn_title": "回到未来",
+    "en_title": "It's About Time",
+    "filename": "S2E20.txt",
+    "content_hash": "fa247b5061be213a3279746a66ebf11c5c04495e0b93c4d44bd6155be5d23212"
+  },
+  {
+    "season": 2,
+    "episode": 21,
+    "code": "S2E21",
+    "cn_title": "巨龙之谜",
+    "en_title": "Dragon Quest",
+    "filename": "S2E21.txt",
+    "content_hash": "57c95e3c7b7e2f4d636b9e453f373882c644203edb9719c23c6e2d31c88cef81"
+  },
+  {
+    "season": 2,
+    "episode": 22,
+    "code": "S2E22",
+    "cn_title": "飓风使者",
+    "en_title": "Hurricane Fluttershy",
+    "filename": "S2E22.txt",
+    "content_hash": "8bf007a5cb83d798a684a7b9ac0bec552c1d016669890609ffeee852680fbdb6"
+  },
+  {
+    "season": 2,
+    "episode": 23,
+    "code": "S2E23",
+    "cn_title": "马镇机密",
+    "en_title": "Ponyville Confidential",
+    "filename": "S2E23.txt",
+    "content_hash": "098f0778fcf0b68f6feed7d8fb0a3595620e4384908c61957f8763c5451d6587"
+  },
+  {
+    "season": 2,
+    "episode": 24,
+    "code": "S2E24",
+    "cn_title": "蛋糕谜案",
+    "en_title": "MMMystery on the Friendship Express",
+    "filename": "S2E24.txt",
+    "content_hash": "8ab89019053ee6da2bbd5ab7eb049cd7f64e3f95ea542c89d67f5d3478c246db"
+  },
+  {
+    "season": 2,
+    "episode": 25,
+    "code": "S2E25",
+    "cn_title": "皇城婚礼（上）",
+    "en_title": "A Canterlot Wedding - Part 1",
+    "filename": "S2E25.txt",
+    "content_hash": "758aaec8c893968479af2ea9269175b88b66bfb5a61a5b8d7a007ed699bd8ee3"
+  },
+  {
+    "season": 2,
+    "episode": 26,
+    "code": "S2E26",
+    "cn_title": "皇城婚礼（下）",
+    "en_title": "A Canterlot Wedding - Part 2",
+    "filename": "S2E26.txt",
+    "content_hash": "f311e8484c5e037c199a1beea772e19a8fd04f4e467ea10859c8e0fffc19b7b0"
+  },
+  {
+    "season": 3,
+    "episode": 1,
+    "code": "S3E01",
+    "cn_title": "水晶帝国（上）",
+    "en_title": "The Crystal Empire - Part 1",
+    "filename": "S3E01.txt",
+    "content_hash": "3d253c3d9e713c9948c22c7887dbd1d443c27663cb299a4d8e9b224193c2543b"
+  },
+  {
+    "season": 3,
+    "episode": 2,
+    "code": "S3E02",
+    "cn_title": "水晶帝国（下）",
+    "en_title": "The Crystal Empire - Part 2",
+    "filename": "S3E02.txt",
+    "content_hash": "91d3749366159bcf6f855cddd42b3916913e8bcde524148f5764940e0a12f52f"
+  },
+  {
+    "season": 3,
+    "episode": 3,
+    "code": "S3E03",
+    "cn_title": "萍琪遍地",
+    "en_title": "Too Many Pinkie Pies",
+    "filename": "S3E03.txt",
+    "content_hash": "aa14d38b723b18816df64ba7daaf1640a2450f2b9e1275f4e4b6dde20829161d"
+  },
+  {
+    "season": 3,
+    "episode": 4,
+    "code": "S3E04",
+    "cn_title": "One Bad Apple",
+    "en_title": "One Bad Apple",
+    "filename": "S3E04.txt",
+    "content_hash": "facd6b67cd86ff4c1e5a9cca4ec66d3854e1b888c42ba1141b7605ca9a50e4af"
+  },
+  {
+    "season": 3,
+    "episode": 5,
+    "code": "S3E05",
+    "cn_title": "魔法对决",
+    "en_title": "Magic Duel",
+    "filename": "S3E05.txt",
+    "content_hash": "8c47074692e3459592058aef8ccb688a08b91be07ce4fa687b064f7fa10276ff"
+  },
+  {
+    "season": 3,
+    "episode": 6,
+    "code": "S3E06",
+    "cn_title": "惊夜无眠",
+    "en_title": "Sleepless in Ponyville",
+    "filename": "S3E06.txt",
+    "content_hash": "0613cad1810d7097bfe5c747502b60fd01f5a3d81fc9eb3f0428397e024cda74"
+  },
+  {
+    "season": 3,
+    "episode": 7,
+    "code": "S3E07",
+    "cn_title": "天马学院",
+    "en_title": "Wonderbolts Academy",
+    "filename": "S3E07.txt",
+    "content_hash": "1355451c6e65b99d04283679218198e73e57006c0ec295f2d75139a9e8371a4c"
+  },
+  {
+    "season": 3,
+    "episode": 8,
+    "code": "S3E08",
+    "cn_title": "家族团聚",
+    "en_title": "Apple Family Reunion",
+    "filename": "S3E08.txt",
+    "content_hash": "772ddfeaa1dfa4e1b1afa4e956c882421ba833c759b052c459132e9e301c36b2"
+  },
+  {
+    "season": 3,
+    "episode": 9,
+    "code": "S3E09",
+    "cn_title": "救命之恩",
+    "en_title": "Spike at Your Service",
+    "filename": "S3E09.txt",
+    "content_hash": "7d57a38d48c5f06dcef134b60f3013898e660d894b46c7f39904b32d8c2913f7"
+  },
+  {
+    "season": 3,
+    "episode": 10,
+    "code": "S3E10",
+    "cn_title": "以柔克刚",
+    "en_title": "Keep Calm and Flutter On",
+    "filename": "S3E10.txt",
+    "content_hash": "3014d7ac13b6f01b321dbc2e925091dae9bbcab88fd076941ed8fede525b31db"
+  },
+  {
+    "season": 3,
+    "episode": 11,
+    "code": "S3E11",
+    "cn_title": "宠物管家",
+    "en_title": "Just for Sidekicks",
+    "filename": "S3E11.txt",
+    "content_hash": "904fcb4ddfc1e702513945ab9eee1ac6f426ab21e0f13d63acd26f713e717159"
+  },
+  {
+    "season": 3,
+    "episode": 12,
+    "code": "S3E12",
+    "cn_title": "阴差阳错",
+    "en_title": "Games Ponies Play",
+    "filename": "S3E12.txt",
+    "content_hash": "b8b6b72fac0059149862df981d2def097e38b2dbcec0193e9ec5c26838b9bbbd"
+  },
+  {
+    "season": 3,
+    "episode": 13,
+    "code": "S3E13",
+    "cn_title": "命运魔咒",
+    "en_title": "Magical Mystery Cure",
+    "filename": "S3E13.txt",
+    "content_hash": "ac11829176b17c3ee18fe41b76ca024d8abe99688da97215eaa15f3fa91197ae"
+  }
+]

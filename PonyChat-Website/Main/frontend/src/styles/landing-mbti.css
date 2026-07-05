@@ -1,0 +1,403 @@
+/* ── MBTI 测验选择页 /mbti ── */
+.shell-mbti-choice {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    min-height: 100svh;
+}
+
+.mbti-choice-main {
+    flex: 1;
+    width: 100%;
+    max-width: min(40rem, 100%);
+    margin: 0 auto;
+    padding-block: clamp(1rem, 4vmin, 2rem);
+}
+
+.mbti-choice-head {
+    margin-bottom: clamp(1.25rem, 4vmin, 2rem);
+}
+
+.mbti-choice-head .hero-eyebrow {
+    margin-bottom: 0.5rem;
+}
+
+.mbti-choice-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.35rem, 4vw, 1.65rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin: 0 0 0.65rem;
+}
+
+.mbti-choice-lead {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.65;
+}
+
+.mbti-choice-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 560px) {
+    .mbti-choice-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1.1rem;
+    }
+}
+
+.mbti-choice-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    text-decoration: none;
+    color: inherit;
+    padding: clamp(1.1rem, 3vw, 1.35rem);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--stroke);
+    background: var(--surface);
+    box-shadow: var(--shadow-glow);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.08s ease;
+    min-height: 11rem;
+}
+
+.mbti-choice-card:hover {
+    border-color: var(--stroke-strong);
+    background: var(--surface-hover);
+}
+
+.mbti-choice-card:active {
+    transform: scale(0.99);
+}
+
+.mbti-choice-card--accent {
+    border-color: rgba(159, 134, 214, 0.32);
+}
+
+.mbti-choice-card-title {
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    color: var(--text);
+}
+
+.mbti-choice-card-desc {
+    margin: 0 0 auto;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    flex: 1;
+}
+
+.mbti-choice-card-cta {
+    margin-top: 1rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--accent-mid);
+}
+
+.mbti-choice-footnote {
+    margin-top: clamp(1.5rem, 5vmin, 2.25rem);
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+}
+
+.mbti-choice-footnote a {
+    color: var(--accent-mid);
+    text-decoration: none;
+}
+
+.mbti-choice-footnote a:hover {
+    text-decoration: underline;
+}
+
+.mbti-choice-card:focus-visible {
+    outline: 2px solid var(--accent-mid);
+    outline-offset: 3px;
+}
+
+/* ── 认证角色大厅 /character-hall ── */
+.shell-character-hall {
+    display: flex;
+    flex-direction: column;
+}
+
+.character-hall-main {
+    flex: 1;
+    width: 100%;
+    padding-block: clamp(1rem, 4vmin, 2.75rem);
+}
+
+.character-hall-head {
+    max-width: 48rem;
+    margin-bottom: clamp(1.5rem, 4.5vmin, 2.5rem);
+}
+
+.character-hall-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.85rem, 5vw, 3rem);
+    line-height: 1.15;
+    letter-spacing: 0;
+    color: var(--text);
+    margin-bottom: 0.85rem;
+}
+
+.character-hall-lead {
+    max-width: 42rem;
+    color: var(--text-muted);
+    line-height: 1.72;
+    font-size: clamp(0.95rem, 2vw, 1.05rem);
+}
+
+.character-hall-state {
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    padding: 1.1rem 1.25rem;
+    color: var(--text-muted);
+    background: rgba(15, 23, 42, 0.58);
+}
+
+.character-hall-state-error {
+    color: #ffb4b4;
+    border-color: rgba(255, 180, 180, 0.28);
+}
+
+.character-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+    gap: clamp(0.9rem, 2.6vw, 1.2rem);
+}
+
+.character-card {
+    min-width: 0;
+    border: 1px solid var(--stroke);
+    border-radius: 8px;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.76), rgba(10, 18, 32, 0.78));
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.18);
+    padding: clamp(1rem, 3vw, 1.25rem);
+}
+
+.character-cover {
+    width: calc(100% + clamp(2rem, 6vw, 2.5rem));
+    height: clamp(8rem, 19vw, 12rem);
+    margin: calc(clamp(1rem, 3vw, 1.25rem) * -1) calc(clamp(1rem, 3vw, 1.25rem) * -1) 1rem;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+    background: rgba(7, 14, 27, 0.48);
+}
+
+.character-cover img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+}
+
+.character-card-top {
+    display: flex;
+    gap: 0.95rem;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.character-avatar-wrap {
+    width: 4.6rem;
+    height: 4.6rem;
+    flex: 0 0 auto;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(187, 176, 234, 0.3);
+    background: rgba(15, 23, 42, 0.72);
+}
+
+.character-avatar,
+.character-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.character-avatar {
+    object-fit: cover;
+}
+
+.character-avatar-fallback {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent-mid);
+}
+
+.character-title-block {
+    min-width: 0;
+    flex: 1;
+}
+
+.character-name-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.55rem;
+    margin-bottom: 0.45rem;
+}
+
+.character-name-row h2 {
+    min-width: 0;
+    font-family: var(--font-display);
+    font-size: 1.18rem;
+    line-height: 1.25;
+    letter-spacing: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.certified-badge {
+    flex: 0 0 auto;
+    border: 1px solid rgba(78, 191, 207, 0.36);
+    border-radius: 999px;
+    padding: 0.14rem 0.48rem;
+    color: #b7f4fb;
+    background: rgba(78, 191, 207, 0.08);
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.character-signature {
+    color: var(--text-muted);
+    line-height: 1.55;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+}
+
+.character-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.character-metrics div {
+    min-width: 0;
+    border: 1px solid rgba(148, 163, 184, 0.13);
+    border-radius: 8px;
+    background: rgba(7, 14, 27, 0.36);
+    padding: 0.55rem 0.5rem;
+}
+
+.character-metrics dt {
+    color: var(--text-dim);
+    font-size: 0.68rem;
+    margin-bottom: 0.18rem;
+}
+
+.character-metrics dd {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 0.88rem;
+    overflow-wrap: anywhere;
+}
+
+.mbti-code,
+.mbti-meaning {
+    display: block;
+}
+
+.mbti-meaning {
+    margin-top: 0.18rem;
+    color: var(--text-dim);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.35;
+}
+
+.character-profile {
+    border-top: 1px solid var(--stroke);
+    padding-top: 0.95rem;
+}
+
+.character-profile h3 {
+    font-family: var(--font-display);
+    color: var(--text);
+    font-size: 0.98rem;
+    margin-bottom: 0.45rem;
+    letter-spacing: 0;
+}
+
+.character-profile p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.62;
+    overflow-wrap: anywhere;
+}
+
+.profile-facts {
+    list-style: none;
+    display: grid;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+}
+
+.profile-facts li {
+    display: grid;
+    grid-template-columns: 3rem minmax(0, 1fr);
+    gap: 0.65rem;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.profile-facts span {
+    color: var(--text-dim);
+}
+
+@media (max-width: 720px) {
+    .character-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 460px) {
+    .character-card-top {
+        gap: 0.8rem;
+    }
+
+    .character-avatar-wrap {
+        width: 4rem;
+        height: 4rem;
+    }
+
+    .character-metrics dd {
+        font-size: 0.82rem;
+    }
+
+    .profile-facts {
+        gap: 0.55rem;
+    }
+
+    .profile-facts li {
+        grid-template-columns: 1fr;
+        gap: 0.1rem;
+    }
+}
+
+/* 平板：略增主栏水平留白 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .shell {
+        padding-left: max(clamp(24px, 4vw, 44px), env(safe-area-inset-left, 0px));
+        padding-right: max(clamp(24px, 4vw, 44px), env(safe-area-inset-right, 0px));
+    }
+}

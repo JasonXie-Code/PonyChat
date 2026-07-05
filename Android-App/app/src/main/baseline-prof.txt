@@ -1,0 +1,58 @@
+# PonyChat Baseline Profile
+# 预编译热路径，消除首次进入 ChatScreen 时的 ART JIT 卡顿。
+# 由 profileinstaller 在 APK 安装时解析并 AOT 编译。
+# 格式：[H]HSP = hot/startup/post-startup；L = class descriptor；-> = method signature
+
+# ── 核心 ChatScreen（日志发现 JIT 在滚动期间编译以下函数，已导致 Skipped 33 frames）──
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->ChatScreen(Ltop/ponychat/webview/ui/chat/ChatViewModel;Ltop/ponychat/webview/data/model/Character;Ltop/ponychat/webview/data/prefs/AppPreferences;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;III)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->MessageBubble(Ltop/ponychat/webview/data/model/Message;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZZZJIZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->GalgameSceneView(Ljava/lang/String;JLjava/util/Map;Landroidx/compose/runtime/Composer;II)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->GalgameColoredSection(Ljava/lang/String;Landroidx/compose/ui/text/AnnotatedString;JJZZLandroidx/compose/runtime/Composer;II)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->GalgameCollapsibleSection(Ljava/lang/String;Landroidx/compose/ui/text/AnnotatedString;Landroidx/compose/runtime/Composer;I)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->GalgameCollapsibleSectionItems(Ljava/lang/String;Ljava/lang/String;Landroidx/compose/runtime/Composer;I)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->GalgameTagsRow(Ljava/util/Map;Ltop/ponychat/webview/data/model/GalgamePalette;Landroidx/compose/runtime/Composer;I)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->GalgameTagChip(Ljava/lang/String;JJLandroidx/compose/ui/graphics/vector/ImageVector;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->parseSimpleMarkdown(Ljava/lang/String;)Landroidx/compose/ui/text/AnnotatedString;
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->ScrollToBottomFab(Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->ChatDisplaySettingsScreen(Ltop/ponychat/webview/data/prefs/AppPreferences;Ltop/ponychat/webview/data/model/ChatSettings;IIZLjava/util/List;Ljava/lang/String;ZLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->ThinkBlock(Ljava/lang/String;ZLandroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->GalgameScoreCapsule(ILkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;II)V
+# ── CharacterListScreen（日志发现 CharacterCard JIT 编译，6898KB）──────────────
+HSPLtop/ponychat/webview/ui/character/CharacterListScreenKt;->CharacterCard(Ltop/ponychat/webview/data/model/Character;Ljava/lang/String;Ljava/lang/String;ZZZLandroidx/compose/ui/Modifier;ZJLkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Landroidx/compose/runtime/Composer;III)V
+
+# ── 核心业务层 ──────────────────────────────────────────
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->splitMessageMedia(Ljava/lang/String;)Ltop/ponychat/webview/ui/chat/MessageMedia;
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->imageModelForCoil(Ljava/lang/String;Landroid/content/Context;)Ljava/lang/Object;
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->decodeB64ToFile(Ljava/lang/String;Landroid/content/Context;)Ljava/io/File;
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->parseMessageContent(Ljava/lang/String;)Ltop/ponychat/webview/ui/chat/ParsedMessage;
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->parseGalgameFromHtml(Ljava/lang/String;)Ljava/util/Map;
+HSPLtop/ponychat/webview/ui/chat/ChatScreenKt;->parseGalgameFields(Ljava/lang/String;)Ljava/util/Map;
+HSPLtop/ponychat/webview/ui/chat/ChatScreenGalgameKt;->buildGalgameParsedFromMetadata(Ljava/lang/String;)Ljava/util/Map;
+HSPLtop/ponychat/webview/ui/chat/ChatViewModel;->getState()Lkotlinx/coroutines/flow/StateFlow;
+HSPLtop/ponychat/webview/ui/chat/ChatViewModel;->initWithCharacter(Ltop/ponychat/webview/data/model/Character;)V
+HSPLtop/ponychat/webview/ui/chat/ChatViewModel;->sendMessage()V
+HSPLtop/ponychat/webview/ui/chat/ChatUiState;->getMessages()Ljava/util/List;
+HSPLtop/ponychat/webview/ui/chat/ChatUiState;->getIsStreaming()Z
+HSPLtop/ponychat/webview/ui/chat/ChatUiState;->getIsLoadingHistory()Z
+HSPLtop/ponychat/webview/ui/chat/ChatUiState;->getIsBackgroundRefreshing()Z
+HSPLtop/ponychat/webview/data/local/LocalCacheStore;->loadLatestConversation(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ltop/ponychat/webview/data/local/CachedConversation;
+HSPLtop/ponychat/webview/data/local/LocalCacheStore;->saveConversation(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/util/List;)V
+
+# ── Compose 运行时（首次组合热路径）────────────────────────
+HSPLandroidx/compose/runtime/ComposerImpl;->startReplaceableGroup(I)V
+HSPLandroidx/compose/runtime/ComposerImpl;->endReplaceableGroup()V
+HSPLandroidx/compose/runtime/ComposerImpl;->changed(Ljava/lang/Object;)Z
+HSPLandroidx/compose/runtime/ComposerImpl;->cache(ZLkotlin/jvm/functions/Function0;)Ljava/lang/Object;
+HSPLandroidx/compose/runtime/RecomposerKt;->runRecomposeAndApplyChanges$default()V
+
+# ── Compose Foundation（LazyColumn 关键路径）────────────────
+HSPLandroidx/compose/foundation/lazy/LazyListKt;->LazyColumn(Landroidx/compose/ui/Modifier;Landroidx/compose/foundation/lazy/LazyListState;Landroidx/compose/foundation/layout/PaddingValues;ZLandroidx/compose/foundation/gestures/FlingBehavior;ZLkotlin/jvm/functions/Function1;Landroidx/compose/runtime/Composer;II)V
+HSPLandroidx/compose/foundation/lazy/LazyListState;->getFirstVisibleItemIndex()I
+HSPLandroidx/compose/foundation/lazy/LazyListMeasureKt;->measureLazyList(IILandroidx/compose/ui/unit/Constraints;)Landroidx/compose/foundation/lazy/LazyListMeasureResult;
+
+# ── Coil 图片加载（首次渲染热路径）────────────────────────
+HSPLcoil/compose/AsyncImagePainter;->onRemembered()V
+HSPLcoil/compose/AsyncImageKt;->AsyncImage(Ljava/lang/Object;Ljava/lang/String;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
+HSPLcoil/ImageLoader;->enqueue(Lcoil/request/ImageRequest;)Lcoil/request/Disposable;
+HSPLcoil/ImageLoader;->execute(Lcoil/request/ImageRequest;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+HSPLcoil/memory/MemoryCache;->get(Lcoil/memory/MemoryCache$Key;)Lcoil/memory/MemoryCache$Value;

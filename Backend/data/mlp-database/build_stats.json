@@ -1,0 +1,14 @@
+{
+  "database": "P:\\PonyChat\\Backend\\data\\mlp-database\\mlp_world.db",
+  "episodes": 65,
+  "entries": 819,
+  "by_type": {
+    "character": 548,
+    "concept": 113,
+    "episode": 65,
+    "item": 9,
+    "location": 24,
+    "song": 55,
+    "species": 5
+  }
+}

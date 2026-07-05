@@ -1,0 +1,14 @@
+{
+    "active_model": "deepseek-v4-flash",
+    "model_sources": [
+        "models/doubao.json",
+        "models/apiyi.json",
+        "models/deepseek.json",
+        "models/poloai.json",
+        "models/xai.json",
+        "models/qwen_dashscope.json",
+        "models/openrouter.json",
+        "models/custom.json"
+    ],
+    "custom_models": []
+}

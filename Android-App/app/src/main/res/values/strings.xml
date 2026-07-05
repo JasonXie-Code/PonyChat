@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PonyChat</string>
+    <string name="agent_accessibility_service_description">操作陪玩模式：允许 PonyChat AI 代替你点击、滑动屏幕，自动完成任务。关闭陪玩后权限不再使用。</string>
+</resources>

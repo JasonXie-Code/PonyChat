@@ -1,0 +1,71 @@
+# 运行时数据
+var/
+Backend/database/*
+!Backend/database/README.md
+Backend/backups/
+Backend/data/mlp/*.db
+
+# 便携工具链（体积极大，独立维护）
+misc/tools/
+misc/_tmp_model/
+PonyChat-Website/MBTI/MLP/misc/python/
+PonyChat-Website/MBTI/MLP/misc/node-windows-64/
+PonyChat-Website/MBTI/Standard/misc/python/
+PonyChat-Website/MBTI/Standard/misc/node-windows-64/
+
+# 前端依赖与构建产物
+**/node_modules/
+**/dist/
+PonyChat-Website/Main/frontend/dist/
+PonyChat-Website/static_web/dist/
+PonyChat-Website/MLP-Songs-AUTO/generated/
+
+# Voice Lab runtime data and large local assets
+PonyChat-Website/TTS/Data/
+PonyChat-Website/TTS/models/
+PonyChat-Website/TTS/voices/
+PonyChat-Website/TTS/outputs/
+PonyChat-Website/TTS/uploads/
+PonyChat-Website/TTS/generation_logs/
+
+# Android 构建产物
+Android-App/.gradle/
+Android-App/build/
+Android-App/app/build/
+Android-App/local.properties
+Android-App/app/local.properties
+Android-App/signing/*.jks
+Android-App/signing/*.keystore
+Android-App/signing/keystore.properties
+!Android-App/signing/keystore.properties.example
+
+# Python
+__pycache__/
+*.py[cod]
+**/.venv*/
+Backend/.deploy_revision
+
+# 日志/临时输出
+*.log
+artifacts/
+Android-App/output.txt
+Android-App/full_log.txt
+Android-App/build_log.txt
+*.song.autosave
+Android-App/素材/**/History/
+
+# 本地临时/敏感文件
+temp/
+.agent/
+.docs/
+.codex-remote-attachments/
+.env
+.env.*
+.secrets/
+ServerKeys.md
+*id_rsa*
+PonyChat-Website/Main/deploy/server-usa/
+
+# 系统
+.DS_Store
+Thumbs.db

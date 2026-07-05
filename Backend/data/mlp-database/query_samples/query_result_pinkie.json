@@ -1,0 +1,709 @@
+{
+  "schema_version": "mlp_query_result_v1",
+  "query": {
+    "keywords": [
+      "碧琪",
+      "Pinkie Pie",
+      "萍琪派"
+    ],
+    "query_type": "profile_material",
+    "budgets": {
+      "simple_chars": 100,
+      "detailed_chars": 500
+    }
+  },
+  "usage_contract": {
+    "result_is_final_payload": true,
+    "display": "网页端直接展示 structured_profile，也可以展示 generation_material 摘要。",
+    "reply_use": "分步回复直接使用 generation_material 和 importance_options。",
+    "ooc_safe_material_fields": [
+      "generation_material.simple.text",
+      "generation_material.detailed.text",
+      "importance_options.background.material",
+      "importance_options.important_basis.material"
+    ]
+  },
+  "results": [
+    {
+      "rank": 1,
+      "match": {
+        "canonical_name": "碧琪",
+        "entry_type": "character",
+        "matched_keywords": [
+          "碧琪",
+          "Pinkie Pie",
+          "萍琪派"
+        ],
+        "matched_aliases": [
+          "碧琪",
+          "Pinkie Pie",
+          "萍琪派"
+        ],
+        "canonical_aliases": [
+          "碧琪",
+          "萍琪派",
+          "萍卡美娜·戴安·派",
+          "萍卡美娜",
+          "Pinkie Pie",
+          "Pinkamena Diane Pie",
+          "Pinkie",
+          "PP",
+          "派派",
+          "粉粉"
+        ],
+        "language_variants": {
+          "zh_cn": [
+            "碧琪",
+            "萍琪派",
+            "萍卡美娜·戴安·派",
+            "萍卡美娜"
+          ],
+          "zh_tw": [
+            "碧琪",
+            "萍琪派",
+            "萍卡美娜·戴安·派",
+            "萍卡美娜"
+          ],
+          "en": [
+            "Pinkie Pie",
+            "Pinkamena Diane Pie",
+            "Pinkie",
+            "PP"
+          ],
+          "nicknames": [
+            "Pinkie",
+            "PP",
+            "派派",
+            "粉粉"
+          ]
+        },
+        "score": 1.0
+      },
+      "character_brief": {
+        "species": "陆马",
+        "gender": "雌性",
+        "mbti": {
+          "type": "ESFP",
+          "name_zh": "表演者",
+          "inferred": true,
+          "confidence": "medium",
+          "note": "16人格为根据角色行为和性格短评推断，非剧中明示设定"
+        },
+        "personality_brief": "活泼搞怪，派对核心",
+        "interests_brief": "派对、唱歌、甜点"
+      },
+      "query_views": {
+        "simple": {
+          "budget_chars": 100,
+          "summary": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，身份是面包师、派对小马，性格活泼、搞怪、乐观，喜欢派对、唱歌、甜点。",
+          "key_fields": [
+            "identity",
+            "character_brief",
+            "personality",
+            "preferences_and_interests"
+          ]
+        },
+        "detailed": {
+          "budget_chars": 500,
+          "sections": {
+            "identity": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，身份是面包师、派对小马，代表欢笑",
+            "appearance": "体色偏淡灰的覆盆子色，鬃毛亮覆盆子色，眼睛浅天蓝色，可爱标记是三个气球，象征派对、欢乐和庆祝",
+            "personality": "活泼、搞怪、乐观、善于制造欢乐、有创造力、朋友众多、有时过于冲动、分身乏术时焦虑",
+            "preferences": "派对、唱歌、甜点、举办派对、演奏乐器、和朋友一起玩、朋友",
+            "behavior": "喜欢举办惊喜派对、用派对用品装饰、搞怪、夸张、经常唱歌、用乐器吸引注意、热情、主动",
+            "relationships": "朋友包括紫悦、珍奇、苹果嘉儿、云宝、柔柔；宠物或伙伴：软糖是宠物鳄鱼；亲属包括父亲火岩派、母亲云母、大姐石青派、二姐石灰派、四妹玉琪派",
+            "development": "碧琪从单纯追求欢乐到学会坦诚沟通，她的非常规方法逐渐被朋友认可"
+          }
+        }
+      },
+      "generation_material": {
+        "ooc_safe": true,
+        "simple": {
+          "budget_chars": 100,
+          "facts": {
+            "identity": [
+              "碧琪是雌性陆马",
+              "居住在小马镇方糖甜点屋",
+              "常在方糖甜点屋活动",
+              "面包师、派对小马"
+            ],
+            "personality": [
+              "活泼",
+              "搞怪",
+              "乐观"
+            ],
+            "background": [
+              "派对",
+              "唱歌",
+              "甜点"
+            ]
+          },
+          "text": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，常在方糖甜点屋活动，面包师、派对小马。性格活泼、搞怪、乐观。重视或喜欢派对、唱歌、甜点"
+        },
+        "detailed": {
+          "budget_chars": 500,
+          "facts": {
+            "identity": [
+              "碧琪是雌性陆马",
+              "居住在小马镇方糖甜点屋",
+              "常在方糖甜点屋活动",
+              "面包师、派对小马",
+              "代表欢笑"
+            ],
+            "personality": [
+              "活泼",
+              "搞怪",
+              "乐观",
+              "善于制造欢乐",
+              "有创造力",
+              "朋友众多",
+              "有时过于冲动",
+              "分身乏术时焦虑"
+            ],
+            "preferences": [
+              "派对",
+              "唱歌",
+              "甜点",
+              "举办派对",
+              "演奏乐器",
+              "和朋友一起玩",
+              "朋友"
+            ],
+            "behavior": [
+              "喜欢举办惊喜派对",
+              "用派对用品装饰",
+              "搞怪",
+              "夸张",
+              "经常唱歌",
+              "用乐器吸引注意",
+              "热情",
+              "主动"
+            ],
+            "abilities": [
+              {
+                "name": "身体抽动式预感",
+                "category": "special_ability",
+                "description": "能预感到即将发生的事件，通过身体抽搐等信号预警"
+              },
+              {
+                "name": "乐器",
+                "category": "tool",
+                "description": "常用长号等乐器制造音乐"
+              }
+            ],
+            "relationships": {
+              "family": [
+                {
+                  "name": "火岩派",
+                  "relation": "父亲"
+                },
+                {
+                  "name": "云母",
+                  "relation": "母亲"
+                },
+                {
+                  "name": "石青派",
+                  "relation": "大姐"
+                },
+                {
+                  "name": "石灰派",
+                  "relation": "二姐"
+                },
+                {
+                  "name": "玉琪派",
+                  "relation": "四妹"
+                }
+              ],
+              "friends": [
+                {
+                  "name": "紫悦",
+                  "relation": "朋友"
+                },
+                {
+                  "name": "珍奇",
+                  "relation": "朋友"
+                },
+                {
+                  "name": "苹果嘉儿",
+                  "relation": "朋友"
+                },
+                {
+                  "name": "云宝",
+                  "relation": "朋友"
+                },
+                {
+                  "name": "柔柔",
+                  "relation": "朋友"
+                }
+              ],
+              "household": [],
+              "pets": [
+                {
+                  "name": "软糖",
+                  "relation": "宠物",
+                  "species_or_type": "鳄鱼"
+                }
+              ]
+            },
+            "development": [
+              "碧琪从单纯追求欢乐到学会坦诚沟通，她的非常规方法逐渐被朋友认可"
+            ],
+            "appearance": [
+              "体色偏淡灰的覆盆子色",
+              "眼睛浅天蓝色",
+              "鬃毛亮覆盆子色",
+              "可爱标记三个气球"
+            ]
+          },
+          "text": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，常在方糖甜点屋活动，面包师、派对小马。性格活泼、搞怪、乐观。重视或喜欢派对、唱歌、甜点。外貌：体色偏淡灰的覆盆子色，眼睛浅天蓝色，鬃毛亮覆盆子色，可爱标记三个气球。喜好：派对、唱歌、甜点、举办派对、演奏乐器、和朋友一起玩。习惯：喜欢举办惊喜派对、用派对用品装饰、搞怪、夸张、经常唱歌、用乐器吸引注意。能力：身体抽动式预感，能预感到即将发生的事件，通过身体抽搐等信号预警、乐器，常用长号等乐器制造音乐。亲属包括父亲火岩派、母亲云母、大姐石青派、二姐石灰派、四妹玉琪派。常见关系：紫悦、珍奇、苹果嘉儿、云宝、柔柔。宠物或伙伴：软糖是宠物鳄鱼。发展上，碧琪从单纯追求欢乐到学会坦诚沟通，她的非常规方法逐渐被朋友认可"
+        },
+        "forbidden_terms_removed": []
+      },
+      "importance_options": {
+        "background": {
+          "meaning": "只是背景信息；用户没问到时不需要主动提。",
+          "budget_chars": 100,
+          "material": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，常在方糖甜点屋活动，面包师、派对小马。性格活泼、搞怪、乐观。重视或喜欢派对、唱歌、甜点"
+        },
+        "important_basis": {
+          "meaning": "本回合重要回复依据；涉及该条目时优先遵守。",
+          "budget_chars": 500,
+          "material": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，常在方糖甜点屋活动，面包师、派对小马。性格活泼、搞怪、乐观。重视或喜欢派对、唱歌、甜点。外貌：体色偏淡灰的覆盆子色，眼睛浅天蓝色，鬃毛亮覆盆子色，可爱标记三个气球。喜好：派对、唱歌、甜点、举办派对、演奏乐器、和朋友一起玩。习惯：喜欢举办惊喜派对、用派对用品装饰、搞怪、夸张、经常唱歌、用乐器吸引注意。能力：身体抽动式预感，能预感到即将发生的事件，通过身体抽搐等信号预警、乐器，常用长号等乐器制造音乐。亲属包括父亲火岩派、母亲云母、大姐石青派、二姐石灰派、四妹玉琪派。常见关系：紫悦、珍奇、苹果嘉儿、云宝、柔柔。宠物或伙伴：软糖是宠物鳄鱼。发展上，碧琪从单纯追求欢乐到学会坦诚沟通，她的非常规方法逐渐被朋友认可",
+          "must_follow_facts": [
+            "identity",
+            "appearance",
+            "personality",
+            "preferences",
+            "habits",
+            "abilities",
+            "relationships",
+            "character_development"
+          ],
+          "character_development": "碧琪从单纯追求欢乐到学会坦诚沟通，她的非常规方法逐渐被朋友认可"
+        }
+      },
+      "structured_profile": {
+        "schema_version": "mlp_entry_profile_v3",
+        "entry_type": "character",
+        "canonical_name": "碧琪",
+        "common": {
+          "names": {
+            "zh": "碧琪",
+            "en": "Pinkie Pie",
+            "full_name": "Pinkamena Diane Pie",
+            "aliases": [
+              "碧琪",
+              "萍琪派",
+              "萍卡美娜·戴安·派",
+              "萍卡美娜",
+              "Pinkie Pie",
+              "Pinkamena Diane Pie",
+              "Pinkie",
+              "PP",
+              "派派",
+              "粉粉"
+            ],
+            "nicknames": [
+              "Pinkie",
+              "PP",
+              "派派",
+              "粉粉"
+            ],
+            "translation_variants": [
+              "碧琪",
+              "萍琪派",
+              "萍卡美娜·戴安·派",
+              "萍卡美娜"
+            ]
+          }
+        },
+        "query_views": {
+          "simple": {
+            "budget_chars": 100,
+            "summary": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，身份是面包师、派对小马，性格活泼、搞怪、乐观，喜欢派对、唱歌、甜点。",
+            "key_fields": [
+              "identity",
+              "character_brief",
+              "personality",
+              "preferences_and_interests"
+            ]
+          },
+          "detailed": {
+            "budget_chars": 500,
+            "sections": {
+              "identity": "碧琪是雌性陆马，居住在小马镇方糖甜点屋，身份是面包师、派对小马，代表欢笑",
+              "appearance": "体色偏淡灰的覆盆子色，鬃毛亮覆盆子色，眼睛浅天蓝色，可爱标记是三个气球，象征派对、欢乐和庆祝",
+              "personality": "活泼、搞怪、乐观、善于制造欢乐、有创造力、朋友众多、有时过于冲动、分身乏术时焦虑",
+              "preferences": "派对、唱歌、甜点、举办派对、演奏乐器、和朋友一起玩、朋友",
+              "behavior": "喜欢举办惊喜派对、用派对用品装饰、搞怪、夸张、经常唱歌、用乐器吸引注意、热情、主动",
+              "relationships": "朋友包括紫悦、珍奇、苹果嘉儿、云宝、柔柔；宠物或伙伴：软糖是宠物鳄鱼；亲属包括父亲火岩派、母亲云母、大姐石青派、二姐石灰派、四妹玉琪派",
+              "development": "碧琪从单纯追求欢乐到学会坦诚沟通，她的非常规方法逐渐被朋友认可"
+            }
+          }
+        },
+        "character_brief": {
+          "species": "陆马",
+          "gender": "雌性",
+          "mbti": {
+            "type": "ESFP",
+            "name_zh": "表演者",
+            "inferred": true,
+            "confidence": "medium",
+            "note": "16人格为根据角色行为和性格短评推断，非剧中明示设定"
+          },
+          "personality_brief": "活泼搞怪，派对核心",
+          "interests_brief": "派对、唱歌、甜点"
+        },
+        "character_profile": {
+          "identity": {
+            "gender": "雌性",
+            "species": "陆马",
+            "residence": "小马镇方糖甜点屋",
+            "workplace": "方糖甜点屋",
+            "occupations_or_roles": [
+              "面包师",
+              "派对小马"
+            ],
+            "element_or_symbol": "欢笑",
+            "community_role": [],
+            "pet_or_companion": [
+              {
+                "name": "软糖",
+                "relation": "宠物"
+              }
+            ]
+          },
+          "appearance": {
+            "body": {
+              "coat_or_body_color": "偏淡灰的覆盆子色",
+              "notable_body_traits": []
+            },
+            "hair": {
+              "mane_color": "亮覆盆子色"
+            },
+            "eyes": {
+              "eye_color": "浅天蓝色"
+            },
+            "cutie_mark": {
+              "description": "三个气球",
+              "meaning": "派对、欢乐和庆祝"
+            },
+            "magic_or_aura": {
+              "notes": []
+            },
+            "accessories_or_clothing": [],
+            "other_visual_traits": []
+          },
+          "personality": {
+            "core_traits": [
+              "活泼",
+              "搞怪",
+              "乐观"
+            ],
+            "emotional_patterns": [],
+            "strengths": [
+              "善于制造欢乐",
+              "有创造力",
+              "朋友众多"
+            ],
+            "flaws_or_limits": [
+              "有时过于冲动",
+              "分身乏术时焦虑"
+            ],
+            "insecurities_or_fears": [],
+            "motivations": [
+              "让朋友开心",
+              "享受派对"
+            ],
+            "values": [
+              "友谊",
+              "欢笑"
+            ]
+          },
+          "preferences_and_interests": {
+            "likes": [
+              "派对",
+              "唱歌",
+              "甜点"
+            ],
+            "dislikes": [],
+            "favorite_foods_or_sweets": [],
+            "hobbies": [
+              "举办派对",
+              "演奏乐器"
+            ],
+            "favorite_activities": [
+              "和朋友一起玩",
+              "唱歌"
+            ],
+            "important_places": [
+              "方糖甜点屋",
+              "小马镇"
+            ],
+            "things_she_cares_about": [
+              "朋友",
+              "派对"
+            ]
+          },
+          "behavior_and_habits": {
+            "party_habits": [
+              "喜欢举办惊喜派对",
+              "用派对用品装饰"
+            ],
+            "humor_style": [
+              "搞怪",
+              "夸张"
+            ],
+            "song_or_music_habits": [
+              "经常唱歌",
+              "用乐器吸引注意"
+            ],
+            "social_style": [
+              "热情",
+              "主动"
+            ],
+            "problem_solving_style": [
+              "非常规方法",
+              "用音乐或搞笑方式"
+            ],
+            "recurring_actions": [
+              "突然出现",
+              "唱歌电报"
+            ],
+            "stress_or_conflict_behavior": [
+              "焦虑",
+              "用分身逃避选择"
+            ]
+          },
+          "abilities_and_tools": {
+            "special_abilities": [
+              {
+                "name": "身体抽动式预感",
+                "category": "special_ability",
+                "description": "能预感到即将发生的事件，通过身体抽搐等信号预警"
+              }
+            ],
+            "practical_skills": [],
+            "signature_tools": [
+              {
+                "name": "乐器",
+                "category": "tool",
+                "description": "常用长号等乐器制造音乐"
+              }
+            ],
+            "pets_or_companions": [
+              {
+                "name": "软糖",
+                "relation": "宠物",
+                "species_or_type": "鳄鱼"
+              }
+            ],
+            "limits_or_costs": []
+          },
+          "relationships": {
+            "family": [
+              {
+                "name": "火岩派",
+                "relation": "父亲"
+              },
+              {
+                "name": "云母",
+                "relation": "母亲"
+              },
+              {
+                "name": "石青派",
+                "relation": "大姐"
+              },
+              {
+                "name": "石灰派",
+                "relation": "二姐"
+              },
+              {
+                "name": "玉琪派",
+                "relation": "四妹"
+              }
+            ],
+            "close_friends": [
+              {
+                "name": "紫悦",
+                "relation": "朋友"
+              },
+              {
+                "name": "珍奇",
+                "relation": "朋友"
+              },
+              {
+                "name": "苹果嘉儿",
+                "relation": "朋友"
+              },
+              {
+                "name": "云宝",
+                "relation": "朋友"
+              },
+              {
+                "name": "柔柔",
+                "relation": "朋友"
+              }
+            ],
+            "mentors_or_teachers": [],
+            "work_or_household": [],
+            "pets": [
+              {
+                "name": "软糖",
+                "relation": "宠物",
+                "species_or_type": "鳄鱼"
+              }
+            ],
+            "other": []
+          },
+          "character_development": {
+            "arc_summary": "碧琪从单纯追求欢乐到学会坦诚沟通，她的非常规方法逐渐被朋友认可",
+            "starting_point": "碧琪最初以搞怪和派对为中心，有时会因分身乏术而焦虑",
+            "ending_point_s3": "到后来，碧琪学会了坦诚面对选择，朋友也更信任她的独特方式",
+            "turning_points": [
+              "在分身危机中，碧琪因无法同时赴约而制造分身，最终导致混乱，学会了坦诚沟通",
+              "后来，碧琪用音乐引开贪吃精灵，拯救了小镇，朋友认识到她的价值"
+            ],
+            "lessons_or_realizations": [
+              "碧琪意识到不能同时满足所有朋友，需要坦诚选择",
+              "碧琪明白自己的非常规方法也能有效解决问题"
+            ],
+            "ability_growth": [
+              "身体抽动式预感能力被朋友接受和信任"
+            ],
+            "relationship_growth": [
+              "与朋友之间的信任增强，朋友更愿意倾听她的建议"
+            ],
+            "status_changes": [],
+            "development_notes": []
+          }
+        },
+        "confidence": {
+          "overall": "medium",
+          "field_confidence": {
+            "identity": "high",
+            "appearance": "high",
+            "personality": "medium",
+            "preferences_and_interests": "medium",
+            "behavior_and_habits": "medium",
+            "abilities_and_tools": "high",
+            "relationships": "high",
+            "character_development": "medium"
+          },
+          "missing_fields": [
+            "age_stage",
+            "cutie_mark",
+            "nicknames",
+            "important_places",
+            "dislikes",
+            "favorite_foods_or_sweets",
+            "insecurities_or_fears",
+            "emotional_patterns",
+            "stress_or_conflict_behavior",
+            "limits_or_costs",
+            "mentors_or_teachers",
+            "work_or_household",
+            "status_changes"
+          ],
+          "risk_notes": []
+        },
+        "disambiguation": {
+          "primary_entity": "碧琪",
+          "matched_aliases": [
+            "PP",
+            "派派",
+            "粉粉",
+            "碧琪",
+            "Pinkie"
+          ],
+          "avoid_confusion_with": [],
+          "ambiguity_notes": []
+        },
+        "search_profile": {
+          "match_keywords": [
+            "碧琪",
+            "萍琪派",
+            "萍卡美娜·戴安·派",
+            "萍卡美娜",
+            "Pinkie Pie",
+            "Pinkamena Diane Pie",
+            "Pinkie",
+            "PP",
+            "派派",
+            "粉粉",
+            "欢笑元素",
+            "方糖甜点屋",
+            "身体抽动式预感"
+          ],
+          "language_variants": {
+            "zh_cn": [
+              "碧琪",
+              "萍琪派",
+              "萍卡美娜·戴安·派",
+              "萍卡美娜"
+            ],
+            "zh_tw": [
+              "碧琪",
+              "萍琪派",
+              "萍卡美娜·戴安·派",
+              "萍卡美娜"
+            ],
+            "en": [
+              "Pinkie Pie",
+              "Pinkamena Diane Pie",
+              "Pinkie",
+              "PP"
+            ],
+            "nicknames": [
+              "Pinkie",
+              "PP",
+              "派派",
+              "粉粉"
+            ]
+          }
+        }
+      },
+      "confidence": {
+        "overall": "medium",
+        "field_confidence": {
+          "identity": "high",
+          "appearance": "high",
+          "personality": "medium",
+          "preferences_and_interests": "medium",
+          "behavior_and_habits": "medium",
+          "abilities_and_tools": "high",
+          "relationships": "high",
+          "character_development": "medium"
+        },
+        "missing_fields": [
+          "age_stage",
+          "cutie_mark",
+          "nicknames",
+          "important_places",
+          "dislikes",
+          "favorite_foods_or_sweets",
+          "insecurities_or_fears",
+          "emotional_patterns",
+          "stress_or_conflict_behavior",
+          "limits_or_costs",
+          "mentors_or_teachers",
+          "work_or_household",
+          "status_changes"
+        ],
+        "risk_notes": []
+      },
+      "disambiguation": {
+        "primary_entity": "碧琪",
+        "matched_aliases": [
+          "PP",
+          "派派",
+          "粉粉",
+          "碧琪",
+          "Pinkie"
+        ],
+        "avoid_confusion_with": [],
+        "ambiguity_notes": []
+      }
+    }
+  ]
+}

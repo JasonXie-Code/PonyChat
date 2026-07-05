@@ -1,0 +1,56 @@
+{
+  "models": [
+    {
+      "id": "deepseek-v4-flash",
+      "name": "PonyChat",
+      "key_name": "PonyChat",
+      "type": "openai",
+      "endpoint": "https://api.deepseek.com",
+      "api_key": "${PONYCHAT_DEEPSEEK_API_KEY}",
+      "model_name": "deepseek-v4-flash",
+      "description": "DeepSeek 官方 V4 Flash · 1M 上下文；默认关闭思考，与游戏/锁分/路由一致走非推理",
+      "enabled": true,
+      "hidden": false,
+      "is_default": true,
+      "for_chat": true,
+      "for_chat_router": true,
+      "for_chat_director": true,
+      "for_memory": true,
+      "for_summarize": true,
+      "supports_reasoning": true,
+      "supports_enable_thinking": true,
+      "uses_v4_thinking_api": true,
+      "enable_thinking": false,
+      "options": {
+        "max_tokens": 8192,
+        "reasoning_effort": "low"
+      }
+    },
+    {
+      "id": "deepseek-v4-flash-code",
+      "name": "Code",
+      "key_name": "Code",
+      "type": "openai",
+      "endpoint": "https://api.deepseek.com",
+      "api_key": "${PONYCHAT_DEEPSEEK_CODE_API_KEY}",
+      "model_name": "deepseek-v4-flash",
+      "description": "DeepSeek 官方 V4 Flash · Code key",
+      "enabled": true,
+      "hidden": true,
+      "is_default": false,
+      "for_chat": false,
+      "for_chat_router": false,
+      "for_chat_director": false,
+      "for_memory": false,
+      "for_summarize": false,
+      "supports_reasoning": true,
+      "supports_enable_thinking": true,
+      "uses_v4_thinking_api": true,
+      "enable_thinking": false,
+      "options": {
+        "max_tokens": 8192,
+        "reasoning_effort": "low"
+      }
+    }
+  ]
+}

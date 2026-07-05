@@ -1,0 +1,25 @@
+{
+    "models": [
+        {
+            "id": "qwen3.5-plus",
+            "name": "Qwen3.5-Plus（深度思考）",
+            "type": "openai",
+            "endpoint": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "api_key": "${PONYCHAT_DASHSCOPE_API_KEY}",
+            "model_name": "qwen3.5-plus",
+            "description": "通义千问 3.5 Plus · 旗舰 MoE 397B（激活 17B）· 1M 上下文 · 回答前先推理思考，适合逻辑推断、剧情创作",
+            "enabled": true,
+            "hidden": false,
+            "is_default": false,
+            "supports_vision": true,
+            "supports_reasoning": true,
+            "supports_tools": true,
+            "supports_web_search": true,
+            "enable_thinking": true,
+            "options": {
+                "temperature": 0.7,
+                "max_tokens": 8192
+            }
+        }
+    ]
+}

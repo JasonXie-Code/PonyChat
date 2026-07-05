@@ -1,0 +1,16 @@
+{
+  "models": [
+    {
+      "id": "banana-pro",
+      "name": "Banana Pro",
+      "type": "openai",
+      "endpoint": "https://api.apiyi.com/v1",
+      "api_key": "${PONYCHAT_APIYI_API_KEY}",
+      "model_name": "gemini-3-pro-image-preview",
+      "description": "Nano Banana Pro - 谷歌最新图像生成模型，支持4K高清，文本渲染最强",
+      "enabled": true,
+      "is_default": false,
+      "is_draw": true
+    }
+  ]
+}

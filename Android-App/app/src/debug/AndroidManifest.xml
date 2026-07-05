@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application>
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+
+        <activity
+            android:name=".ui.chinesechess.ChineseChessActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+
+        <activity
+            android:name=".ui.doudizhu.DoudizhuActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+
+        <activity
+            android:name=".ui.tictactoe.TicTacToeActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+
+        <activity
+            android:name=".debug.DialogPreviewActivity"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PonyChatApp" />
+    </application>
+</manifest>

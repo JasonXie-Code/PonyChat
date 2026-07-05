@@ -1,0 +1,677 @@
+{
+  "schemaVersion": "2.0.0",
+  "title": "MLP 情境化 MBTI 题库",
+  "description": "四轴各 18 题共 72 题；测验时从题库随机抽取 12/36 题并按随机顺序呈现。",
+  "axes": {
+    "EI": {
+      "left": "E",
+      "right": "I",
+      "label": "能量来源（外向 E / 内向 I）"
+    },
+    "SN": {
+      "left": "S",
+      "right": "N",
+      "label": "信息方式（实感 S / 直觉 N）"
+    },
+    "TF": {
+      "left": "T",
+      "right": "F",
+      "label": "决策依据（思考 T / 情感 F）"
+    },
+    "JP": {
+      "left": "J",
+      "right": "P",
+      "label": "生活方式（判断 J / 感知 P）"
+    }
+  },
+  "items": [
+    {
+      "id": 1,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "碧琪邀请你参加派对：你更愿意去有很多小马、热闹非凡的聚会，还是只有少数挚友的安静小聚？",
+      "optionLeft": "人多热闹更开心",
+      "optionRight": "小圈子更自在"
+    },
+    {
+      "id": 2,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "在坎特洛特的庆典上，你更想主动和陌生小马聊天，还是站在一旁观察与休息？",
+      "optionLeft": "主动认识新朋友",
+      "optionRight": "先在一旁观察"
+    },
+    {
+      "id": 3,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "疲惫时，你更能通过「和大家一起玩」充电，还是「独自待一会儿」恢复？",
+      "optionLeft": "和大家在一起充电",
+      "optionRight": "独处恢复精力"
+    },
+    {
+      "id": 4,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "在友谊城堡小组讨论时，你更愿意先开口抛想法，还是先听完再整理再说？",
+      "optionLeft": "边想边说",
+      "optionRight": "想好再说"
+    },
+    {
+      "id": 5,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "面对新环境（比如第一次去云中城），你更兴奋于探索与互动，还是更需要时间适应？",
+      "optionLeft": "立刻探索互动",
+      "optionRight": "先适应再参与"
+    },
+    {
+      "id": 6,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "你更常把心情说出来让朋友知道，还是先在心里消化再选择性分享？",
+      "optionLeft": "说出来更舒服",
+      "optionRight": "先内化再分享"
+    },
+    {
+      "id": 7,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "周末你更期待被朋友约出门活动，还是留给自己独处或安静安排？",
+      "optionLeft": "期待外出社交",
+      "optionRight": "期待独处安静"
+    },
+    {
+      "id": 8,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "在苹果家族丰收派对上，你更愿意成为带动气氛的一员，还是享受角落里的轻松陪伴？",
+      "optionLeft": "带动气氛",
+      "optionRight": "角落陪伴"
+    },
+    {
+      "id": 9,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "思考复杂问题时，你更习惯边说边理清，还是独自安静推演？",
+      "optionLeft": "边说边理清",
+      "optionRight": "独自推演"
+    },
+    {
+      "id": 10,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "在闪电天马选拔现场，你更愿意大声给选手加油，还是安静看完再在心里点评？",
+      "optionLeft": "大声加油更带劲",
+      "optionRight": "安静看完再点评"
+    },
+    {
+      "id": 11,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "收到一封来自未知地址的派对请柬，你更想立刻转发给朋友讨论，还是先自己琢磨？",
+      "optionLeft": "立刻找人讨论",
+      "optionRight": "先自己琢磨"
+    },
+    {
+      "id": 12,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "独处一整天后，你更需要「见见活的小马」还是「继续安静充电」？",
+      "optionLeft": "见见小马",
+      "optionRight": "继续安静"
+    },
+    {
+      "id": 13,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "在火车上邻座搭话，你更自然接话聊一路，还是礼貌回应后看书？",
+      "optionLeft": "接话聊一路",
+      "optionRight": "回应后自己看东西"
+    },
+    {
+      "id": 14,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "你更常是群里话多的那个，还是潜水观察的那个？",
+      "optionLeft": "话多活跃",
+      "optionRight": "潜水观察"
+    },
+    {
+      "id": 15,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "压力大时，倾诉能让你更快好起来，还是独自消化更有效？",
+      "optionLeft": "倾诉好得快",
+      "optionRight": "独自消化"
+    },
+    {
+      "id": 16,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "周末被临时约出门，你更兴奋还是更想婉拒？",
+      "optionLeft": "兴奋赴约",
+      "optionRight": "想婉拒休息"
+    },
+    {
+      "id": 17,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "在集市上，你更爱逛热闹摊位，还是找角落小店？",
+      "optionLeft": "热闹摊位",
+      "optionRight": "角落小店"
+    },
+    {
+      "id": 18,
+      "axis": "EI",
+      "optionLeftPole": "E",
+      "optionRightPole": "I",
+      "text": "开会时你更愿意第一个发言破冰，还是等别人先开口？",
+      "optionLeft": "先发言破冰",
+      "optionRight": "等别人先开口"
+    },
+    {
+      "id": 19,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "珍奇设计新礼服时，你更关注布料触感、针脚细节，还是整体造型与象征意义？",
+      "optionLeft": "细节与质感",
+      "optionRight": "意象与象征"
+    },
+    {
+      "id": 20,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "读一本小马游记，你更记得具体地名与路线，还是故事里的隐喻与可能性？",
+      "optionLeft": "具体事实路线",
+      "optionRight": "隐喻与可能"
+    },
+    {
+      "id": 21,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "面对眼前的问题，你更依赖「已经验证可行的做法」，还是「尝试新的组合与联想」？",
+      "optionLeft": "经验与可行",
+      "optionRight": "联想与创新"
+    },
+    {
+      "id": 22,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "你更欣赏苹果嘉儿那种踏实可感的承诺，还是云宝那种「再飞高一点」的想象？",
+      "optionLeft": "踏实可感",
+      "optionRight": "想象与突破"
+    },
+    {
+      "id": 23,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "学习新魔法时，你更想一步步练习直到熟练，还是先理解整体图景再填充细节？",
+      "optionLeft": "逐步练习",
+      "optionRight": "先整体后细节"
+    },
+    {
+      "id": 24,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "描述一场婚礼，你更倾向讲清楚流程与布置，还是讲氛围与「像童话一样的未来感」？",
+      "optionLeft": "流程与布置",
+      "optionRight": "氛围与未来感"
+    },
+    {
+      "id": 25,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "听到「水晶帝国」，你更先想到具体景象与历史，还是联想到概念与可能性？",
+      "optionLeft": "具体景象历史",
+      "optionRight": "概念与可能"
+    },
+    {
+      "id": 26,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "你更担心「眼前这一步踩空」，还是「错过更远的可能性」？",
+      "optionLeft": "眼前踩空",
+      "optionRight": "错过可能"
+    },
+    {
+      "id": 27,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "回忆与朋友的冒险，你更常想起具体对话与场景，还是当时感受到的主题与启示？",
+      "optionLeft": "对话与场景",
+      "optionRight": "主题与启示"
+    },
+    {
+      "id": 28,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "面对「水晶之心」的传说，你更在意考古细节，还是故事寓意？",
+      "optionLeft": "考古细节",
+      "optionRight": "故事寓意"
+    },
+    {
+      "id": 29,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "修桥：你更相信老师傅的经验手感，还是新材料的实验数据？",
+      "optionLeft": "经验手感",
+      "optionRight": "实验数据"
+    },
+    {
+      "id": 30,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "描述天气，你更常说「具体温度与云量」，还是「像棉花糖一样的下午」？",
+      "optionLeft": "温度云量",
+      "optionRight": "意象与氛围"
+    },
+    {
+      "id": 31,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "学新舞步，你更想反复练到肌肉记忆，还是先感受节奏整体？",
+      "optionLeft": "反复练准",
+      "optionRight": "先感受整体"
+    },
+    {
+      "id": 32,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "你更欣赏「可复制的配方」，还是「一次性的灵感」？",
+      "optionLeft": "可复制配方",
+      "optionRight": "一次性灵感"
+    },
+    {
+      "id": 33,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "听新歌，你更注意旋律细节，还是整体情绪？",
+      "optionLeft": "旋律细节",
+      "optionRight": "整体情绪"
+    },
+    {
+      "id": 34,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "规划派对菜单，你更在意食材清单，还是主题故事线？",
+      "optionLeft": "食材清单",
+      "optionRight": "主题故事线"
+    },
+    {
+      "id": 35,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "你更常记住别人「说过什么原话」，还是「当时的感觉」？",
+      "optionLeft": "原话细节",
+      "optionRight": "当时感觉"
+    },
+    {
+      "id": 36,
+      "axis": "SN",
+      "optionLeftPole": "S",
+      "optionRightPole": "N",
+      "text": "看到彩虹，你更先想到光学原理，还是童话里的约定？",
+      "optionLeft": "光学原理",
+      "optionRight": "童话约定"
+    },
+    {
+      "id": 37,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "团队争执时，你更优先厘清对错与效率，还是照顾大家的感受与关系？",
+      "optionLeft": "对错与效率",
+      "optionRight": "感受与关系"
+    },
+    {
+      "id": 38,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "做艰难决定时，你更依赖逻辑与原则，还是共情与价值观上的「对不对得起谁」？",
+      "optionLeft": "逻辑与原则",
+      "optionRight": "共情与对得起谁"
+    },
+    {
+      "id": 39,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "评价一集剧情，你更在意结构是否合理，还是角色情感是否动人？",
+      "optionLeft": "结构合理",
+      "optionRight": "情感动人"
+    },
+    {
+      "id": 40,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "朋友犯错时，你更想直接指出问题帮其改进，还是先安抚再慢慢谈？",
+      "optionLeft": "直接指出",
+      "optionRight": "先安抚再谈"
+    },
+    {
+      "id": 41,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "你更欣赏紫悦式的分析与纠错，还是柔柔式的体谅与包容？",
+      "optionLeft": "分析与纠错",
+      "optionRight": "体谅与包容"
+    },
+    {
+      "id": 42,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "分配任务时，你更重视公平与能力匹配，还是照顾意愿与士气？",
+      "optionLeft": "公平与能力",
+      "optionRight": "意愿与士气"
+    },
+    {
+      "id": 43,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "看到争议话题，你更先问「论证是否成立」，还是「会伤到谁」？",
+      "optionLeft": "论证是否成立",
+      "optionRight": "会伤到谁"
+    },
+    {
+      "id": 44,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "你更认为「坦率哪怕刺耳」是善意，还是「委婉保全面子」更重要？",
+      "optionLeft": "坦率是善意",
+      "optionRight": "委婉保全面子"
+    },
+    {
+      "id": 45,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "做选择时，你更常感到「应该理性」，还是「心里过不去」？",
+      "optionLeft": "应该理性",
+      "optionRight": "心里过不去"
+    },
+    {
+      "id": 46,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "朋友爽约，你更先想「是否该立规矩」，还是「TA 是不是遇到困难」？",
+      "optionLeft": "立规矩",
+      "optionRight": "是否遇到困难"
+    },
+    {
+      "id": 47,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "争论中，你更在意逻辑链条，还是现场气氛？",
+      "optionLeft": "逻辑链条",
+      "optionRight": "现场气氛"
+    },
+    {
+      "id": 48,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "分配座位，你更按效率与规则，还是照顾害羞的小马？",
+      "optionLeft": "效率规则",
+      "optionRight": "照顾害羞"
+    },
+    {
+      "id": 49,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "指出错误时，你更倾向「对事不对人」，还是「先维护关系」？",
+      "optionLeft": "对事不对人",
+      "optionRight": "先维护关系"
+    },
+    {
+      "id": 50,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "你更认同「公平即正义」，还是「体谅即温柔」？",
+      "optionLeft": "公平即正义",
+      "optionRight": "体谅即温柔"
+    },
+    {
+      "id": 51,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "团队复盘，你更爱看数据与指标，还是感受与士气？",
+      "optionLeft": "数据指标",
+      "optionRight": "感受士气"
+    },
+    {
+      "id": 52,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "你更怕「讲错事实」，还是「伤到人心」？",
+      "optionLeft": "讲错事实",
+      "optionRight": "伤到人心"
+    },
+    {
+      "id": 53,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "做选择时，你更常问「合理吗」，还是「大家能接受吗」？",
+      "optionLeft": "合理吗",
+      "optionRight": "大家能接受吗"
+    },
+    {
+      "id": 54,
+      "axis": "TF",
+      "optionLeftPole": "T",
+      "optionRightPole": "F",
+      "text": "你更欣赏直截了当，还是委婉体贴？",
+      "optionLeft": "直截了当",
+      "optionRight": "委婉体贴"
+    },
+    {
+      "id": 55,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "出发前你更喜欢行程表列好时间与地点，还是留足空白即兴发挥？",
+      "optionLeft": "列好行程",
+      "optionRight": "即兴发挥"
+    },
+    {
+      "id": 56,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "面对截止日，你更倾向提前完成心里踏实，还是压力下灵感更足？",
+      "optionLeft": "提前完成",
+      "optionRight": "压力下爆发"
+    },
+    {
+      "id": 57,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "整理房间：你更想一次分类定案，还是边收边发现新摆法？",
+      "optionLeft": "分类定案",
+      "optionRight": "边收边调整"
+    },
+    {
+      "id": 58,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "你更讨厌事情悬而未决，还是讨厌过早定死没有回旋？",
+      "optionLeft": "讨厌悬而未决",
+      "optionRight": "讨厌过早定死"
+    },
+    {
+      "id": 59,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "小组作业里，你更想先定分工与里程碑，还是先看情况再协调？",
+      "optionLeft": "先定分工里程碑",
+      "optionRight": "看情况再协调"
+    },
+    {
+      "id": 60,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "旅行中你更享受按计划打卡，还是偶遇惊喜？",
+      "optionLeft": "按计划打卡",
+      "optionRight": "偶遇惊喜"
+    },
+    {
+      "id": 61,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "新信息到来时，你更想尽快结论与行动，还是多留开放再观察？",
+      "optionLeft": "尽快结论行动",
+      "optionRight": "多留开放观察"
+    },
+    {
+      "id": 62,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "你更常觉得「先把规矩说清楚」，还是「规矩可以边做边改」？",
+      "optionLeft": "先说清楚规矩",
+      "optionRight": "边做边改"
+    },
+    {
+      "id": 63,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "周末计划被打乱时，你更焦虑失控感，还是兴奋于新变化？",
+      "optionLeft": "焦虑失控",
+      "optionRight": "兴奋新变化"
+    },
+    {
+      "id": 64,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "行李箱里，你更倾向提前列清单，还是出发前再塞？",
+      "optionLeft": "提前列清单",
+      "optionRight": "出发前再塞"
+    },
+    {
+      "id": 65,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "新项目启动，你更想先定里程碑，还是边做边摸索？",
+      "optionLeft": "先定里程碑",
+      "optionRight": "边做边摸索"
+    },
+    {
+      "id": 66,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "临时加场演出，你更焦虑流程被打乱，还是兴奋于即兴？",
+      "optionLeft": "焦虑打乱",
+      "optionRight": "兴奋即兴"
+    },
+    {
+      "id": 67,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "你更常提前到，还是踩点到？",
+      "optionLeft": "提前到",
+      "optionRight": "踩点到"
+    },
+    {
+      "id": 68,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "面对开放结局的故事，你更想立刻讨论结论，还是保留多种解读？",
+      "optionLeft": "讨论结论",
+      "optionRight": "保留解读"
+    },
+    {
+      "id": 69,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "家务排期，你更爱固定节奏，还是看心情？",
+      "optionLeft": "固定节奏",
+      "optionRight": "看心情"
+    },
+    {
+      "id": 70,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "你更讨厌「没有截止日」，还是「截止日太早」？",
+      "optionLeft": "没有截止日",
+      "optionRight": "截止日太早"
+    },
+    {
+      "id": 71,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "购物时，你更常列购物单，还是逛到啥买啥？",
+      "optionLeft": "列购物单",
+      "optionRight": "逛到啥买啥"
+    },
+    {
+      "id": 72,
+      "axis": "JP",
+      "optionLeftPole": "J",
+      "optionRightPole": "P",
+      "text": "计划被打断时，你更需要快速重建秩序，还是顺势改计划？",
+      "optionLeft": "重建秩序",
+      "optionRight": "顺势改计划"
+    }
+  ]
+}

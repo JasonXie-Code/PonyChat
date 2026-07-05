@@ -1,0 +1,44 @@
+{
+  "models": [
+    {
+      "id": "doubao-2-0-mini",
+      "name": "Doubao 2.0-mini",
+      "type": "openai",
+      "endpoint": "https://ark.cn-beijing.volces.com/api/v3",
+      "api_key": "${PONYCHAT_DOUBAO_API_KEY}",
+      "model_name": "doubao-seed-2-0-mini-260215",
+      "description": "豆包 2.0-mini，速度极快，支持视觉识图，适合陪玩/日常对话",
+      "enabled": true,
+      "hidden": false,
+      "is_default": false,
+      "for_web_search": true,
+      "supports_vision": true,
+      "supports_reasoning": true,
+      "supports_web_search": true,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    },
+    {
+      "id": "doubao-2-0-lite",
+      "name": "Doubao 2.0-lite",
+      "type": "openai",
+      "endpoint": "https://ark.cn-beijing.volces.com/api/v3",
+      "api_key": "${PONYCHAT_DOUBAO_API_KEY}",
+      "model_name": "doubao-seed-2-0-lite-260215",
+      "description": "豆包 2.0 Lite - 视觉多模态，支持识图，与 Ark 豆包系列共用 API Key",
+      "enabled": true,
+      "is_default": false,
+      "supports_vision": true,
+      "supports_reasoning": true,
+      "supports_web_search": true,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    }
+  ]
+}

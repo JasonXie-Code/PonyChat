@@ -1,0 +1,1427 @@
+{
+  "PonyChat-Website/Main/deploy/server-usa/apply-www-selfsigned-https.py": [
+    "#!/usr/bin/env python3"
+  ],
+  "PonyChat-Website/Main/deploy/server-usa/deploy_static_web_now.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# Windows 控制台统一 UTF-8，避免 Cursor/PowerShell 中中文步骤名乱码。",
+    "# 本脚本路径：PonyChat/PonyChat-Website/Main/deploy/server-usa/ → parents[4] 为 PonyChat 仓库根；ServerKeys 与其同级（如 P:/ServerKeys）",
+    "    # web_repo = Main/（其下 frontend/dist、deploy/server-usa）"
+  ],
+  "PonyChat-Website/Main/frontend/vite.config.js": [
+    "/** Cursor / VS Code Simple Browser：去掉 /@vite/client，避免其 WebSocket 初始化失败导致整页白屏 */",
+    "    // 显式绑定 IPv4：避免仅监听 [::1] 时，部分环境把 localhost 解析到 127.0.0.1 导致「无效响应」"
+  ],
+  "PonyChat-Website/Main/frontend/public/js/ionicons/p-Z3yp5Yym.js": [
+    "/*!__STENCIL_STATIC_IMPORT_SWITCH__*/})(n,t);if(i&&\"then\"in i){const e=()=>{};o=await i,e()}else o=i;if(!o)throw Error(`Constructor for \"${n.i}#${t.N}\" was not found`);o.isProxied||(n.D=o.watchers,pe(o,n,2),o.isProxied=!0);const r=()=>{};t.o|=8;try{new o(t)}catch(t){l(t,e)}t.o&=-9,t.o|=128,r(),me(t.t,e)}else o=e.constructor,customElements.whenDefined(e.localName).then((()=>t.o|=128));if(o&&o.style){let e;\"string\"==typeof o.style&&(e=o.style);const t=D(n);if(!i.has(t)){const o=()=>{};((e,t,n)=>{let o=i.get(e);d&&n?(o=o||new CSSStyleSheet,\"string\"==typeof o?o=t:o.replaceSync(t)):o=t,i.set(e,o)})(t,e,!!(1&n.o)),o()}}}const r=t.j,c=()=>oe(t,!0);r&&r[\"s-rc\"]?r[\"s-rc\"].push(c):c()})(e,n,o)}r()}})(this)))}disconnectedCallback(){a.jmp((()=>(async e=>{if(!(1&a.o)){const n=t(e);(null==n?void 0:n.t)?ve(n.t,e):(null==n?void 0:n.W)&&n.W.then((()=>ve(n.t,e)))}U.has(e)&&U.delete(e),e.shadowRoot&&U.has(e.shadowRoot)&&U.delete(e.shadowRoot)})(this))),a.raf((()=>{var e;const n=t(this),o=y.findIndex((e=>e===this));o>-1&&y.splice(o,1),(null==(e=null==n?void 0:n.C)?void 0:e.$)instanceof Node&&!n.C.$.isConnected&&delete n.C.$}))}componentOnReady(){return t(this).W}};r.L=e[0],f.includes(u)||h.get(u)||(c.push(u),h.define(u,pe(p,r,1)))}))})),c.length>0&&($&&(v.textContent+=r),v.textContent+=c.sort()+\"{visibility:hidden}.hydrated{visibility:inherit}\",v.innerHTML.length)){v.setAttribute(\"data-styles\",\"\");const e=null!=(o=a.O)?o:k(u.document);null!=e&&v.setAttribute(\"nonce\",e),p.insertBefore(v,m?m.nextSibling:p.firstChild)}b=!1,y.length?y.map((e=>e.connectedCallback())):a.jmp((()=>w=setTimeout(ae,30)))},we=e=>a.O=e;export{L as H,g as a,ye as b,S as c,z as g,W as h,f as p,n as r,we as s}"
+  ],
+  "PonyChat-Website/Main/frontend/scripts/build_showcase_photos.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/Main/frontend/src/api/admin.js": [
+    " * 管理后台 /api/admin/* 请求封装（与旧版 js/admin/*.js 行为对齐）。",
+    "/** 管理后台：新建角色，归属用户名为 System */",
+    "/** @param {File} file 头像文件 */",
+    "/** @param {FormData} formData 资源上传表单 */"
+  ],
+  "PonyChat-Website/Main/frontend/src/api/web.js": [
+    "/** 公开网页 API */"
+  ],
+  "PonyChat-Website/Main/frontend/src/components/admin/AdminNumberInput.vue": [
+    "/** 按数字位数变宽，默认至少 minChars（约两位数） */",
+    "  /* 与 .admin-shell input 一致：0.4rem 0.6rem；右侧略收给箭头列 */",
+    "  /* 不设 1.5：与原生单行 input 同高，避免整体高于相邻「备注」框 */"
+  ],
+  "PonyChat-Website/Main/frontend/src/components/admin/AssetTagForm.vue": [
+    "/* ── Chip 多选 ── */"
+  ],
+  "PonyChat-Website/Main/frontend/src/components/admin/AvatarCropModal.vue": [
+    "/** 与 App 内 AvatarCropDialog 一致：1～3 倍「放大取景」 */",
+    "/** 避免「打开弹层时 modelValue 与 file 各触发一次 init」导致 revoke 后第一张图 onerror */",
+    "      /* ignore */",
+    "  // blob:/data: 本地同源，勿设 crossOrigin，否则易触发加载失败",
+    "      /* ignore */"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useAdminChart.js": [
+    " * Chart.js 管理后台统一深色主题与交互配置",
+    " * 在 Chart 构造后调用，设置 canvas 光标"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useAdminPagination.js": [
+    " * @param {import('vue').Ref<any[]>} itemsRef 待分页列表数据",
+    " * @param {number | import('vue').Ref<number> | import('vue').ComputedRef<number>} pageSizeInput 固定数字或由 useViewportPageSize 提供的 ref"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useAdminTableSort.js": [
+    " * 管理后台表格列排序状态（表头点击切换 asc/desc）。",
+    " * @param {string} defaultKey 默认排序列",
+    " * @param {'asc'|'desc'} defaultDir 默认方向",
+    " * @param {(key: string) => ('asc'|'desc')|undefined} [initialDirForKey] 切换到新列时的初始方向；未返回则用 asc",
+    " * 统一格式化 ISO 串或 Unix 时间戳（ms/s）为 `YYYY-MM-DD HH:mm`（管理后台列表展示）。",
+    " * @param {unknown} val 待格式化的日期/时间戳",
+    " * @returns {string} 格式化后的字符串",
+    "/** 中英文 locale 字符串比较，dir 为 1 表示 asc */",
+    "/** 数值比较，dir 为 1 表示 asc */"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useColResize.js": [
+    " * - 带 columnOrder 的表格默认为 push 模式：仅改变被拖拽列的宽度，",
+    " * - 网格列表通过 cssVarByKey 调整单条 CSS grid 轨道。",
+    " * 传入 resizeMode: 'pair' 可恢复旧行为：与紧邻右侧列互换宽度。",
+    "   * @param {string} key 列键",
+    "   * @param {MouseEvent} e 鼠标事件",
+    "   * @param {HTMLElement | undefined} el 可选布局宿主元素"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useConfirm.js": [
+    " * 全局确认弹窗：AdminLayout 挂载 ConfirmDialog 后，调用 confirmAsync() 返回 Promise<boolean>",
+    " * @param {{ title?: string, message: string, confirmText?: string, cancelText?: string, danger?: boolean }} opts 弹窗选项",
+    " * @returns {Promise<boolean>} 用户是否确认"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useModalBackdropDismiss.js": [
+    " * 避免从弹窗内拖动（如 textarea 调整高度）指针移到遮罩上松开后，误触发遮罩 click 而关闭。"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/usePublicUrl.js": [
+    "/** 拼接 public 目录资源路径，兼容 Vite `base`（如 `./`）。 */"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useToast.js": [
+    " * 全局 Toast：在 AdminLayout 挂载 ToastContainer 后生效。"
+  ],
+  "PonyChat-Website/Main/frontend/src/composables/useViewportPageSize.js": [
+    " * @param {import('vue').Ref<HTMLElement | null | undefined>} containerRef 包住表体区域或列表行的容器（需参与 flex 撑满高度）",
+    " * @param {object} [options] 可选配置",
+    " * @param {number} [options.rowHeight=48] 单行近似高度（px）",
+    " * @param {number} [options.headHeight=44] 表头或列表头占用高度（px）",
+    " * @param {number} [options.minRows=4] 最少行数",
+    " * @param {number} [options.maxRows=200] 最多行数",
+    " * @param {number} [options.slackPx=16] 从可用高度扣除的像素（表头边框、行分割线、亚像素误差等），略少算一行避免末行裁切",
+    "        /* ignore */"
+  ],
+  "PonyChat-Website/Main/frontend/src/styles/admin-shell.css": [
+    "/* 管理控制台：复用主站 landing.css 的 :root 变量，无网格背景，仅深色底 + 轻光晕 */",
+    "  /* 细滚动条（Firefox scrollbar-color：thumb track） */",
+    "/* 未使用 AdminNumberInput 的 number：隐藏系统箭头，仅键盘输入 */",
+    "/* 统计卡片图标槽（与 OverviewSection 配合） */",
+    "/* ── 细滚动条：列表 / 表格 / 侧栏 / 弹层等（Firefox + WebKit） ── */",
+    "/* xterm 终端视口（在 AdminLayout.admin-shell 内，单独加强选择器） */",
+    "/* Toast 堆叠（Teleport 到 body；仅当内容溢出时出现细滚动条） */",
+    "/* AdminLayout 主内容：满高 flex；列表页用分页填满视口，避免表体内部纵向滚动 */",
+    "/* 列宽拖拽把手（th-resizable 表头需 position:relative） */"
+  ],
+  "PonyChat-Website/Main/frontend/src/styles/landing.css": [
+    "/* PonyChat 官网落地页 — 与 landing.html 配套 */",
+    "*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }",
+    "/* 与 Logo 同系：紫→青；饱和度介于「高亮品牌」与「灰紫」之间，主按钮更醒目 */",
+    "/* 宽屏：主栏节奏（左对齐已在默认 .home-hero 中统一） */",
+    "    /* 首页：与子页一致，窄屏导航换至 Logo 下方 */",
+    "/* ── Hero 主视觉区 ── */",
+    "/* Hero 首屏下载 */",
+    "/* ── 核心能力（类 Markdown：标题 + 正文纵排） ── */",
+    "/* 键盘焦点：仅 :focus-visible，避免鼠标点击出现双圈 */",
+    "/* ── MBTI 测验选择页 /mbti ── */"
+  ],
+  "PonyChat-Website/Main/frontend/src/styles/showcase.css": [
+    "/* static_web 展示页补充：阶段表、次要入口 */",
+    "/* 竖屏手机比例外框；截图用 cover 铺满，避免上下留白（极细边缘可能裁切） */",
+    "/* 封档页 Markdown 排版 */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/HomeView.vue": [
+    "/** 与后端 /download/apk 同域；开发环境由 Vite 代理到后端 */",
+    "/** 首页展示图：文件位于 public/Photos，顺序为「列表 → 对话 → 分层叙事」 */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/WebChatView.vue": [
+    "        /* ignore malformed keepalive chunks */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/admin/AdminLayout.vue": [
+    "/* .content-scroll 布局见 admin-shell.css（满高 flex + 子页滚动策略） */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/admin/AdminLoginView.vue": [
+    "/* 隐藏浏览器自带「显示密码」，避免与自定义眼睛重复（Edge / Chromium / WebKit） */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/admin/TerminalView.vue": [
+    "// 本地行缓冲（用于本地回显，不依赖后端 echo）",
+    "    /* ignore */",
+    "    // Ctrl+C：有选区则复制；无选区则让 xterm 传 \\u0003 → handleInput → 取消当前行",
+    "    // Ctrl+V：粘贴"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/admin/sections/AssetsSection.vue": [
+    "/* 预览弹层专用按钮，避免受全局 .btn scoped 污染 */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/admin/sections/CharactersSection.vue": [
+    "/* 颜色与边框继承 .admin-shell input */",
+    "/* ── 编辑弹层（header / body / footer） ── */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/admin/sections/UsersSection.vue": [
+    "/* ── 会员弹窗标题行（置于 modal-header 内） ── */"
+  ],
+  "PonyChat-Website/Main/frontend/src/views/admin/sections/WebCharsSection.vue": [
+    "      /* ignore */"
+  ],
+  "PonyChat-Website/MBTI/Common/src/index.css": [
+    "/* PonyChat 主站同源：深色 slate + 紫青渐变，移动优先 */",
+    "*::before,",
+    "*::after {",
+    "/* 键盘焦点：仅 :focus-visible，避免鼠标点击出现粗轮廓 */"
+  ],
+  "PonyChat-Website/MBTI/Common/src/vite-env.d.ts": [
+    "/// <reference types=\"vite/client\" />"
+  ],
+  "PonyChat-Website/MBTI/Common/src/config/types.ts": [
+    " * 各变体（MLP / Standard）站点级文案与行为，由变体目录下 config.ts 提供。",
+    "  /** TypeExplanation 无 profile 时的提示 */"
+  ],
+  "PonyChat-Website/MBTI/Common/src/context/SessionContext.tsx": [
+    "      /* ignore */",
+    "      /* ignore */"
+  ],
+  "PonyChat-Website/MBTI/MLP/misc/build_questions_72.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/MBTI/MLP/misc/count_mbti_summary.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 匹配 summary: \"...\"（字符串内可能含 \\n）— TS 使用带引号的多行字符串",
+    "    # 查找前面的 type 键（粗略）",
+    "# 更简单：提取 INTJ 块之间的内容"
+  ],
+  "PonyChat-Website/MBTI/MLP/misc/deploy_mbti_server_usa.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "    # PonyChat/PonyChat-Website/MBTI/MLP → 上溯至工作区根，与仓库根同级的 ServerKeys/",
+    "# 主上传目标（与 PonyChat-Website nginx-ponychat-www.conf 一致）",
+    "# 与旧 Nginx / deploy.ps1 一致，由远端 cp -a 镜像，避免只更新一份时公网仍读旧目录"
+  ],
+  "PonyChat-Website/MBTI/MLP/misc/start_dev.py": [
+    "# -*- coding: utf-8 -*-",
+    "    # 当前目录：PonyChat/PonyChat-Website/MBTI/MLP → 上三级为 PonyChat 仓库根"
+  ],
+  "PonyChat-Website/MBTI/MLP/web/src/vite-env.d.ts": [
+    "/// <reference types=\"vite/client\" />"
+  ],
+  "PonyChat-Website/MBTI/MLP/web/src/data/compatExplain.ts": [
+    " * 规则与 lib/scoring「朋友 = 仅翻转 E/I；伴侣 = 仅翻转 J/P」一致。",
+    "/** 伴侣向长说明末尾：与 `ponyForPartner`（性别相反一侧）一致，避免文案内再写死角色名 */"
+  ],
+  "PonyChat-Website/MBTI/MLP/web/src/data/mbtiTypes.ts": [
+    " * summary 为三段，每段约 80～100 字，含小马情境举例。",
+    "/** 标题/友伴行等与标准站统一用通用中文简称；长文案仍用本文件 typeProfiles.nickname */"
+  ],
+  "PonyChat-Website/MBTI/MLP/web/src/data/typicalPonies.ts": [
+    " * 伴侣向展示需与用户性别相反：`ponyForPartner`。",
+    "/** 根据用户填写的性别文案判断男/女（无法识别则为 unknown） */"
+  ],
+  "PonyChat-Website/MBTI/Standard/misc/build_questions_72.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/MBTI/Standard/misc/count_mbti_summary.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 匹配 summary: \"...\"（字符串内可能含 \\n）— TS 使用带引号的多行字符串",
+    "    # 查找前面的 type 键（粗略）",
+    "# 更简单：提取 INTJ 块之间的内容"
+  ],
+  "PonyChat-Website/MBTI/Standard/misc/deploy_standard_mbti_server_usa.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/MBTI/Standard/misc/gen_standard_questions.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/MBTI/Standard/misc/start_dev.py": [
+    "# -*- coding: utf-8 -*-",
+    "    # 当前目录：PonyChat/PonyChat-Website/MBTI/Standard → 上三级为 PonyChat 仓库根"
+  ],
+  "PonyChat-Website/MBTI/Standard/web/src/vite-env.d.ts": [
+    "/// <reference types=\"vite/client\" />"
+  ],
+  "PonyChat-Website/MBTI/Standard/web/src/data/compatExplain.ts": [
+    " * 规则与 lib/scoring「朋友 = 仅翻转外倾/内倾；伴侣 = 仅翻转判断/感知」一致。",
+    "/** 将「您属于{标准中文}人格」改为「您属于 CODE · 标准中文人格」；不匹配则原样返回 */"
+  ],
+  "PonyChat-Website/MBTI/Standard/web/src/data/mbtiTypes.ts": [
+    " * summary 为三段：性格与人际、职业倾向、成长建议；标准表述，无虚构作品情境。",
+    "/** 类型中文简称：与 Common `mbtiStandardShortZh` 一致 */"
+  ],
+  "PonyChat-Website/MBTI/Standard/web/src/data/typicalPonies.ts": [
+    " * 伴侣行按性别取相反侧：ponyForPartner。",
+    "/** 根据用户填写的性别文案判断男/女（无法识别则为 unknown） */"
+  ],
+  "PonyChat-Website/MLP-Songs/app/main.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/MLP-Songs/scripts/check_server_https.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/MLP-Songs/scripts/compare_server_vs_collection.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "PonyChat-Website/MLP-Songs/scripts/deploy.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 项目根：…/PonyChat-Website/MLP-Songs/；ServerKeys 与 PonyChat 仓库根同级（如 P:/ServerKeys）",
+    "# 公网 443 由 stream SNI 转发；music 须指向本机 TLS 端口 8443（勿用 8447 空端口）",
+    "    # scp -r web remote/ 会在远端生成 web/ 子目录，平铺到站点根"
+  ],
+  "PonyChat-Website/MLP-Songs/scripts/generate_index.py": [
+    "# -*- coding: utf-8 -*-",
+    "# slug -> 展示用专辑标题",
+    "                # ── 主专辑：根目录 + Extras/ 并入同一 albumId"
+  ],
+  "PonyChat-Website/MLP-Songs/scripts/transcode.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 项目根目录：PonyChat/MLP-Songs/",
+    "# 源专辑文件夹名 -> media-export/audio/ 下子目录 slug"
+  ],
+  "PonyChat-Website/MLP-Songs/web/app.js": [
+    " * MLP Music 前端：专辑浏览、播放列表、乐谱 PDF.js 画布预览。",
+    " * 与站点同源，API 前缀 /api。",
+    "  /* ── DOM 引用 ── */",
+    "  /* ── PDF.js 初始化 ── */",
+    "  /* ── History API 状态管理 ── */",
+    "    /* 遮罩关闭侧边栏时会 history.back() 回到「专辑」历史位；此时曲目面板仍打开，",
+    "    // 若是由 popstate 之外触发（如点击遮罩），回退历史",
+    "  /* 汉堡菜单：统一打开/关闭侧边栏（内容随 Tab 在专辑筛选 / 乐谱列表间切换） */",
+    "  /** 按当前 Tab 显示侧边栏内「专辑筛选」或「乐谱列表」区块 */",
+    "  /* ── API 接口 ── */",
+    "      /* 列表内严格递增序号（元数据 track 可能重复，如正式版与 Demo 同号） */",
+    "  /* ── 乐谱 PDF.js 渲染 ── */",
+    "  /** 打开全屏前保存焦点，关闭时先移出再 aria-hidden，避免与无障碍规则冲突 */",
+    "      /* 标题（可折行，flex: 1） */",
+    "      /* 下载整个 PDF 按钮 */",
+    "  /* ── Tab 切换 ── */"
+  ],
+  "PonyChat-Website/MLP-Songs/web/index.html": [
+    "    <!-- 统一侧边栏：按 Tab 切换「专辑筛选」或「乐谱列表」 -->",
+    "          <!-- 自绘 SVG，避免系统 emoji 在部分机型上出现橙色描边 -->"
+  ],
+  "PonyChat-Website/MLP-Songs/web/style.css": [
+    "/* MLP Music — 与 PonyChat 主站设计语言统一 */",
+    "*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }",
+    "  /* 顶栏内容区高度；总占用高度见 --header-h（含刘海安全区） */",
+    "/* ── 整体布局：固定占用「顶栏～播放器」之间高度，避免整页滚动；左右列各自 overflow ── */",
+    "/* 侧栏 / 主内容 / 侧栏内乐谱列表：统一细滚动条（WebKit 与 Firefox 变量一致） */",
+    "/* ── 主内容：占满 shell 右列，内部再滚动 ── */",
+    "/* 音乐：专辑/曲目列表整块可滚（滚动条样式与 .sidebar 一致，见上节 ::-webkit-scrollbar） */",
+    "/* 乐谱面板激活时为 flex 布局（须与上一行并列，否则 #panelScores 单独写 display 会压过 .panel { display:none }） */",
+    "/* ── 乐谱面板（列表在统一侧边栏；此处仅预览区；高度随主栏，不用 100dvh 撑破页面） ── */",
+    "/* 侧边栏里的 PDF 下载按钮 */",
+    "/* 桌面：左为封面/曲名/控制；DOM 中进度在首，故用 order 与视觉一致 */",
+    "/* 播放/暂停：自绘 SVG，纯白矢量，无 emoji 字体边框 */",
+    "/* 桌面：单行「当前 / 总时长」；手机端由 .player-progress-mobile-times 展示，此处隐藏 */",
+    "    /* 顶栏细进度条 + 时间行 + 封面与控制行（.player-now） */",
+    "  /* 搜索框换为图标，图标展开后再显示输入框；图标贴右上角（靠 flex 余量顶到右缘） */",
+    "  /* 搜索展开态：顶栏加 search-active 类后显示搜索框、隐藏图标 */",
+    "  /* ── 播放器：上进度下主控（DOM 顺序即布局顺序，无需 order） ── */",
+    "  /* 勿 flex:1 撑满剩余高度，否则单行会在区域内垂直居中，时间行与封面行间距过大 */",
+    "  /* 进度条与时间行全宽；时间行与 .player-now 共用 12px 水平内边距 */",
+    "  /* 正常时不显示拖拽点，touch 时出现 */"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/scripts/build_demo.py": [
+    "# 全局小节→页码表，由 _autodetect_page2_first_measure() 填充。",
+    "# 两页歌曲为 {1: 1, PAGE2_FIRST_MEASURE: 2}。",
+    "            # 保持 PAGE2_FIRST_MEASURE 与向后兼容代码路径同步",
+    "            # PAGE2_FIRST_MEASURE 已由",
+    "            # _autodetect_page2_first_measure() 在本调用前自动检测。",
+    "            # 构建每页小节偏移表。优先使用由 PDF 印刷小节号",
+    "            # 推导的全局页起始；OMR 局部小节",
+    "        # 与 Audiveris 分配符头 ID 的从左到右、从上到下顺序一致，",
+    "        # 多声部交错时与 linearTime 顺序不同。",
+    "    # 预计算每个 (page, row_bucket) 的最大时间，以便跨",
+    "    # 但携带 pdf-asr-time 修正后的更晚时间戳，",
+    "        # enforce_visual_row_time_order 整理行内顺序。",
+    "        # 同时更新当前行 row_max_time 以反映前移。",
+    "                # 已安全超过阈值的事件跳过 (continue)，",
+    "    # 检查是否有多个需合并的 .mxl 文件",
+    "        # 删除过期的合并 musicxml，mxl 变更时重新合并",
+    "            # 任一 mxl 新于合并文件则重新合并",
+    "    # 构建基础 parts 字典",
+    "    # 查找 part 中最大小节号",
+    "    # 将后续各乐章 parts 追加到 base parts",
+    "        # 确定相对 base 的偏移",
+    "        # 为尚未在 base 中的 part 找公共偏移",
+    "            # 深拷贝本乐章 part 的小节",
+    "                # 将小节追加到已有 part",
+    "                # 本乐章新 part：创建骨架并插入",
+    "    # 合并后续乐章 part-list 条目（避免重复）",
+    "                # 排除标题级引号歌名与和弦 OCR 噪声。",
+    "            # 用持久 current_time_sig_beats 作为权威小节长度。",
+    "            # max_local_beat 仅在无拍号时作回退，",
+    "    # 由小节号与小节内拍近似。MusicXML 解析器",
+    "    # OMR 有时将速度/风格标记当作假歌词附在顶部",
+    "    # 首系统。将该处孤立全符号/极短 token 视为",
+    "    # 非人声，避免 ASR 锚点拉歪前奏。",
+    "        # 实际音符（含柔和 pad 和弦）在各 MLP cue 均高于此。",
+    "        # 才会跳过未匹配谱面歌词或未匹配 ASR 词，",
+    "        # （如 Audiveris 在多谱表上丢失",
+    "        # 更早 ASR 词，破坏时序。",
+    "    # 限于明显早于 vocal-slope",
+    "    # --- 步骤 1：估计 vocal slope（音频秒/谱面秒）。",
+    "    # 计算两条 slope，反向外推取较小者：",
+    "    #   * local_slope：前 ~8 个 vocal 锚点的成对 slope 中位数。",
+    "    #     捕捉副歌级律动，但人声 rubato 时偏高。",
+    "    #   * global_slope：首个 vocal 音时已过多少音频时间",
+    "    #     相对该点谱面 linear time。更接近歌曲",
+    "    #     长期 tempo 比，反向外推更安全：",
+    "    #     过陡 slope 会把谱面",
+    "    #     （本 intro 锚点流程要修的 bug）。",
+    "    # 当 sustained onset 明显晚于裸",
+    "    # onset 检测器时采用前者 — 该间隙为 pre-roll，",
+    "    # --- 步骤 3：音高匹配的中间 intro 锚点。",
+    "    # 使光标能跟踪前奏内的 tempo 变化。",
+    "        # 音很早开始，但用该早 onset 作",
+    "        # 后续 pitch 匹配种子会压缩整段前奏，使",
+    "        # 光标约超前一小节。保留保守 vocal-slope",
+    "        # 种子作 tempo 链；早开场音仍是",
+    "        # 将音频直方图后旋 k，使 audio_pc[(orig - k) % 12]",
+    "        # 与 score_pc[orig] 对齐。best k 非零表示音频",
+    "        # 终点）及首个 vocal 锚点之后内容。",
+    "        # 不会静默回退为「任意 onset 即匹配」。",
+    "    # 首个 vocal 时间 = 最早非 intro 锚点",
+    "    # 找前奏末个非休止音（远早于 vocal）",
+    "    # 找该 PC 在 vocal 前最后强音频音（忽略音头极始）",
+    "    # 安全：仅当 push > 0.8 s 且仍有空间时值得做",
+    "    # 收集 pre-vocal 块内所有休止事件",
+    "    # 将首个休止标为固定 snap 边界，避免 onset-snap 重分配",
+    "    # Slope 合理性滤波：健康的谱音对齐",
+    "    # d_asr / d_linear 应接近 1.0（约 [0.4, 2.5]）。谱面",
+    "    # 歌词错配到 distant ASR 词（如 M13 \"per\" 被拉到",
+    "    # 早期 \"you're\"），相邻锚点局部 slope",
+    "    # 剩余 slope 合理。",
+    "            # 找最差 slope 比（偏离 1.0）",
+    "            # 当 basic-pitch 证明旋律链早于",
+    "            # slope 反推， pinned 前导休止不得消耗",
+    "            # 音频时间 — 否则 play-head ``t>0`` 仍高亮 meas.~1。",
+    "            #       在首个 vocal/器乐锚点前）。从 (lin=0, audio=0)",
+    "            #       线性缩放到 (first_x, first_y)，使",
+    "            #       这使全休止前奏（catchy-song、",
+    "            #       smile-song）与录音对齐，",
+    "            #       而非沿噪声 DTW 路径。",
+    "            # 和弦符号与布局标签同在 PDF 文本层。",
+    "            # 且可后续与 ASR 序列匹配的词。",
+    "        # 粗 pass：整行歌词。建立本行局部时移，",
+    "        # 细 pass：短语块与短滑动词窗。使用",
+    "        # 粗 pass 行移但 ASR 窗更小。",
+    "        # 若 ASR/PDF cue 时序显示相邻歌词事件几乎",
+    "        # 迫使后续 cue 前移。",
+    "    # 标记 critical 事件",
+    "            # intro-rest-push 固定的休止须作",
+    "            # snap 边界，否则重分配循环会覆盖。",
+    "    # 计算 snap 目标",
+    "        # 找最近 onset（二分）",
+    "        # 自适应 snap 窗：",
+    "        #  - 歌词事件：ASR 锚点已给 ~50-100ms 精度，",
+    "        #    仅 onset 很近 (≤120ms) 时 snap，避免",
+    "        #    将 vocal 光标拉到碰巧早几百 ms 的",
+    "        #    器乐 hit 而非真实演唱 onset。",
+    "        #  - 纯器乐 critical 事件无歌词真值，",
+    "        #    允许更宽窗 (±0.25s) 让 onset 拉动 DTW 估计",
+    "            # 器乐 snap 后侧收紧：宽后向窗会 latch",
+    "            # 到上一拍或 ghost pad，拖整小节更早，",
+    "            # （如 Love Is In Bloom 前奏中段钢琴）。",
+    "    # snap 列表严格单调（若 snap 会",
+    "    # 破坏先前 snap 顺序或自然序列则丢弃）。",
+    "    # 在相邻 snap 对之间应用 snap 并重分配",
+    "        # 按 linearTime 比重分配内部事件",
+    "    # 标记已 snap 事件",
+    "    # 此处保持 rest 专用映射稳定。",
+    "        # 在记谱休止跨度上搜索，对话/rubato 额外容差，",
+    "        # 上界：下一 distinct 时间（留隙）",
+    "        # 在 [t0, t_end] 内按 linearTime 比分配",
+    "    # 若记谱休止应在下一演唱音前但 DTW 将其",
+    "    # 用 spectral flux onset 检测（比 RMS 能量更敏感于起音）",
+    "    # 防止 DTW 将大音符组坍缩为单 onset 峰",
+    "    # 回退：旧帧级 chroma DTW。仅作 event aligner 失败时",
+    "    # 构建每小节拍长：优先 MusicXML 拍号，回退到",
+    "    # sync 事件中 max(beatInMeasure + noteDuration)。",
+    "    # 根级文件作旧 API 路径与调试的默认样本。"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/scripts/deploy.py": [
+    "    # 证书尚不存在时，nginx 初始配置临时仅用 HTTP（供 ACME 验证）",
+    "# 先写入仅 HTTP 配置，以便 certbot 签发证书",
+    "# 再写入完整 HTTPS 配置",
+    "# 若尚未注册则添加 SNI 路由"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/scripts/_diag_laughter.py": [
+    "        # 查找造成 max 的事件",
+    "        # 查找 min 的事件"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/scripts/_fix_https.py": [
+    "# 步骤 1：给 HTTP 配置加上 acme-challenge 路径，为 certbot 做准备（暂不加 HTTPS 重定向）",
+    "# 步骤 1：写入临时 HTTP 配置并重载",
+    "# 步骤 3：最终 nginx 配置（HTTP 重定向 + HTTPS at 8847）",
+    "# 步骤 3：更新 sni-route.conf（追加 music-auto → 8847）",
+    "# 先读取当前内容，然后在 default 行之前插入",
+    "# 写入最终 nginx 站点配置",
+    "# 检查 sni-route.conf 是否已经有 music-auto",
+    "    # 在 default 行前插入 music-auto"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/web/app.js": [
+    "  // ── 简谱 SVG 渲染器 ──────────────────────────────────────────",
+    "  // 布局常量（SVG 用户单位，1:1 即 px）",
+    "  // 每级将 durationBeats < threshold[level] 的连续音符分组。",
+    "    // 将 token 按小节分组；并从 jianpu.measures 读取 beatsPerMeasure",
+    "    // 全局 bpm：取首个含 beatsPerMeasure 的小节（用于布局/mpr）",
+    "    // 自适应 mpr：每小节视觉符号数的 75 分位数",
+    "    // 拉伸拍宽以在 baseMpr 小节/行下填满一行（上限 65px/拍）",
+    "    // SVG 尺寸：取最宽一行",
+    "        // 渲染每个 token",
+    "        // 无真实 token 的整数拍位用占位 '0' 填充。",
+    "        // 拍位 fb 被覆盖当：有 token 起始于 [fb, fb+1)，或",
+    "        // 更长 token 跨越该槽（起始于 fb 前、结束于 fb+1 后）。",
+    "    // 避免 DTW 时间倒置与多声部交错导致",
+    "  // 进度条与标签更新（RAF 与 timeupdate 均会触发）",
+    "  // 通过 requestAnimationFrame 高频更新光标（约 16ms，timeupdate 约 250ms）。",
+    "  // 对快速音符跟踪必不可少（BPM=134，八分音符约 224ms）。",
+    "    // 进度条 DOM 写入限流至约 15fps，避免布局抖动",
+    "  // 暂停时 seek 后由 timeupdate 保持进度条正确",
+    "    // 暂停时不跑 RAF；保持谱面光标与 scrubber 对齐。",
+    "      // 进度/音量滑块点击后仍占焦点；Space 仍应切换播放/暂停。"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/web/auto.css": [
+    "/* ── 简谱 SVG 谱面 ───────────────────────────────────────── */"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/web/style.css": [
+    "/* MLP Music — 与 PonyChat 主站设计语言统一 */",
+    "*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }",
+    "  /* 顶栏内容区高度；总占用高度见 --header-h（含刘海安全区） */",
+    "/* ── 整体布局：固定占用「顶栏～播放器」之间高度，避免整页滚动；左右列各自 overflow ── */",
+    "/* 侧栏 / 主内容 / 侧栏内乐谱列表：统一细滚动条（WebKit 与 Firefox 变量一致） */",
+    "/* ── 主内容：占满 shell 右列，内部再滚动 ── */",
+    "/* 音乐：专辑/曲目列表整块可滚（滚动条样式与 .sidebar 一致，见上节 ::-webkit-scrollbar） */",
+    "/* 乐谱面板激活时为 flex 布局（须与上一行并列，否则 #panelScores 单独写 display 会压过 .panel { display:none }） */",
+    "/* ── 乐谱面板（列表在统一侧边栏；此处仅预览区；高度随主栏，不用 100dvh 撑破页面） ── */",
+    "/* 侧边栏里的 PDF 下载按钮 */",
+    "/* 桌面：左为封面/曲名/控制；DOM 中进度在首，故用 order 与视觉一致 */",
+    "/* 播放/暂停：自绘 SVG，纯白矢量，无 emoji 字体边框 */",
+    "/* 桌面：单行「当前 / 总时长」；手机端由 .player-progress-mobile-times 展示，此处隐藏 */",
+    "    /* 顶栏细进度条 + 时间行 + 封面与控制行（.player-now） */",
+    "  /* 搜索框换为图标，图标展开后再显示输入框；图标贴右上角（靠 flex 余量顶到右缘） */",
+    "  /* 搜索展开态：顶栏加 search-active 类后显示搜索框、隐藏图标 */",
+    "  /* ── 播放器：上进度下主控（DOM 顺序即布局顺序，无需 order） ── */",
+    "  /* 勿 flex:1 撑满剩余高度，否则单行会在区域内垂直居中，时间行与封面行间距过大 */",
+    "  /* 进度条与时间行全宽；时间行与 .player-now 共用 12px 水平内边距 */",
+    "  /* 正常时不显示拖拽点，touch 时出现 */"
+  ],
+  "PonyChat-Website/PonyWaifuSim/index.html": [
+    "    <!-- 全站标签 (gtag.js) - Google Analytics -->",
+    "                <!-- <li class=\"nav-item\"> -->",
+    "                    <!-- <a class=\"nav-link\" href=\"#progress\">进度</a> -->",
+    "            <!-- <div class=\"game-progress\" id=\"progress\"> -->",
+    "                <!-- <h1 class=\"game-progress-title\">进度</h1> -->",
+    "                <!-- <div class=\"game-progress-grp d-flex flex-column d-md-flex flex-xl-row\"> -->",
+    "                    <!-- <div class=\"jira-content d-flex flex-column\"> -->",
+    "                        <!-- <div class=\"task-bars d-flex flex-column\" id=\"progrss-bar-parent\"> -->",
+    "                            <!-- <div class=\"progress-status-grp d-flex flex-row\" id=\"progress-status-grp\"> -->",
+    "                                <!-- <p class=\"mb-1\" id=\"version-title\">正在加载进度数据...</p> -->",
+    "                                <!-- <p class=\"mb-1 ml-auto\" id=\"task-count\"></p> -->",
+    "                            <!-- </div> -->",
+    "                        <!-- </div> -->",
+    "                        <!-- <p class=\"mr-auto\" id=\"tasks-updated\"></p> -->",
+    "                        <!-- <div class=\"jira-epics d-flex flex-column\" id=\"jira-epics\"> -->",
+    "                        <!-- </div> -->",
+    "                    <!-- </div> -->",
+    "                    <!-- <div class=\"patreon-updates ml-3\"> -->",
+    "                    <!-- </div> -->",
+    "                <!-- </div> -->",
+    "            <!-- </div> -->",
+    "                <!-- <button class=\"download-button btn default\" onclick=\"window.location = 'play';\">WebGL<br><img class=\"download-button-img\" src=\"Images/FontAwesome/html5.svg\" /></button> -->"
+  ],
+  "PonyChat-Website/PonyWaifuSim/Css/Main.css": [
+    "/* Safari 4.0 - 8.0 前缀 */"
+  ],
+  "PonyChat-Website/PonyWaifuSim/JavaScript/Main.js": [
+    "    // getJiraInfo(onJiraSuccess, onJiraFailure);"
+  ],
+  "scripts/_check_apk.py": [
+    "# 找 APK 文件",
+    "# 测试 download url 响应"
+  ],
+  "scripts/_check_nginx2.py": [
+    "# 查看 ponychat-www 完整 sites-enabled 配置（仅第一个 server 块，80 行）"
+  ],
+  "misc/check_syntax.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/compare_server_backend.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# Windows 控制台统一用 UTF-8 输出",
+    "    # 备用：P:\\ServerKeys",
+    "    # 1. 查找远端 Backend 路径",
+    "    # 5. 保存 JSON 报告（可选）"
+  ],
+  "misc/deploy_portable.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# 修复 Windows 控制台编码",
+    "# misc 目录（本脚本所在目录；嵌入式工具在 misc/tools）",
+    "# ANSI 颜色",
+    "# 工具路径配置 — 统一在 P:\\Tools",
+    "    # 方案 1: tools/python/python.exe（直接路径）",
+    "    # 方案 2: tools/python/python-3.x/python.exe（子目录）",
+    "    # 检查 Python",
+    "    # 检查 JDK",
+    "    # 检查 Android SDK",
+    "    # 检查 Gradle",
+    "    # 检查便携 Cairo 运行时",
+    "    # 纯便携模式：仅使用项目内嵌 SDK",
+    "    # 写入 local.properties",
+    "# 由 deploy_portable.py 自动生成",
+    "# 生成于 {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+    "    # Gradle 工程根在 app 的上级（如 Android-App/gradle.properties）",
+    "    # Python 版本",
+    "    # Java 版本",
+    "            # Java 版本输出在 stderr",
+    "    # ADB 版本",
+    "    # 2. 配置 Android SDK",
+    "    # 3. 配置 Gradle JDK",
+    "    # 4. 检查 Python 依赖",
+    "    # 5. 配置 VSCode"
+  ],
+  "misc/project_paths.py": [
+    "# -*- coding: utf-8 -*-",
+    "        # Deploy 分块：项目根下含 backend-server/backend/conf",
+    "        # Legacy：backend/conf 或 Backend/conf（大小写/历史目录名）"
+  ],
+  "misc/restore_db_from_backup.py": [
+    "#!/usr/bin/env python3",
+    "        # 尝试用 SQLite .recover 从损坏的主库抢救数据"
+  ],
+  "misc/_apply_comment_translations.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 精确行替换：(文件相对路径, 旧行) -> 新行；文件路径为 None 表示全局匹配",
+    "# ── PonyChat-Website/Main ──────────────────────────────────────────",
+    "# ── MBTI build_questions ───────────────────────────────────────────",
+    "# ── MLP-Songs-AUTO deploy ──────────────────────────────────────────",
+    "# ── MLP-Songs-AUTO web/app.js ──────────────────────────────────────",
+    "# ── PonyWaifuSim ───────────────────────────────────────────────────",
+    "# ── misc ───────────────────────────────────────────────────────────",
+    "# ── temp ───────────────────────────────────────────────────────────",
+    "# ── Backend ────────────────────────────────────────────────────────",
+    "# build_demo.py 翻译表从配套 JSON 加载"
+  ],
+  "misc/_ssh_twilight_chat_test.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "    # 1) conversation_id + token_version + AUTH_SECRET 签名"
+  ],
+  "misc/debug/test_memory_rewrite.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 这个场景文本来自日志里 carried-forward 的原始 response 风格，包含典型黏连"
+  ],
+  "misc/debug/test_pinkie_stickiness.py": [
+    "# -*- coding: utf-8 -*-",
+    "    # 匹配所有 \"content\": `...`",
+    "    # role 推断：日志中三段 system + 一段 user",
+    "    # user content 是普通双引号字符串，不用反引号，我们从正文里另外提取",
+    "    # 按「【XXX】」段头切分，保留每段的起始标签",
+    "    # L3：L2 基础上把前序步骤 env/body_state/thoughts 也拿掉",
+    "    #     前序段落在 segs[\"_header\"] 里，以「--- 环境描写（已完成）---」开头、",
+    "    # 通过命令行参数可指定只跑某些层级，如 python test.py 0 3"
+  ],
+  "misc/dev/debug_keyboard.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# Windows 终端 UTF-8 支持",
+    "        # 尝试设置终端为 UTF-8",
+    "# ==================== ADB 路径自动检测 ====================",
+    "    # 方案 1: 检查环境变量 PATH",
+    "    # 方案 2: 从 local.properties 读取 SDK 路径",
+    "    # 方案 3: 检查常见的 Android SDK 安装路径",
+    "# 全局 ADB 路径",
+    "    # 启动 logcat 实时监控"
+  ],
+  "misc/dev/debug_log_reader.py": [
+    "    # 日志赋给变量，需去掉 'const debug_log = ' 与 ';'"
+  ],
+  "misc/dev/debug_think_card.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# Windows 终端 UTF-8 支持",
+    "# ADB 路径检测",
+    "    # 方案 0: 优先使用项目内嵌路径（脚本在 misc/dev，须从项目根拼路径）",
+    "# 必须包含的App标识",
+    "                    # 提取opacity值",
+    "                # 捕获DOM结构日志",
+    "                # 捕获margin日志",
+    "                            # ⚠️ 负margin异常提醒",
+    "            # 🔧 新增: opacity分析",
+    "            # 🔧 新增: DOM结构分析"
+  ],
+  "misc/dev/probe_proactive_pending.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/tmp-scripts/AAA现在备份.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# 项目根目录（脚本位于 misc/tmp-scripts，不可再用 __file__.parent 当根目录）",
+    "    # 创建ZIP文件",
+    "                # 添加到ZIP",
+    "    # cleanup_old_backups() 清理旧备份"
+  ],
+  "misc/tmp-scripts/add_avatar_column.py": [
+    "        # 检查 avatar 字段是否存在",
+    "            # 添加 avatar 字段"
+  ],
+  "misc/tmp-scripts/backfill_galgame_options.py": [
+    "#!/usr/bin/env python3",
+    "    # 2. 找 JSON 对象",
+    "    # 4. 清洗：过滤掉 _options_perspective 元素，保留有 label 的选项",
+    "        # 确保列存在（galgame_messages 通过迁移添加，galgame_lock_messages 在 schema 中定义）"
+  ],
+  "misc/tmp-scripts/backfill_scene_metadata.py": [
+    "#!/usr/bin/env python3",
+    "        # 已有 scene_metadata 且可解析则不覆盖"
+  ],
+  "misc/tmp-scripts/batch_test_nsfw_models.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# Windows 下：UTF-8 输出 + 启用 ANSI 颜色",
+    "# ANSI 颜色（拒绝=红，通过=绿，失败=黄）",
+    "# 项目根目录（tools 在 misc/tools 下，上溯两级到仓库根）",
+    "# 与 backend/routes/chat.py 保持一致",
+    "# 测试用的 NSFW 请求（虚构创作场景）",
+    "    # xAI 使用 max_completion_tokens",
+    "        #  strip reasoning/think 标签内容（仅保留最终输出）",
+    "    # 输出完整原始回复：JSON + 易读文本",
+    "    # 原始请求内容（发给模型的 prompts）"
+  ],
+  "misc/tmp-scripts/check_char_count.py": [
+    "    # 检查是否有 user_id 为 NULL 或 0 的记录"
+  ],
+  "misc/tmp-scripts/check_db_content.py": [
+    "# -*- coding: utf-8 -*-",
+    "# Windows 控制台 UTF-8"
+  ],
+  "misc/tmp-scripts/check_galgame_short_id_duplicates.py": [
+    "#!/usr/bin/env python3"
+  ],
+  "misc/tmp-scripts/check_imports.py": [
+    "#!/usr/bin/env python3",
+    "# 匹配: import ... from '相对路径.js' 或 import ... from '相对路径.js?v=...'"
+  ],
+  "misc/tmp-scripts/check_user_991406477.py": [
+    "#!/usr/bin/env python3"
+  ],
+  "misc/tmp-scripts/cleanup_duplicates.py": [
+    "# 强制设置输出编码为 UTF-8 以兼容 Windows 终端",
+    "        # 提取核心内容: 只看 role 和 content",
+    "    # 结构: { char_id: { content_hash: [file_paths] } }",
+    "        # 支持新目录结构: conversations/charId/convId.json",
+    "        # 同时兼容子目录中的 .json 文件 (如 convId/conv_xxx.json)",
+    "                # 跳过无法解析的文件（hash 为 None）",
+    "    # 默认清理仓库内 user_data/<用户名>；可通过环境变量覆盖：PONYCHAT_CLEANUP_USER_DIR",
+    "    # 第一次运行：预览模式 (dry_run=True)",
+    "    # 请确认输出无误后，将 dry_run 改为 False 执行真实删除"
+  ],
+  "misc/tmp-scripts/clear_conversations.py": [
+    "# -*- coding: utf-8 -*-",
+    "# Windows 控制台 UTF-8"
+  ],
+  "misc/tmp-scripts/clear_invalid_context_summaries.py": [
+    "# -*- coding: utf-8 -*-",
+    "    # ── conversations 表 ──",
+    "    # ── galgame_data 表 ──",
+    "    # ── galgame_lock_data 表 ──"
+  ],
+  "misc/tmp-scripts/final_organize.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 要保留的文件（AAA开头的）",
+    "    # backend/__init__.py 路由注册",
+    "    # backend/routes/system.py 系统路由",
+    "    # backend/config.py 配置",
+    "    # scripts/launch/AAA_launch_backend.py（历史键名曾用 AAA启动后端.py）",
+    "    # AAA绿色部署.bat",
+    "    # 5. 更新 index.html 中的 Service Worker 注册路径和相对路径",
+    "            # 更新 Service Worker 注册路径",
+    "            # 注意：CSS和JS的相对路径不需要修改，因为它们相对于HTML文件位置"
+  ],
+  "misc/tmp-scripts/fix_age.py": [
+    "# -*- coding: utf-8 -*-",
+    "    # 检查 data 顶层的 age 字段",
+    "    # 替换 data.prompt 里的年龄文本",
+    "        # 替换 prompt 字段",
+    "        # 替换 data JSON 里的年龄"
+  ],
+  "misc/tmp-scripts/fix_character_jailbreak.py": [
+    "# 1. 删除整个 JAILBREAK_PROMPT 常量（三引号字符串 + 末尾换行）",
+    "# 2. 简化 load_character_prompts：移除 jailbreak_allowed 参数及相关逻辑",
+    "# 原拦截 + 注入块（lines 82-93）",
+    "# 3. 简化 load_character_system_prompt 签名"
+  ],
+  "misc/tmp-scripts/fix_chat_indent.py": [
+    "# 定位 try 块的开始位置 (大约 527 行)",
+    "    # 或者如果我之前插入了 try，找那个位置",
+    "    # Step 788 插入的 try 在 519 行附近",
+    "# 需要缩进的范围：从 try 下一行开始，直到 except 之前",
+    "# 但是之前的 edits 可能已经缩进了一部分 (比如整个上半部分)",
+    "# 让我们检查 625 行 (user_context_prompt) 的缩进",
+    "# 如果它是 4 空格，且 try 是 4 空格，那它需要缩进到 8 空格",
+    "# 找到 except 块的开始",
+    "    # try 块本身及其之后的代码 (除了 loop 内部已经缩进好的部分？)",
+    "    # 1. 保持 try 之前以及 try 行不变",
+    "    # 2. 从 try+1 到 except-1，确保每一行都至少有 8 空格缩进 (除了空行)",
+    "    # 对于 625 - except_index-1，它们只有 4 空格。",
+    "            # 但既然 user_context_prompt (625) 是 4 空格，那么这之后的所有 4 空格都要变 8"
+  ],
+  "misc/tmp-scripts/fix_chinese_encoding.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 设置标准输出为 UTF-8"
+  ],
+  "misc/tmp-scripts/fix_jason_password.py": [
+    "    # 检查 Jason 用户"
+  ],
+  "misc/tmp-scripts/fix_jason_ziyue_galgame.py": [
+    "#!/usr/bin/env python3",
+    "# 紫悦 NSFW 的 character_id（来自 ChatLogs）",
+    "        # 获取 user_id",
+    "        # 查找该用户+角色下 sequence_number 最大的消息（最新一条）",
+    "        # 更新 galgame_data 分数为 100"
+  ],
+  "misc/tmp-scripts/fix_remaining_encoding.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 设置标准输出为 UTF-8"
+  ],
+  "misc/tmp-scripts/inspect_db.py": [
+    "#!/usr/bin/env python3",
+    "    # Galgame：按角色统计"
+  ],
+  "misc/tmp-scripts/inspect_galgame_db.py": [
+    "#!/usr/bin/env python3",
+    "        # 查询 user_id",
+    "        # 列出该用户所有 galgame_data"
+  ],
+  "misc/tmp-scripts/merge_normal_conversations.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/tmp-scripts/migrate_avatars.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "        # 目标目录：database/avatars/user_data/{username}/",
+    "    # 目标目录：database/avatars/character_data/"
+  ],
+  "misc/tmp-scripts/migrate_character_avatars.py": [
+    "# 设置输出编码为UTF-8",
+    "# 配置路径（user_data 在项目根；数据库在 backend/database）",
+    "            # 如果不是用户头像（不以avatar_开头），则认为是角色头像",
+    "        # 4. 更新JSON文件中的路径引用",
+    "                            # 更新路径为character_data格式"
+  ],
+  "misc/tmp-scripts/migrate_fs_to_db.py": [
+    "# 修复 Windows GBK 控制台编码",
+    "        # 如果 image_url 不是 base64 data URI 就置空（可能是 null 或相对路径）",
+    "            # message_id UNIQUE 冲突，跳过",
+    "    # 1. 新格式：conversations/{charId}/{convId}.json",
+    "            # 1a. 子目录结构: conversations/{charId}/{convId}.json",
+    "            # 1b. 旧格式单文件: conversations/{charId}.json",
+    "                        # 检查是 conversations 结构 还是 消息列表",
+    "                                # conversations 结构",
+    "    # 2. 遗留大文件: conversations.json",
+    "    # 3. Galgame：galgame/{charId}.json"
+  ],
+  "misc/tmp-scripts/migrate_hall_characters_to_uuid.py": [
+    "#!/usr/bin/env python3",
+    "    # 旧格式：xxx_timestamp（例如 UUID_1766940497360 或短 id_1766940497360）",
+    "    # 短 id（无 _ 但来自大厅，originalId 存在则可能是旧数据里的短 id 记录）",
+    "    # galgame_data: PK (character_id, user_id)，需先插新行再删旧行"
+  ],
+  "misc/tmp-scripts/migrate_prompt_field.py": [
+    "# -*- coding: utf-8 -*-",
+    "                # prompt 已有值，不迁移，但仍清除冗余的 systemPrompt",
+    "            # prompt 为空，systemPrompt 有值 → 迁移"
+  ],
+  "misc/tmp-scripts/migrate_to_db_only.py": [
+    "    # 1. 创建 avatars 表（如果不存在）",
+    "                    # 判断 MIME 类型",
+    "                    # 使用完整相对路径作为key，方便查找",
+    "    # 清理 user_data 目录",
+    "    # VACUUM 压缩数据库"
+  ],
+  "misc/tmp-scripts/migrate_users_to_db.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "    # 读取 users.json",
+    "        # 检查 users 表是否存在，如果不存在则创建",
+    "                # 如果 created_at 是路径字符串（旧数据），使用 None"
+  ],
+  "misc/tmp-scripts/move_app_logs.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 设置标准输出为 UTF-8"
+  ],
+  "misc/tmp-scripts/move_model_config.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 设置标准输出为 UTF-8"
+  ],
+  "misc/tmp-scripts/move_temp_scripts.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/tmp-scripts/organize_files.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 要保留的文件（AAA开头的）",
+    "    # Python脚本（除了AAA开头的）",
+    "    # HTML文件（保留在根目录或移动到web目录）",
+    "    # Service Worker 相关"
+  ],
+  "misc/tmp-scripts/query_jason_galgame_score.py": [
+    "# 临时脚本：查询 Jason 的柔柔 NSFW 角色游戏模式分数",
+    "# 1) Jason 的 user_id 和密码验证",
+    "# 2) 查找名字为 柔柔 的角色（Jason 的）",
+    "# 优先选 nsfw 的柔柔"
+  ],
+  "misc/tmp-scripts/rename_backlog_dir.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 设置标准输出为 UTF-8"
+  ],
+  "misc/tmp-scripts/rename_logs_dir.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "        # 替换所有 .logs 引用"
+  ],
+  "misc/tmp-scripts/repair_message_ordering.py": [
+    "#!/usr/bin/env python3",
+    "    # 行布局：rowid、<partition...>、message_id、id、timestamp、sequence_number",
+    "        # message_id 为空时，为保持链连续仅回退到 id。",
+    "        # 本脚本不修改 message_id。",
+    "        # 始终更新 previous_message_id 以保持链一致。"
+  ],
+  "misc/tmp-scripts/rescue_db.py": [
+    "#!/usr/bin/env python3",
+    "# 从 backend/db/database.py 中提取建表 SQL",
+    "    # 即使 integrity_check 不通过，也试着读表",
+    "    # 创建 schema",
+    "    # 2. WAL checkpoint 检查点"
+  ],
+  "misc/tmp-scripts/restore_991406477.py": [
+    "#!/usr/bin/env python3",
+    "    # 第一步：把空账号 user_id=98 改名为 991406477_new",
+    "    # 第二步：把原账号 user_id=34 改回 991406477",
+    "    # 第三步：使空账号已签发的 token 失效（递增 token_version，旧 JWT 校验时 version 不匹配即拒绝）",
+    "    # 第四步：将 normal_image_contexts / normal_image_context_state 中属于原账号的记录改回正确用户名",
+    "    # （当前这些表里 username='991406477' 的记录实际属于 user_id=34，改回后仍正确）"
+  ],
+  "misc/tmp-scripts/run_web_backend_5round_experiment.py": [
+    "    # 步骤 1：env",
+    "    # 步骤 2：body_state",
+    "    # 步骤 3：thoughts",
+    "    # 步骤 4：response"
+  ],
+  "misc/tmp-scripts/test_refusal_detector.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/tmp-scripts/test_xai_api.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# 项目根目录（本文件在 misc/tools/）"
+  ],
+  "misc/tmp-scripts/unescape_chatlogs_newlines.py": [
+    "#!/usr/bin/env python3"
+  ],
+  "misc/tmp-scripts/update_jason_password.py": [
+    "    # 检查 Jason 用户"
+  ],
+  "misc/tmp-scripts/verify_age.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/tmp-scripts/verify_galgame_save.py": [
+    "#!/usr/bin/env python3",
+    "# 确保能 import backend（从项目根运行）",
+    "    # 使用与 config 一致的路径，避免单例指向错误 DB",
+    "    # 使用已存在的用户和角色（Jason, user_id=1；其下任一角色 id）"
+  ],
+  "misc/tmp-scripts/verify_no_system_prompt.py": [
+    "# -*- coding: utf-8 -*-",
+    "                # 若 prompt 仍为空则先迁移，再清除"
+  ],
+  "misc/tmp-scripts/_extract_think_tag.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/tmp-scripts/_fix_constants.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 找 PROFILE_PRESETS 的行号",
+    "# 验证能否正常 import"
+  ],
+  "misc/tmp-scripts/_patch_chatscreen_think.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "misc/tmp-scripts/_patch_prompt.py": [
+    "# -*- coding: utf-8 -*-",
+    "# Few-shot 示例尽量贴近失败 case 的文本模式"
+  ],
+  "misc/tmp-scripts/整理根目录.py": [
+    "#!/usr/bin/env python",
+    "# -*- coding: utf-8 -*-",
+    "# 项目根目录（本脚本在 misc/tmp-scripts，勿用 __file__.parent 当根）",
+    "# 要保留的文件（AAA开头的）",
+    "    # Python脚本（除了AAA开头的）",
+    "    # HTML文件（保留在根目录或移动到web目录）",
+    "    # Service Worker 相关"
+  ],
+  "temp/bytes_ana.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "temp/check_planner_162524.py": [
+    "# 读PLANNER_RESPONSE，提取bubble_count等关键字段",
+    "    # 找backtick内容",
+    "            # 解析内层JSON"
+  ],
+  "temp/decode_test.py": [
+    "# -*- coding: utf-8 -*-",
+    "# utf-8 被误读为 gbk 的路径：",
+    "# 正确 utf-8 字节用 gbk 解码 -> 错误 unicode",
+    "# 逆向：将错误 unicode 按 gbk 编码，再 utf-8 解码？"
+  ],
+  "temp/decode_test2.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 产生乱码：utf-8 字节按 gb18030 解码"
+  ],
+  "temp/decode_test3.py": [
+    "# -*- coding: utf-8 -*-",
+    "            # 跳过孤立的 ? — 常为 3 字节 UTF-8 块断裂；尝试后续字符",
+    "        # 收集一段非 ASCII 批量编码",
+    "# 按 ASCII 分割",
+    "# 手动：仅修复 CJK 连续段"
+  ],
+  "temp/deploy_planner_patch.py": [
+    "# 用scp上传"
+  ],
+  "temp/fix_mojibake.py": [
+    "# -*- coding: utf-8 -*-",
+    "        # 类似 🫛? 的 Emoji 乱码",
+    "        # 混合：可能含 ASCII + 乱码 — 查找高位字符连续段",
+    "    # 简单做法：每行若像损坏的 UTF-8（含典型乱码字符），",
+    "        # 跳过纯 ASCII 注释",
+    "        # 启发式：含可能为乱码的 CJK（特定区间的汉字）",
+    "        # 实际尝试：对含 // 的行取 // 后子串，若含非 ASCII"
+  ],
+  "temp/latest_xiaodai_memory.py": [
+    "# 读最新的REQUEST日志，提取记忆部分"
+  ],
+  "temp/patch_planner.py": [
+    "# 找到目标行结尾（用ASCII唯一标记定位）",
+    "# 目标：在 \"bubble_count=2。\\n- initiative_level\" 之间插入新行"
+  ],
+  "temp/read_shudong.py": [
+    "# 读取数洞场景周边的RESPONSE文件，以及对应的REQUEST(看用户说了什么)",
+    "# 提取 data 字段内容",
+    "    # 尝试提取 data 字段",
+    "        # 找 backtick 内容",
+    "        # 找 \"data\": \"...\" 格式",
+    "    # 提取data"
+  ],
+  "temp/read_shudong2.py": [
+    "# 先看 02:19:10 的 REQUEST（包含对话历史，能看到数洞内容在什么上下文里）",
+    "# 这个是完整的messages数组，只看最后几条消息",
+    "    # 找最近几条messages",
+    "    # 提取所有user/assistant content"
+  ],
+  "temp/_test_chat.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 需要先获取 Jason 的 JWT token",
+    "        # 登录获取 token"
+  ],
+  "Backend/scripts/backfill_character_memory_layers.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/scripts/backfill_character_profiles.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/scripts/clear_companion_data_all_users.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/scripts/clear_user_character_memories.py": [
+    "#!/usr/bin/env python3"
+  ],
+  "Backend/scripts/migrate_b64_to_cdn.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/scripts/migrate_galgame_backfill_raw_content.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/scripts/verify_vitals_emotion_chain.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "    # 1) 极端情绪钉勇气：净压制应钳在 3，decay(0)=+5 → 勇气 +2"
+  ],
+  "Backend/scripts/launch/AAA_install_debug_app.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# ANSI 颜色转义码",
+    "    # Windows 10+ 终端支持 ANSI，但可能需要初始化",
+    "# 仓库根：misc/tools 位于此目录（与 Backend、Android-App 同级；勿把 Backend/ 当作根）",
+    "# 应用配置（Android 工程在 Android-App/）",
+    "# 全局工具盘（P:\\Tools）优先；回退到项目内嵌 misc\\tools",
+    "    # 均不存在时返回项目内嵌路径（保持原行为，后续 .exists() 判断会给出警告）",
+    "# 日志保存目录（仓库根 var/applogs/，与 var/ 下其他运行数据并列）",
+    "# WiFi 调试历史 IP 存储（最多 5 个）",
+    "# APK 上传配置（远端路径）",
+    "# 服务器上存放 APK 的目录（与后端 _resolve_apk_path 约定一致）",
+    "# 服务器上 Backend 目录的默认路径",
+    "# [L]/[S] 等：行级黑名单（子串匹配）。仅剔除已观察到的系统/SDK 刷屏行，其余原样保留。",
+    "    # --- 通用 / Chromium / GPU 探测 ---",
+    "    # --- 同进程系统框架（MIUI / AOSP 常见刷屏）---",
+    "    # 使用正斜杠，Gradle 在 Windows 上也能识别",
+    "    # 转换路径格式 (Windows 下必须用正斜杠或双反斜杠)",
+    "            # 使用 UTF-8 编码并忽略无法解码的字符，避免 Windows 下 GBK 解码错误",
+    "    # 更新 Gradle 配置",
+    "    # 停止旧 Gradle 守护进程，避免其仍使用迁移前的 org.gradle.java.home（如 tools/jdk-17）",
+    "    # 获取应用 PID",
+    "        # 应用未运行，显示所有 AndroidRuntime 错误",
+    "        # 配对模式（Android 11+）",
+    "        # 使用 subprocess 直接运行，因为 pair 命令需要交互",
+    "    # 重置旧版泛型默认（\"/root\" 无意义）",
+    "    # 远端 Backend 目录（仅作为搜索起点/提示，脚本会自动探测）",
+    "    # 构建在服务器上运行的 Python 脚本（base64 传输，避免 shell 转义问题）",
+    "    # 若指定路径不存在，自动在服务器上搜索含 MIN_APP_VERSION_NAME 的 config.py",
+    "    # 同步更新本地 config.py（保持本地与远端一致）",
+    "    # 定位 ServerKeys 目录（与项目根同级）",
+    "    # 编译 APK：改了版本号必须重新编译；否则询问",
+    "    # ── 自动同步服务器 .env（版本号 + APK 路径）并重启后端 ──────────────",
+    "    # 检查 ADB 状态"
+  ],
+  "Backend/scripts/launch/AAA_launch_backend.py": [
+    "# 尝试安装并导入 colorama",
+    "    # 尝试安装 colorama",
+    "            # 备用 ANSI 转义序列",
+    "# 保存原始的stdout引用（在重定向之前）",
+    "# 仓库根（含 Backend/ 与 misc/tools）；config.PROJECT_ROOT = dirname(Backend) 亦为该目录",
+    "# 物理目录名为 Backend，import 名为 backend；Windows 上大小写不自动等同，须用 importlib 显式加载",
+    "        # 直接写入原始stderr，避免循环",
+    "# 启动器单实例锁（仅主进程使用；热重载子进程 RUN_MAIN=true 不参与）",
+    "            # 仅匹配同启动脚本，避免误伤其他 python 任务",
+    "        # 锁冲突：先关闭当前 fp，用 psutil 找到所有旧启动器进程并杀掉，再删锁文件重建",
+    "# 不再重定向 logging/sys.stdout/sys.stderr，避免与 uvicorn reload/access 日志链路冲突。",
+    "# 后端统一日志配置在 backend/config.py 中维护（文件 + 控制台）。",
+    "# 执行 Backend/__init__.py：注册所有路由、静态文件挂载及 WebSocket 端点",
+    "        # 刷新所有 logger 的处理器，确保后端日志 + uvicorn access 全量日志都已落盘",
+    "        # 合并导出：backend.log（业务日志）+ backend_access_full.log（含完整 access/job 轮询）",
+    "            # uvicorn.access 常见 args:",
+    "            # (client_addr, method, full_path, http_version, status_code)",
+    "    # 轮询接口日志过滤：/api/chat/job 仅在错误状态码时回显（避免 200 轮询刷屏）",
+    "                        # 写入前再检查一次 pause，消除\"读到行 → 暂停生效 → 仍写入\"的竞态",
+    "    # 同时给所有控制台 handler 加上全屏蔽过滤器，阻止 uvicorn 直接写入终端",
+    "        # 先获取模型列表用于 id->name 映射（展示更友好）",
+    "    # 可信 Python 根目录列表（按优先级）：",
+    "    #   1. misc/tools/python  — 旧版项目内嵌",
+    "    #   2. P:\\Tools\\python    — 新版共享工具盘（同一台机器，工具统一放 P:\\Tools）",
+    "        # 精确匹配 python_base/python.exe",
+    "        # 模糊匹配 python_base/<子目录>/python.exe（如 python-3.x.x/python.exe）",
+    "    # 每项为 (label, [(候选路径, required), ...])：找到任意一个即视为 OK，都没有则按最后一项的 required 决定是否中断。",
+    "            # 透传真实客户端来源，便于后端 access log 显示手机局域网 IP。",
+    "                        # SSE 是行协议：每个 token 事件是一行 data:...，后跟一个空行。",
+    "                        # 用 readline() 逐行读取并立即 flush，确保每个 token 单独推送给客户端，",
+    "                        # 避免 http.client chunked 解码积攒多行后一次性返回导致批量到达。",
+    "            # 成功的 /api/chat/job 轮询不打印，只展示出错情况",
+    "    # 静默 SSLWantReadError：客户端在 TLS 握手期间断开时会产生此噪声，不是真正的错误",
+    "    # 仅主进程执行：先抢占单实例锁，再清理残留启动器，避免误杀当前 py.exe 启动链",
+    "    # 0.0.0.0 可供局域网设备直连；127.0.0.1 仅本机。可通过环境变量 PONYCHAT_HOST 覆盖",
+    "    # 默认关闭本地 HTTPS，优先兼容“外层穿透 HTTPS + 内层本地 HTTP 回源”。",
+    "    # 如需局域网直连 HTTPS，可设置 PONYCHAT_ENABLE_HTTPS=1。",
+    "    # 仅主进程开启请求日志回显，确保当前终端可见 GET/POST 请求行",
+    "    # 启动输入监听线程（传入端口供 backups/restore 请求本机 API）",
+    "    # 🔥 [防火墙] 自动放行端口，确保局域网设备能直连（默认 profile=any，见 _firewall_profile_arg）",
+    "            # 名称与旧版「…Proxy」区分，便于在 profile=any 更新后自动新建入站规则（避免沿用仅 private 的旧规则）",
+    "    # 局域网模式时提示直连地址（排除 VPN/TUN 虚拟网卡，优先 WLAN）",
+    "    # 配置 uvicorn 日志（稳定链路 + 控制台彩色）",
+    "        # 使用统一后的 uvicorn 日志配置（与 backend/config.py 一致）",
+    "        # 解释器退出前先回收控制台回显线程，避免 Ctrl+C 触发 stdout 锁竞争崩溃"
+  ],
+  "Backend/tests/deep_test_baishang.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# 生产环境从 env 读取；脚本在服务器本地跑，直接读 env",
+    "# ANSI 颜色",
+    "    # ponychat_chat_v1 协议：events[].choices[0].delta.content 拼合",
+    "    # 普通 JSON 格式兼容",
+    "        # 模拟：让前一条 assistant 被认为是\"不满意\"，重发",
+    "            # 不放 deleted_assistant，模拟用户删了它"
+  ],
+  "Backend/tests/manual_noon_nap_goodnight_rate.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/manual_scheduled_followup_no_self_answer.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/manual_scheduled_followup_self_answer_matrix.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/manual_speaker_attribution_ziyue.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/manual_user_agreed_task_timing.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/manual_ziyue_bracket_paragraphs.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/run_migration.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/test_deepseek_v4_smoke.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/test_expression_policy.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/test_gift_attribution_ziyue.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# 触发 bug 的关键词：角色声称是自己挑/买了礼物",
+    "        # ── T2：\"真的吗\" — 核心 bug 复现点 ──"
+  ],
+  "Backend/tests/test_image_context_store.py": [
+    "# 仓库根目录（含 Backend/ 包）"
+  ],
+  "Backend/tests/test_kelin_jason.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/test_new_endpoints.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "    # 分离 body 和 status",
+    "    # ── T2: 分页消息接口（无 auth → 401）───────────────────",
+    "    # ── T3: 消息搜索接口（无 auth → 401）───────────────────",
+    "    # 缺 query 参数 → FastAPI 先校验必填参数，返回 422（正常行为，不是路由错误）",
+    "    # ── T4: 对话合并迁移接口（admin，无 auth 要求）──────────",
+    "    # 不存在的 username → 404",
+    "    # GET /api/conversation/messages → 无 auth → 401（已注册）",
+    "    # GET /api/messages/search → 有 query 无 auth → 401（已注册）",
+    "    # POST /api/admin/migrate_merge_conversations → 用户不存在 → 404（路由已注册，404 是业务逻辑）"
+  ],
+  "Backend/tests/test_repeat_variant.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/test_scheduled_followup_prompting.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/test_server_files.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "    # normal_chat_memory 表（服务器运行后自动创建）",
+    "    # API 接口验证（服务器本地 curl）",
+    "    # 管理迁移接口：不存在用户 → 404（业务逻辑，路由已注册；curl -f 压制 4xx 响应体故用 -w 检查状态码）"
+  ],
+  "Backend/tests/test_server_import.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-",
+    "# 1. 导入 context_memory",
+    "# 2. 检查 normal_chat_memory 表",
+    "# 3. 检查 messages.py 新路由已注册"
+  ],
+  "Backend/tests/test_user_fact_guard_prompts.py": [
+    "#!/usr/bin/env python3",
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/tests/_remote_check.py": [
+    "#!/usr/bin/env python3",
+    "# 1. 导入 context_memory",
+    "# 2. 检查 normal_chat_memory 表",
+    "# 3. 通过 OpenAPI 检查路由"
+  ],
+  "Backend/data/mlp/add_fts.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 删除旧 FTS 表（如果存在）",
+    "# 建 FTS5 表：tokenize=unicode61 支持中文按字分词",
+    "# 注意：不加 content='' ，让 FTS5 自行存储数据（正常模式）",
+    "# 从 mlp_knowledge 同步数据",
+    "# search_text = cn_name + \"\\n\" + content（让 cn_name 被单独权重更高地检索）"
+  ],
+  "Backend/data/mlp/build_vector_db.py": [
+    "# -*- coding: utf-8 -*-",
+    "# ── 加载 tags.jsonl → {filename: {cn_name, type, importance}} ────────────────",
+    "# ── 初始化 / 升级 SQLite 表 ──────────────────────────────────────────────────",
+    "# ── Embedding API（单批，带重试）────────────────────────────────────────────"
+  ],
+  "Backend/data/mlp/check_eg.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 找出 refined/ 里还有哪些文件不在 DB 里（可能是其他误删）",
+    "# 找出其中 filename 不含 EG 特征的（可能误删）"
+  ],
+  "Backend/data/mlp/check_importance.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 只看 character 类型和无类型（很多角色落在无类型里）"
+  ],
+  "Backend/data/mlp/check_pinkie.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/check_spike.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/cleanup_eg.py": [
+    "# -*- coding: utf-8 -*-",
+    "# ── 删除 DB 条目 + FTS5 条目 ───────────────────────────────────────────────",
+    "# FTS5 同步删除",
+    "# ── 从 aliases.json 移除指向被删条目的别名 ──────────────────────────────────",
+    "# 找出被删条目的 cn_name 片段"
+  ],
+  "Backend/data/mlp/cleanup_failed.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/cleanup_junk.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 删除 FTS",
+    "# 从 refined_pony/ 移除"
+  ],
+  "Backend/data/mlp/cleanup_refused.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/clean_pages.py": [
+    "# -*- coding: utf-8 -*-",
+    "        # ── 信息框处理（仅前 INFOBOX_ZONE 行，且未遇到第一段正文）──────────",
+    "                # 此行是正文，正常处理（不 continue）"
+  ],
+  "Backend/data/mlp/export_table.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/fetch_mlp_wiki.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 强制 stdout 使用 UTF-8（避免 PowerShell GBK 编码报错）",
+    "# 使用 cloudscraper 绕过 Cloudflare 防护"
+  ],
+  "Backend/data/mlp/fetch_portraits.py": [
+    "# -*- coding: utf-8 -*-",
+    "# Fandom 对默认 Python UA 常返回 403；使用常见浏览器 UA。",
+    "# 正文里偶发的英译与 Fandom 词条名不一致时在此纠正（解析出的标题 -> 实际 wiki 标题）",
+    "        # 仅括号英文副标题，如 (Princess Twilight Sparkle) — 作备选而非主标题",
+    "        # 去掉「英语：XXX」类后半",
+    "    # 无面部关键词时宁可回退全身 ID，避免误选无关「face」图"
+  ],
+  "Backend/data/mlp/fetch_portrait_candidates.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 复用 fetch_portraits 中的解析与 API",
+    "    # 先用维基 API 的 width/height 打分（CDN 可能返回 WebP，本地按 PNG 头会失败）"
+  ],
+  "Backend/data/mlp/filter_pony.py": [
+    "# -*- coding: utf-8 -*-",
+    "# ── 加载 tags.jsonl ──────────────────────────────────────────────────────────",
+    "# ── EQG 检测 ─────────────────────────────────────────────────────────────────",
+    "# 确知为 EQG 专属的文件名关键词",
+    "# EQG 内容关键词（出现即可怀疑）",
+    "# cn_name 中的 EG 标记",
+    "    # A: cn_name 含 EG 标记（无论类型）",
+    "    # B: 文件名含明显 EQG 关键词（无论类型）",
+    "    # （LLM 生成内容可能错误地把\"友谊学园\"写成\"坎特拉高中\"）",
+    "    # C: 非剧集类，开头就提到 EQG 专属场景",
+    "    # D: 非剧集类，内容多次提到 EQG"
+  ],
+  "Backend/data/mlp/find_junk.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/find_no_importance.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/fix_filenames.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 加载 tags",
+    "        # 从 tags 中移除旧 key",
+    "    # 更新 tags_map",
+    "# 重写 tags.jsonl"
+  ],
+  "Backend/data/mlp/fix_importance.py": [
+    "# -*- coding: utf-8 -*-",
+    "# ── 需要手动标 major/supporting 的条目 ──",
+    "    # concept — major 主要",
+    "    # item — major/supporting 主要/配角",
+    "    # episode 剧集",
+    "# ── 标志性歌曲标 supporting ──"
+  ],
+  "Backend/data/mlp/fix_importance2.py": [
+    "# -*- coding: utf-8 -*-",
+    "    # major → supporting（不属于核心主角/核心反派）",
+    "# 检查重复的 cn_name",
+    "# 检查所有 major 角色最终列表"
+  ],
+  "Backend/data/mlp/fix_importance3.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 最终 major 角色",
+    "# supporting 角色数量"
+  ],
+  "Backend/data/mlp/fix_unicorn.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/image_to_jpg.py": [
+    "# -*- coding: utf-8 -*-",
+    "    # 高 quality 时关闭色度抽样，减轻彩边与糊感"
+  ],
+  "Backend/data/mlp/list_db.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/mlp_paths.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/portrait_quality.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/refine_pages.py": [
+    "# -*- coding: utf-8 -*-",
+    "# ── API 配置 ──────────────────────────────────────────────────────────────────",
+    "# ── Prompt 模板 ────────────────────────────────────────────────────────────────",
+    "# 字数说明放在 user 侧而非 system 侧，减少 system prompt 大小",
+    "# ── 单次 LLM 调用 ─────────────────────────────────────────────────────────────",
+    "            # 去掉偶发的 ```markdown 包裹",
+    "    # 截取合理长度的输入（target 越大给越多原文）",
+    "    # 空结果或被拒绝（模型返回拒绝语）→ 降级为直接复制 clean 文件"
+  ],
+  "Backend/data/mlp/restore_false_junk.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 找出 refined/ 中被删但内容够长的文件",
+    "# 复制回 refined_pony/",
+    "    # FTS 全文检索"
+  ],
+  "Backend/data/mlp/tag_pages.py": [
+    "# -*- coding: utf-8 -*-",
+    "# ── 从模型清单与各供应商片段合并后的配置读取 API ─────────────────────────────",
+    "# ── 打标 Prompt ────────────────────────────────────────────────────────────────",
+    "            # 提取 JSON（模型偶尔会带 markdown 代码块）",
+    "    # 全部失败，标记为 skip"
+  ],
+  "Backend/data/mlp/test_api.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_challenge.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_rag_final.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_rag_prompt.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_refine.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_refine2.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_single.py": [
+    "# -*- coding: utf-8 -*-",
+    "# 测试1: reasoning_effort=none（关掉思考）"
+  ],
+  "Backend/data/mlp/test_tag.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_tag2.py": [
+    "# -*- coding: utf-8 -*-"
+  ],
+  "Backend/data/mlp/test_tag3.py": [
+    "# -*- coding: utf-8 -*-"
+  ]
+}

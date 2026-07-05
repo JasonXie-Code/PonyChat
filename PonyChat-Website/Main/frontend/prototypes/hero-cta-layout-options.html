@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PonyChat CTA Layout Options</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #081120;
+      --panel: rgba(15, 23, 42, 0.72);
+      --panel-strong: rgba(17, 24, 39, 0.9);
+      --line: rgba(148, 163, 184, 0.18);
+      --line-strong: rgba(187, 176, 234, 0.34);
+      --text: #e6f1ff;
+      --muted: #8f9cb3;
+      --dim: #66738b;
+      --violet: #9067e8;
+      --cyan: #52c7d7;
+      --mint: #4ade80;
+      --amber: #f7c76f;
+      --rose: #ff8fb3;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        linear-gradient(rgba(26, 39, 66, 0.6) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(26, 39, 66, 0.6) 1px, transparent 1px),
+        radial-gradient(circle at 18% 24%, rgba(144, 103, 232, 0.18), transparent 28rem),
+        radial-gradient(circle at 70% 12%, rgba(82, 199, 215, 0.12), transparent 30rem),
+        var(--bg);
+      background-size: 72px 72px, 72px 72px, auto, auto, auto;
+    }
+
+    main {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 44px 0 64px;
+    }
+
+    .page-head {
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: #bbb0ea;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .lead {
+      max-width: 760px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+
+    .options {
+      display: grid;
+      gap: 24px;
+    }
+
+    .option {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(8, 17, 32, 0.58);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .option-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(15, 23, 42, 0.42);
+    }
+
+    .option-title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .option-note {
+      margin: 0;
+      color: var(--dim);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .stage {
+      padding: clamp(18px, 3vw, 28px);
+    }
+
+    .hero-meta {
+      margin: 0 0 12px;
+      color: var(--dim);
+      font-size: 13px;
+      letter-spacing: 0.03em;
+    }
+
+    .cta {
+      width: min(100%, 660px);
+    }
+
+    .btn {
+      min-height: 58px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 13px 18px;
+      color: var(--text);
+      background: rgba(20, 31, 50, 0.72);
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 720;
+      line-height: 1.2;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+    }
+
+    .btn.primary {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, var(--violet), #6b7fdc 48%, var(--cyan));
+      color: white;
+      box-shadow: 0 18px 52px rgba(82, 199, 215, 0.16), 0 0 0 1px rgba(187, 176, 234, 0.28);
+    }
+
+    .btn.web {
+      border-color: rgba(82, 199, 215, 0.36);
+      background: linear-gradient(135deg, rgba(17, 55, 73, 0.96), rgba(18, 28, 48, 0.92));
+      color: #d8fbff;
+    }
+
+    .btn.hall {
+      border-color: rgba(187, 176, 234, 0.34);
+      background: linear-gradient(135deg, rgba(46, 39, 74, 0.92), rgba(18, 28, 48, 0.88));
+    }
+
+    .btn.info {
+      border-color: rgba(247, 199, 111, 0.28);
+      background: linear-gradient(135deg, rgba(64, 49, 27, 0.72), rgba(18, 28, 48, 0.86));
+    }
+
+    .btn.archive {
+      border-color: rgba(255, 143, 179, 0.26);
+      background: linear-gradient(135deg, rgba(64, 34, 53, 0.7), rgba(18, 28, 48, 0.86));
+    }
+
+    .option-a .grid-two .btn {
+      border-color: rgba(148, 163, 184, 0.2);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.74));
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 46px;
+      height: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.62);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+    }
+
+    .symbol {
+      display: inline-flex;
+      width: 22px;
+      height: 22px;
+      align-items: center;
+      justify-content: center;
+      color: currentColor;
+      opacity: 0.9;
+    }
+
+    .symbol svg {
+      width: 100%;
+      height: 100%;
+      stroke: currentColor;
+    }
+
+    .option-a .top {
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .option-b .primary-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .option-b .support-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .option-b .support-row .btn {
+      min-height: 52px;
+      font-size: 14px;
+      padding-inline: 14px;
+    }
+
+    .option-c .phone-stack {
+      width: min(100%, 440px);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.42);
+      padding: 10px;
+    }
+
+    .option-c .phone-stack .btn {
+      width: 100%;
+      min-height: 54px;
+      justify-content: flex-start;
+      border-radius: 12px;
+      margin: 0;
+    }
+
+    .option-c .phone-stack .btn + .btn {
+      margin-top: 8px;
+    }
+
+    .option-c .mini {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 34px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.07);
+      color: #d8fbff;
+    }
+
+    .option-c .label-block {
+      display: grid;
+      gap: 3px;
+    }
+
+    .option-c .sub {
+      color: var(--dim);
+      font-size: 12px;
+      font-weight: 560;
+    }
+
+    .option-d .feature {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: stretch;
+      margin-bottom: 12px;
+    }
+
+    .option-d .feature .btn.primary {
+      justify-content: flex-start;
+      padding-inline: 20px;
+    }
+
+    .option-d .feature .btn.web {
+      min-width: 190px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .pill-row .btn {
+      min-height: 48px;
+      flex: 1 1 180px;
+      border-radius: 999px;
+      font-size: 14px;
+      padding: 10px 16px;
+    }
+
+    .option-e .cluster {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 0.62fr);
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .option-e .left {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-e .right {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option-e .right .btn {
+      min-height: 52px;
+      justify-content: flex-start;
+      font-size: 14px;
+      border-radius: 12px;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        width: min(100% - 20px, 680px);
+        padding-top: 28px;
+      }
+
+      .option-head {
+        display: block;
+      }
+
+      .option-note {
+        margin-top: 5px;
+        white-space: normal;
+      }
+
+      .grid-two,
+      .option-b .primary-row,
+      .option-b .support-row,
+      .option-d .feature,
+      .option-e .cluster {
+        grid-template-columns: 1fr;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .option-d .feature .btn.primary {
+        justify-content: center;
+      }
+
+      .option-d .feature .btn.web {
+        min-width: 0;
+      }
+    }
+
+    @media (max-width: 430px) {
+      main {
+        width: min(100% - 16px, 390px);
+        padding-bottom: 40px;
+      }
+
+      .lead {
+        font-size: 14px;
+      }
+
+      .stage {
+        padding: 14px;
+      }
+
+      .hero-meta {
+        font-size: 12px;
+      }
+
+      .btn {
+        min-height: 52px;
+        border-radius: 14px;
+        font-size: 15px;
+        padding: 12px 14px;
+      }
+
+      .badge {
+        min-width: 40px;
+        height: 24px;
+        font-size: 11px;
+      }
+
+      .option-c .sub {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="page-head">
+      <p class="eyebrow">PonyChat CTA Draft</p>
+      <h1>首页 5 个入口的排版候选</h1>
+      <p class="lead">这页只是本地草图，用来比较下载、角色大厅、网页版聊天、产品介绍、项目近况这 5 个入口的主次关系。把浏览器拖窄可以看移动端效果。</p>
+    </header>
+
+    <div class="options">
+      <section class="option option-a">
+        <div class="option-head">
+          <h2 class="option-title">方案 A：一个主按钮 + 2x2 次级网格</h2>
+          <p class="option-note">最稳，五个入口整齐统一</p>
+        </div>
+        <div class="stage">
+          <p class="hero-meta">Android 客户端 · v5.3.35 · 17.2 MB</p>
+          <div class="cta">
+            <a class="btn primary top" href="#">
+              <span class="badge">APK</span>
+              <span>下载安装包</span>
+              <span class="symbol" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+            <div class="grid-two">
+              <a class="btn hall" href="#">查看角色大厅</a>
+              <a class="btn web" href="#">打开网页版聊天</a>
+              <a class="btn info" href="#">看看 PonyChat 能做什么</a>
+              <a class="btn archive" href="#">看看最近做到了哪一步</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="option option-b">
+        <div class="option-head">
+          <h2 class="option-title">方案 B：下载和网页聊天并列为双主入口</h2>
+          <p class="option-note">适合强调网页版也能马上体验</p>
+        </div>
+        <div class="stage">
+          <p class="hero-meta">Android 客户端 · v5.3.35 · 17.2 MB</p>
+          <div class="cta">
+            <div class="primary-row">
+              <a class="btn primary" href="#">
+                <span class="badge">APK</span>
+                <span>下载安装包</span>
+              </a>
+              <a class="btn web" href="#">打开网页版聊天</a>
+            </div>
+            <div class="support-row">
+              <a class="btn hall" href="#">查看角色大厅</a>
+              <a class="btn info" href="#">产品介绍</a>
+              <a class="btn archive" href="#">项目近况</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="option option-c">
+        <div class="option-head">
+          <h2 class="option-title">方案 C：移动端菜单式纵向列表</h2>
+          <p class="option-note">最适合窄屏，按钮不会挤</p>
+        </div>
+        <div class="stage">
+          <p class="hero-meta">Android 客户端 · v5.3.35 · 17.2 MB</p>
+          <div class="phone-stack">
+            <a class="btn primary" href="#">
+              <span class="badge">APK</span>
+              <span class="label-block"><span>下载安装包</span><span class="sub">Android 客户端</span></span>
+            </a>
+            <a class="btn web" href="#">
+              <span class="mini">聊</span>
+              <span class="label-block"><span>打开网页版聊天</span><span class="sub">无需安装，先试普通对话</span></span>
+            </a>
+            <a class="btn hall" href="#">
+              <span class="mini">角</span>
+              <span class="label-block"><span>查看角色大厅</span><span class="sub">浏览公开角色</span></span>
+            </a>
+            <a class="btn info" href="#">
+              <span class="mini">介</span>
+              <span class="label-block"><span>看看 PonyChat 能做什么</span><span class="sub">了解产品能力</span></span>
+            </a>
+            <a class="btn archive" href="#">
+              <span class="mini">近</span>
+              <span class="label-block"><span>看看最近做到了哪一步</span><span class="sub">查看项目近况</span></span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="option option-d">
+        <div class="option-head">
+          <h2 class="option-title">方案 D：顶部双入口 + 下方胶囊按钮</h2>
+          <p class="option-note">桌面紧凑，移动端会自然换行</p>
+        </div>
+        <div class="stage">
+          <p class="hero-meta">Android 客户端 · v5.3.35 · 17.2 MB</p>
+          <div class="cta">
+            <div class="feature">
+              <a class="btn primary" href="#">
+                <span class="badge">APK</span>
+                <span>下载安装包</span>
+                <span class="symbol" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </a>
+              <a class="btn web" href="#">打开网页版聊天</a>
+            </div>
+            <div class="pill-row">
+              <a class="btn hall" href="#">角色大厅</a>
+              <a class="btn info" href="#">产品介绍</a>
+              <a class="btn archive" href="#">项目近况</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="option option-e">
+        <div class="option-head">
+          <h2 class="option-title">方案 E：下载独占左侧，其他入口收进右侧按钮列</h2>
+          <p class="option-note">适合桌面首屏，窄屏自动变单列</p>
+        </div>
+        <div class="stage">
+          <p class="hero-meta">Android 客户端 · v5.3.35 · 17.2 MB</p>
+          <div class="cta">
+            <div class="cluster">
+              <div class="left">
+                <a class="btn primary" href="#">
+                  <span class="badge">APK</span>
+                  <span>下载安装包</span>
+                  <span class="symbol" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12l7 7 7-7" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </span>
+                </a>
+                <a class="btn web" href="#">打开网页版聊天</a>
+              </div>
+              <div class="right">
+                <a class="btn hall" href="#">查看角色大厅</a>
+                <a class="btn info" href="#">看看 PonyChat 能做什么</a>
+                <a class="btn archive" href="#">看看最近做到了哪一步</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>

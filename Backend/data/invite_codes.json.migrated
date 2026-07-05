@@ -1,0 +1,56 @@
+{
+  "2ANC9PEK": {
+    "code": "2ANC9PEK",
+    "created_at": "2026-01-04T22:28:36.412648",
+    "expires_at": "2026-02-03T22:28:36.412648",
+    "is_used": true,
+    "used_by": "test666",
+    "used_at": "2026-01-04T23:23:22.067235",
+    "note": ""
+  },
+  "F4S9B2TJ": {
+    "code": "F4S9B2TJ",
+    "created_at": "2026-01-05T03:56:54.285711",
+    "expires_at": "2026-02-04T03:56:54.285711",
+    "is_used": true,
+    "used_by": "椰子",
+    "used_at": "2026-01-05T03:58:23.673778",
+    "note": ""
+  },
+  "LYE24K7D": {
+    "code": "LYE24K7D",
+    "created_at": "2026-01-05T04:24:17.685933",
+    "expires_at": "2026-02-04T04:24:17.685933",
+    "is_used": true,
+    "used_by": "dukenukem300000",
+    "used_at": "2026-01-05T04:25:16.925684",
+    "note": ""
+  },
+  "W5BNRQG8": {
+    "code": "W5BNRQG8",
+    "created_at": "2026-01-24T20:03:52.828143",
+    "expires_at": "2026-02-23T20:03:52.828143",
+    "is_used": true,
+    "used_by": "test",
+    "used_at": "2026-01-24T20:05:34.575237",
+    "note": ""
+  },
+  "4HHT6DQT": {
+    "code": "4HHT6DQT",
+    "created_at": "2026-01-24T20:07:07.388090",
+    "expires_at": "2026-02-23T20:07:07.388090",
+    "is_used": false,
+    "used_by": null,
+    "used_at": null,
+    "note": ""
+  },
+  "7GZD8P6J": {
+    "code": "7GZD8P6J",
+    "created_at": "2026-01-24T20:07:29.970077",
+    "expires_at": "2026-02-23T20:07:29.970077",
+    "is_used": false,
+    "used_by": null,
+    "used_at": null,
+    "note": ""
+  }
+}
