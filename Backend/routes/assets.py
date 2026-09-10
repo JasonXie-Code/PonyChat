@@ -1,5 +1,6 @@
 import io
 import json
+import re
 import uuid
 import hashlib
 import base64
@@ -10,7 +11,6 @@ import aiosqlite
 from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from ..chat_modules.normal_planner import _parse_vision_json
 from ..config import logger, model_manager
 from ..db import get_database
 from ..providers.llm_call import call_llm_payload
@@ -20,6 +20,24 @@ from ..routes.auth import auth_token_verify
 from .admin.assets_routes import _ALLOWED_MIMES, _MAX_ASSET_BYTES, _check_aspect_ratio, _detect_animated
 
 router = APIRouter(prefix="/api/assets", tags=["Assets"])
+
+
+def _parse_vision_json(text: str) -> dict[str, Any]:
+    raw = str(text or "").strip()
+    fenced = re.search(r"```(?:json)?\s*([\s\S]*?)```", raw, re.IGNORECASE)
+    if fenced:
+        raw = fenced.group(1).strip()
+    for candidate in (raw, raw[raw.find("{"): raw.rfind("}") + 1]):
+        if not candidate:
+            continue
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            try:
+                return json.loads(candidate, strict=False)
+            except json.JSONDecodeError:
+                continue
+    raise ValueError("vision response is not a JSON object")
 
 _USER_STICKER_SELECT = (
     "id, source_asset_id, file_size, mime_type, is_animated, name, "
@@ -223,16 +241,16 @@ def _coerce_sticker_tagging(data: dict[str, Any] | None, fallback_name: str) -> 
 
 async def _auto_tag_user_sticker(data: bytes, mime: str, username: str, fallback_name: str) -> dict[str, Any]:
     data_url = f"data:{mime};base64,{base64.b64encode(data).decode('ascii')}"
-    doubao = model_manager.get_model_for_task("web_search")
-    if not doubao or not doubao.get("api_key"):
+    vision_model = model_manager.get_model_for_task("web_search")
+    if not vision_model or not vision_model.get("api_key"):
         return _coerce_sticker_tagging({"custom_tags": ["vision_error:no_vision_config"]}, fallback_name)
-    model_id = str(doubao.get("model_name") or "")
+    model_id = str(vision_model.get("model_name") or "")
     reasoning_policy = resolve_software_reasoning_policy(
         "user_sticker_tagging",
         model_name=model_id,
         mode="normal",
-        active_model=doubao,
-        endpoint=doubao.get("endpoint", ""),
+        active_model=vision_model,
+        endpoint=vision_model.get("endpoint", ""),
     )
     payload = {
         "model": model_id,
@@ -257,7 +275,7 @@ async def _auto_tag_user_sticker(data: bytes, mime: str, username: str, fallback
     try:
         result = await call_llm_payload(
             payload,
-            doubao,
+            vision_model,
             task="user_sticker_tagging",
             timeout=llm_task_float("user_sticker_tagging", "timeout_seconds", 90.0) or 90.0,
             reasoning_policy=reasoning_policy,

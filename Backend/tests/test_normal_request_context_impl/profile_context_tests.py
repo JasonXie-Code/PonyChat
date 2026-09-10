@@ -606,10 +606,11 @@ def test_dead_main_character_at_uses_spirit_reply_policy():
 def test_dead_spirit_reply_format_is_prompt_driven_not_sanitized():
     from Backend.chat_modules.normal_nonstream import NORMAL_DEAD_SPIRIT_STAGE3_GUARD
 
-    assert "固定形态" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
-    assert "（角色名的灵魂/残响" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
-    assert "括号外只写一句直接台词" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
-    assert "合格示例" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
+    assert "用户本轮显式@" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
+    assert "灵魂或残响回应" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
+    assert "不复活，不改变dead状态" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
+    assert "主动任务" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
+    assert "合格示例" not in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
 
 
 def test_quoted_assistant_message_selects_reply_character_when_no_at():

@@ -12,7 +12,6 @@ import sys as _impl_sys
 def _load_implementation_modules() -> None:
     impl_modules = (
         "handoff_router_recent_assistant_turns.py",
-        "current_user_profile_facts.py",
         "normal_nonstream_sse.py",
     )
     impl_dir = _impl_pathlib.Path(_impl_sys._getframe().f_code.co_filename).with_name("normal_nonstream_impl")

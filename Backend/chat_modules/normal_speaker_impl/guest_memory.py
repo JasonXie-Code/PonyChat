@@ -82,7 +82,7 @@ def speaker_context_prompt(request: ChatRequest) -> str:
         f"「{speaker_name}」能看到最近对话上下文，需要接住用户当前话题并推进情境，像被叫进临时群聊/现场的人一样自然回应。\n"
         f"如果提到「{main_name}」或本主会话，请保持第三方关系清楚；不要假装这就是「{speaker_name}」自己的主聊天窗口。\n"
         f"当前正文只写「{speaker_name}」这一位角色的本轮发言；如果需要让「{main_name}」或其他在场角色接下一句，"
-        "正文里只能自然把话递出去，不能代替对方说话；是否真的让对方接话由后端独立 router 判断。"
+        "正文里只能自然把话递出去，不能代替对方说话；需要对方接话时使用 handoff_reply，由对方自己的 Agent 继续。"
     )
 
 
@@ -143,6 +143,11 @@ async def write_guest_direct_memory_once(
     wait: bool = True,
 ) -> bool:
     """Persist raw temporary-group evidence as soon as a guest speaker is resolved."""
+    if getattr(request, "_normal_autonomous_harness_requested", False):
+        # Agent Memory grants the guest access to actual scene message IDs and
+        # commits its own selected memories with delivery. Do not also invent a
+        # legacy first-person summary before the guest has replied.
+        return False
     if not is_guest_speaker(request):
         return False
     if getattr(request, "_normal_guest_direct_memory_written", False):

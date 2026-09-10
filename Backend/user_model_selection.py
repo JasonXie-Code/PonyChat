@@ -3,12 +3,12 @@
 
 约定（勿重复造默认）：
   - 已登录用户：读 `user_settings.active_model_id` → 无效则修正为 DEFAULT_FALLBACK_MODEL_ID 并回退
-  - 无用户名 / 未设置：走 `get_default_active_model()` → 固定优先豆包 Lite（与清单默认一致）
+  - 无用户名 / 未设置：走 `get_default_active_model()` → 固定优先 DeepSeek 视觉（与清单默认一致）
   - 全局清单层：见 `model_manager.DEFAULT_FALLBACK_MODEL_ID` 与 `ModelManager.get_active_model()`
 
-说明：陪玩主 LLM 固定为清单 `doubao-2-0-mini`（见 `companion_chat.COMPANION_LLM_MODEL_ID`），不读用户当前模型；`_MINI_MODEL` 等为清单缺失时的占位。
+说明：陪玩通过 companion_model_policy 统一使用 DeepSeek 视觉模型。
 
-主对话/游戏（`normal` / `galgame` / `galgame_lock`）在 `resolve_auth_and_quota` 中**统一**使用 `model_manager.get_model_for_task("chat")`（智能路由），与用户 `active_model_id` / 请求 `model_id` 无关。其余模式或非聊天路径仍可调用本模块保留的旧数据。
+主对话/游戏在 `resolve_auth_and_quota` 中统一使用后端选定的 chat 模型，忽略用户偏好和请求 model_id。本模块用于其余模式或非聊天路径。
 """
 from __future__ import annotations
 
@@ -31,12 +31,7 @@ def _get_enabled_model_by_id(model_id: str) -> Optional[dict]:
 
 
 def get_default_active_model() -> Optional[dict]:
-    """
-    无用户偏好时的默认模型：固定为豆包 2.0 Lite；若清单中缺失则仅委托 `model_manager.get_active_model()`（已与 DEFAULT 对齐，避免再写一套遍历）。
-    """
-    lite = _get_enabled_model_by_id(DEFAULT_FALLBACK_MODEL_ID)
-    if lite:
-        return lite
+    """Use the configured global model when the user has no preference."""
     return model_manager.get_active_model()
 
 

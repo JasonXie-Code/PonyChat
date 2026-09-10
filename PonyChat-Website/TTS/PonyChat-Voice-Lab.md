@@ -1,10 +1,12 @@
 # PonyChat Voice Lab 说明
 
-> 最后更新日期：2026-07-05
+> 文档状态：2026-09-09 更新本机后端与服务器静态网页分工。易变的版本、部署和服务状态在使用前仍需现场验证。
 
-`PonyChat-Website/TTS/` 是 PonyChat 语音实验室和生产 TTS 网关目录。当前生产默认只依赖 Server-USA 上的 CosyVoiceTTS 网关，调用官方 DashScope / 百炼 CosyVoice HTTP API。
+> 最后更新日期：2026-09-09
 
-旧 Qwen3TTS / OmniVoice 代码仍保留在仓库中，主要用于历史回溯、本地实验或兼容旧 voice id。它们不再是默认生产路径。本机 Qwen3TTS 计划任务和 `127.0.0.1:8010` 服务已停用；需要临时回退时必须手动重新启用本机栈、反向隧道和后端 systemd 环境变量。
+聊天当前默认使用本机 `C:\PonyChatVoice\TTS` 的 Qwen3TTS（8010）。CosyVoice 网关也已迁到本机，由 `P:\PonyChat\scripts\ops\local_stack.py` 在 18010 启动；数据在 `var/services/cosyvoice`，调用官方 DashScope / 百炼 API。
+
+语音静态网页保留在 Server-USA `/opt/ponychat-cosyvoice/static`，由 Nginx 直接提供；API 经反向隧道连接本机。`PonyChat Qwen3TTS Local Stack` 登录自启任务继续启用。不要运行旧 `deploy.py` 重建 USA 的 CosyVoice 服务。完整运行说明见 [SERVER.md](../../SERVER.md)。
 
 ## 当前生产入口
 
@@ -13,23 +15,23 @@
 | `https://voice.ponychat.org/` | 跳转 | 跳转到 `/cosyvoice/` |
 | `https://voice.ponychat.org/cosyvoice/` | 当前入口 | CosyVoiceTTS 网页与 API |
 | `https://voice.ponychat.org/cosyvoice/health` | 当前入口 | 健康检查，返回 `backend=dashscope-cosyvoice-http` |
-| `/qwen3tts`、`/qwen3tts/` | 兼容跳转 | 跳转到 `/cosyvoice/` |
+| `/qwen3tts`、`/qwen3tts/` | 当前 Qwen 入口 | USA 回环 18012 转发本机 8010，不能重定向至 CosyVoice |
 | `/omnivoice`、`/omnivoice/*` | 已移除 | 返回 410 |
 
 ## 代码边界
 
 | 文件 / 目录 | 用途 |
 | --- | --- |
-| `app_cosyvoice.py` | Server-USA FastAPI 网关，提供 CosyVoice 页面、任务队列、音色注册、合成和声音库接口 |
-| `deploy.py` | 部署 `app_cosyvoice.py`、静态资源、systemd 和 `voice.ponychat.org` Nginx 路由 |
+| `app_cosyvoice.py` | 本机 FastAPI 网关，提供 CosyVoice 页面、任务队列、音色注册、合成和声音库接口 |
+| `deploy.py` | 历史部署工具；本次迁移后停用，原流程部署 `app_cosyvoice.py`、静态资源、systemd 和 `voice.ponychat.org` Nginx 路由 |
 | `static/cosyvoice.html`、`static/assets/cosyvoice.js` | 当前语音实验室页面 |
 | `app_fast.py`、`app_fast_impl/` | 旧本机 Qwen3TTS 兼容后端 |
 | `app_omni.py` | 旧 OmniVoice 后端，生产入口已移除 |
-| `start_qwen3tts_*.ps1`、`install_qwen3tts_startup_task.ps1` | 本机 Qwen3TTS 启动/隧道/自启脚本，默认不启用 |
+| `start_qwen3tts_*.ps1`、`install_qwen3tts_startup_task.ps1` | 本机 Qwen3TTS 启动/隧道/自启脚本，既有本机任务继续启用 |
 
 运行数据、模型、声音库、输出音频和上传缓存均被 `.gitignore` 排除：`models/`、`voices/`、`outputs/`、`uploads/`、`generation_logs/` 等不应提交。
 
-## 后端接入
+## 历史 systemd 模板（不再用于生产部署）
 
 生产后端 systemd 模板默认：
 

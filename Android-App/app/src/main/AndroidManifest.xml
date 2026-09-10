@@ -43,6 +43,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <!-- 悬浮窗（弹幕叠加层 + 悬浮按钮）：需用户在设置中手动授权 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 仅同签名的系统级 Companion Runtime 能授予此绑定权限。 -->
+    <uses-permission android:name="top.ponychat.companion.permission.BIND_RUNTIME" />
     
     <!-- 相机功能声明（可选，非必须） -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
@@ -62,6 +64,7 @@
         <!-- 🔧 [通用] Google 语音服务 -->
         <package android:name="com.google.android.googlequicksearchbox" />
         <package android:name="com.google.android.tts" />
+        <package android:name="top.ponychat.companion" />
     </queries>
 
     <application
@@ -88,6 +91,21 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 同一 APK 的设备 HOME 入口。普通手机默认禁用；自研系统镜像用 RRO 启用。 -->
+        <activity
+            android:name=".DeviceHomeActivity"
+            android:enabled="@bool/device_home_enabled"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.PonyChatApp">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 

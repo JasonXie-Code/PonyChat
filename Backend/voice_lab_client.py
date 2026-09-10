@@ -13,7 +13,12 @@ import httpx
 
 from .audio_normalization import AudioSilenceStats, probe_audio_silence_stats
 from .config import logger
-from .cosyvoice_client import CosyVoiceError, is_cosyvoice_enabled, synthesize_cosyvoice
+from .cosyvoice_client import (
+    CosyVoiceError,
+    cosyvoice_base_url,
+    is_cosyvoice_enabled,
+    synthesize_cosyvoice,
+)
 from .qwen_tts_online_client import is_qwen_tts_online_enabled, synthesize_qwen_tts_online
 
 
@@ -725,9 +730,9 @@ def _record_voice_success() -> None:
 
 
 def _voice_lab_health_url() -> str:
-    engine = _default_engine()
     if is_cosyvoice_enabled():
-        engine = ""
+        return f"{cosyvoice_base_url()}/health"
+    engine = _default_engine()
     base = _engine_base_url(_base_url(), engine)
     return f"{base}/health"
 

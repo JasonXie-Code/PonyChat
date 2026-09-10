@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # 全局默认模型 ID（唯一约定；业务侧请用 get_active_model / get_user_active_model / get_default_active_model，勿再硬编码其他 id）
 # 含义：① model_config.json 的 active_model 回退 ② 用户无偏好或偏好无效 ③ 清单中 active 缺失/禁用时的解析结果
-DEFAULT_FALLBACK_MODEL_ID = "doubao-2-0-lite"
+DEFAULT_FALLBACK_MODEL_ID = "deepseek-flash"
 
 CONF_DIR = Path(__file__).parent / "conf"
 CONFIG_FILE = CONF_DIR / "model_config.json"
@@ -137,24 +137,28 @@ class ModelManager:
             return self._config_cache
         
         if not CONFIG_FILE.exists():
-            # 与仓库正式 doubao 片段中 doubao-2-0-lite 对齐；冷启动仅一条模型，避免与 DEFAULT_FALLBACK_MODEL_ID 分叉
+            # 与仓库正式 DeepSeek 视觉片段对齐；冷启动仅一条模型，避免与 DEFAULT_FALLBACK_MODEL_ID 分叉
             default_model = {
                 "id": DEFAULT_FALLBACK_MODEL_ID,
-                "name": "Doubao 2.0-lite",
+                "name": "DeepSeek V4 Flash Vision",
                 "type": "openai",
-                "endpoint": "https://ark.cn-beijing.volces.com/api/v3",
-                "model_name": "doubao-seed-2-0-lite-260215",
-                "api_key": "",
+                "endpoint": "https://api.deepseek.com",
+                "model_name": "deepseek-flash",
+                "api_key": "${PONYCHAT_DEEPSEEK_API_KEY}",
+                "supports_vision": True,
+                "uses_v4_thinking_api": True,
+                "enable_thinking": True,
+                "options": {"reasoning_effort": "low"},
                 "enabled": True,
             }
             models_dir = CONF_DIR / "models"
             models_dir.mkdir(parents=True, exist_ok=True)
-            _atomic_write_json(models_dir / "doubao.json", {"models": [default_model]})
+            _atomic_write_json(models_dir / "deepseek.json", {"models": [default_model]})
             _atomic_write_json(models_dir / "custom.json", {"models": []})
             manifest = {
                 "active_model": DEFAULT_FALLBACK_MODEL_ID,
                 "model_sources": [
-                    "models/doubao.json",
+                    "models/deepseek.json",
                     "models/custom.json",
                 ],
                 "custom_models": []
@@ -386,20 +390,19 @@ class ModelManager:
             if is_v4_thinking:
                 _def_eff = str(
                     options.get("reasoning_effort")
-                    or ("high" if model.get("supports_reasoning") else "high")
+                    or "low"
                 ).strip().lower()
-                if _def_eff not in ("high", "max"):
-                    _def_eff = "high"
+                if _def_eff != "low":
+                    _def_eff = "low"
                 schema.append({
                     "key": "reasoning_effort",
                     "label": "思考强度",
-                    "description": "对应 DeepSeek V4 官方 API 的 reasoning_effort：高 与 Max",
+                    "description": "统一使用 DeepSeek 视觉模型的 low 思考模式",
                     "type": "enum",
                     "default_string": _def_eff,
                     "group": "thinking",
                     "options": [
-                        {"value": "high", "label": "高"},
-                        {"value": "max", "label": "Max"},
+                        {"value": "low", "label": "低"},
                     ],
                 })
             # 非双模型且非 V4 thinking 才显示 Qwen 式思考预算档位
@@ -486,12 +489,50 @@ class ModelManager:
         """
         self.config = self._load_config()
         flag = f"for_{task}"
+        if task == "chat":
+            active = self.get_active_model()
+            if active and active.get("for_chat"):
+                return active
         for model in self.config.get("models", []):
             if (model.get(flag)
                     and model.get("enabled") is not False
                     and model.get("api_key", "")):
                 return model
         return self.get_active_model()
+
+    def get_model_for_capability(
+        self,
+        capability: str,
+        *,
+        preferred_task: str = "",
+    ) -> Optional[Dict[str, Any]]:
+        """Return an enabled, configured model that explicitly declares a capability.
+
+        Unlike ``get_model_for_task``, this method never falls back to an incapable
+        active model.  Internal multimodal callers use it so changing the main chat
+        model cannot silently route an image request to a text-only endpoint.
+        """
+        self.config = self._load_config()
+        capability_flag = (
+            capability if capability.startswith("supports_") else f"supports_{capability}"
+        )
+        candidates = [
+            model
+            for model in self.config.get("models", [])
+            if model.get("enabled") is not False
+            and bool(model.get("api_key"))
+            and bool(model.get(capability_flag))
+        ]
+        if not candidates:
+            return None
+        if preferred_task:
+            preferred_flag = f"for_{preferred_task}"
+            preferred = next((model for model in candidates if model.get(preferred_flag)), None)
+            if preferred is not None:
+                return preferred
+        active_id = str(self.config.get("active_model") or "").strip()
+        active = next((model for model in candidates if model.get("id") == active_id), None)
+        return active or candidates[0]
 
     def set_active_model(self, model_id: str):
         """切换活跃模型。enabled=false 的模型不允许被激活。"""
@@ -541,7 +582,7 @@ class ModelManager:
         if len(models) < initial_len:
             self.config["models"] = models
             
-            # 若活跃模型被删除，优先豆包 Lite，否则选第一个仍可用模型
+            # 若活跃模型被删除，优先 DeepSeek 视觉，否则选第一个仍可用模型
             if self.config.get("active_model") == model_id and models:
                 prefer = next(
                     (x for x in models if x.get("id") == DEFAULT_FALLBACK_MODEL_ID and x.get("enabled") is not False),

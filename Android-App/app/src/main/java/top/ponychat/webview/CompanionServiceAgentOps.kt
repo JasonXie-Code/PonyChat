@@ -314,6 +314,7 @@ internal suspend fun CompanionService.fetchAgentPlan(task: String, bitmap: Bitma
             val bodyJson = JSONObject().apply {
                 put("image_base64", b64)
                 put("character_id", characterId)
+                put("personality_style", personalityStyle)
                 put("username", username)
                 put("user_text", task)
                 put("max_chars", 30)

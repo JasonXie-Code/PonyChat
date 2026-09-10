@@ -1,5 +1,7 @@
 # Galgame / 锁分：分层记忆 — 前后端契约说明
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 本文说明「长期 / 短期 / 对话历史」分层记忆在 **存档结构**、**摘要接口** 与 **对话详情** 上的约定，便于客户端与 Web 对齐。
 
 ## 1. 存档中的字段（`load_galgame_state` / 同步 payload）
@@ -22,7 +24,7 @@
 
 ## 2. 自动折叠（服务端）
 
-每局结束后，在角色记忆更新步骤（**第 10 步**，与 `galgame/memory.py` 中 `SEQ_STEP_10_*`、提示词 `seq_prompts/step_10_char_memory_update.py` 一致；主剧情分步为第 1～9 步）中：当 `char_memory.entries` 条数 **大于 15** 时，会尝试生成分层摘要并将 `entries` 裁剪为最近 **8** 条。若 LLM 失败，**不裁剪**，下轮可重试。
+每局结束后，后台记忆 Agent 会更新角色记忆。当 `char_memory.entries` 条数 **大于 15** 时，会尝试生成分层摘要并将 `entries` 裁剪为最近 **8** 条。若记忆 Agent 失败，**不裁剪**，下轮可重试。
 
 常量（与后端 `galgame/memory.py` 一致）：
 
@@ -73,7 +75,7 @@
 
 ## 5. 后台自动摘要调度
 
-`memory/auto_summarizer.py` **不再**对 Galgame/锁分按 token 阈值写 `contextSummary`。长对话压缩完全由 **第 10 步**（角色记忆更新链路中的分层折叠）与手动 `summarize_context` 负责。
+`memory/auto_summarizer.py` **不再**对 Galgame/锁分按 token 阈值写 `contextSummary`。长对话压缩由后台记忆 Agent 的分层折叠与手动 `summarize_context` 负责。
 
 ---
 

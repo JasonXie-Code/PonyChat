@@ -9,7 +9,7 @@ def normalize_attachment(raw: Any) -> dict[str, Any] | None:
     if not isinstance(raw, dict):
         return None
     typ = str(raw.get("type") or raw.get("kind") or "sticker").strip() or "sticker"
-    if typ not in {"sticker", "emoji_asset"}:
+    if typ not in {"sticker", "emoji_asset", "image"}:
         return None
     asset_id = str(raw.get("asset_id") or raw.get("assetId") or "").strip() or None
     user_sticker_id = str(raw.get("user_sticker_id") or raw.get("userStickerId") or "").strip() or None

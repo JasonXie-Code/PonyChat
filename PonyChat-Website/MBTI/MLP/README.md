@@ -1,5 +1,7 @@
 # MLP MBTI
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 同人向 MBTI 测验（手机优先）。产品约定见 [PROJECT.md](PROJECT.md)，阶段规划见 [ROADMAP.md](ROADMAP.md)。
 
 ## 一键启动（Windows）

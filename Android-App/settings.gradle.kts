@@ -20,12 +20,12 @@ dependencyResolutionManagement {
         maven {
             url = uri("${rootDir}/../local-repo")
         }
-        // ③ 阿里云镜像 + 原始仓库
+        // ③ 原始仓库 + 阿里云镜像回退；避免镜像 TLS 故障阻断后续仓库解析
+        google()
+        mavenCentral()
         maven { url = uri("https://maven.aliyun.com/repository/google") }
         maven { url = uri("https://maven.aliyun.com/repository/central") }
         maven { url = uri("https://maven.aliyun.com/repository/public") }
-        google()
-        mavenCentral()
         maven { url = uri("https://jitpack.io") }
     }
 }

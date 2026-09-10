@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from Backend import cosyvoice_client
+from Backend import cosyvoice_client, voice_lab_client
 
 
 class _FakeResponse:
@@ -37,6 +37,11 @@ class _FakeCosyVoiceClient:
 
     async def __aexit__(self, *args: object) -> None:
         return None
+
+    async def request(self, method: str, url: str, **kwargs: Any) -> _FakeResponse:
+        if method.upper() == "POST":
+            return await self.post(url, **kwargs)
+        return await self.get(url, **kwargs)
 
     async def post(self, _url: str, *, json: dict[str, Any] | None = None, **_kwargs: Any) -> _FakeResponse:
         self._post_count += 1
@@ -106,3 +111,10 @@ def test_cosyvoice_instruction_trim_uses_document_character_units():
     units = sum(2 if "\u3400" <= ch <= "\u9fff" else 1 for ch in trimmed)
     assert units <= 100
     assert trimmed.endswith("。")
+
+
+def test_voice_lab_health_uses_cosyvoice_base_url(monkeypatch):
+    monkeypatch.setenv("PONYCHAT_TTS_PROVIDER", "cosyvoice")
+    monkeypatch.setenv("PONYCHAT_COSYVOICE_BASE_URL", "https://voice.ponychat.org/cosyvoice/")
+
+    assert voice_lab_client._voice_lab_health_url() == "https://voice.ponychat.org/cosyvoice/health"

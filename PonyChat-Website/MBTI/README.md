@@ -1,5 +1,7 @@
 # MBTI（小马 / 标准 双站点）
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 - **`Common/`**：共用前端源码（Vite 别名 `@common`）、`Common/package.json` 供 TypeScript 解析依赖。
 - **`MLP/web/`**：小马情境变体；数据在 `MLP/web/src/data/`（别名 `@data`）。
 - **`Standard/web/`**：标准情境变体；数据在 `Standard/web/src/data/`。

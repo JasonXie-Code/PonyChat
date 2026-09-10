@@ -17,7 +17,6 @@ Provider 工厂模块。
 
 from .base import BaseProvider, LLMResponse, ParseResult
 from .deepseek import DeepseekProvider
-from .doubao import DoubaoProvider
 from .openai_compat import OpenAICompatProvider
 from .qwen import QwenProvider
 from .xai import XaiProvider
@@ -27,7 +26,6 @@ __all__ = [
     "LLMResponse",
     "ParseResult",
     "DeepseekProvider",
-    "DoubaoProvider",
     "OpenAICompatProvider",
     "QwenProvider",
     "XaiProvider",
@@ -43,7 +41,6 @@ __all__ = [
 
 # 按优先级排列：更具体的厂商放前面；OpenAI 兼容兜底放最后（仅云端/公网 API，不含本机推理）
 _PROVIDERS: list[BaseProvider] = [
-    DoubaoProvider(),
     XaiProvider(),
     QwenProvider(),
     DeepseekProvider(),
@@ -57,12 +54,13 @@ def get_provider(model_name: str, endpoint: str, model_cfg: dict) -> BaseProvide
     根据模型名称和端点自动选择 Provider。
 
     检测顺序（优先级从高到低）：
-      1. DoubaoProvider        — 字节豆包 / Seed
       2. XaiProvider           — xAI Grok
       3. QwenProvider          — 阿里云 DashScope Qwen
       4. DeepseekProvider      — DeepSeek 官方端点或 deepseek 模型名
       5. OpenAICompatProvider  — 其它 OpenAI 兼容（未匹配时兜底）
     """
+    if "doubao" in (model_name or "").lower() or "ark.cn-beijing.volces.com" in (endpoint or "").lower():
+        raise ValueError("Retired LLM provider; use deepseek-flash")
     for provider in _PROVIDERS:
         if provider.detect(model_name, endpoint, model_cfg):
             return provider

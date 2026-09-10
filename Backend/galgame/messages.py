@@ -48,7 +48,7 @@ async def build_galgame_messages(
     except Exception:
         state_score = 40
 
-    # 剧情记忆由 char_memory + 分层摘要（长期/短期）在分步提示词中注入，不再使用 context_summary 截断消息链。
+    # 剧情记忆与状态交给单一游戏 Agent 统一读取，不再使用 context_summary 截断消息链。
 
     db_msgs = [m for m in state.get("messages", []) if not m.get("isHidden", False)]
     if db_msgs:
@@ -58,8 +58,7 @@ async def build_galgame_messages(
                 current_user_content = rm.content or ""
                 break
 
-        # 不再硬限 8 轮——尽量使用全量骨架化历史（旧轮在 slim_payload 中被压缩为单行骨架，
-        # token 占用极小）。
+        # 不再硬限 8 轮，尽量向 Agent 提供完整的可信对话历史。
         rebuilt: list[dict] = []
         for item in db_msgs:
             role = item.get("role")
@@ -129,9 +128,7 @@ async def build_galgame_messages(
     _is_lock = request.mode == "galgame_lock"
     _effective_place = current_place_lock if _is_lock else current_place
 
-    # galgame 占位须为第一条 system，供 steps._replace_system_content 替换；用户信息紧随其后保留
-    galgame_sys_msg = {"role": "system", "content": "(placeholder: replaced by step system prompt)"}
-    messages = [galgame_sys_msg] + preserved_system + dialogue_only
+    messages = preserved_system + dialogue_only
 
     request._galgame_char_profile = combined_profile
     request._galgame_is_initial = is_initial

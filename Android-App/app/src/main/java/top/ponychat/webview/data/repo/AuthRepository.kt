@@ -114,7 +114,7 @@ class AuthRepository(private val prefs: AppPreferences) {
     }
 
     suspend fun discoverLanUrl() {
-        // 兼容旧调用点：Android 端固定使用公网 https://www.ponychat.org。
+        // 兼容旧调用点：正式连接使用 AppPreferences 中的 Server-CN IP 入口。
     }
 
     private fun parseErrorMessage(errorBody: String?): String? {

@@ -1,5 +1,7 @@
 # PonyChat LLM 静态站
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 `PonyChat-Website/LLM/` 是一个轻量的本地 LLM 聊天前端，面向 OpenAI-compatible 服务。
 
 ## 功能

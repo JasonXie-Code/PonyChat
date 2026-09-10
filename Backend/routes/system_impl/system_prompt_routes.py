@@ -160,6 +160,11 @@ async def get_app_version():
       PONYCHAT_APP_VERSION_CODE  最新版本 Code（整数，如 103）
       PONYCHAT_APP_DOWNLOAD_URL  APK 下载地址（默认为后端直接分发端点）
     """
+    from Backend.routes.system_impl.local_apk import latest_release
+    release = latest_release()
+    if release is not None:
+        return {"version_name": release["version_name"], "version_code": release["version_code"],
+                "download_url": release["download_url"]}
     return {
         "version_name": os.getenv("PONYCHAT_APP_VERSION_NAME", "4.0.0"),
         "version_code": int(os.getenv("PONYCHAT_APP_VERSION_CODE", "102")),
@@ -174,11 +179,15 @@ async def download_apk():
     优先读取 PONYCHAT_APP_APK_PATH 环境变量；若未设置，则根据
     PONYCHAT_APP_VERSION_NAME / PONYCHAT_APP_VERSION_CODE 自动拼接路径。
     """
+    from Backend.routes.system_impl.local_apk import latest_release, file_response
+    release = latest_release()
+    if release is not None:
+        return file_response(release["filename"])
     apk_path = os.getenv("PONYCHAT_APP_APK_PATH", "")
     if not apk_path:
         version_name = os.getenv("PONYCHAT_APP_VERSION_NAME", "")
         version_code = os.getenv("PONYCHAT_APP_VERSION_CODE", "")
-        releases_dir = Path("/opt/ponychat/PonyChat-Website/Main/deploy/releases")
+        releases_dir = Path(__file__).resolve().parents[3] / "var" / "releases"
         apk_path = str(releases_dir / f"PonyChat-v{version_name}-{version_code}-release.apk")
     if not apk_path or not Path(apk_path).is_file():
         raise HTTPException(status_code=404, detail="APK 文件暂不可用，请稍后重试")
@@ -188,6 +197,12 @@ async def download_apk():
         media_type="application/vnd.android.package-archive",
         filename=filename,
     )
+
+
+@router.get("/releases/{filename}")
+async def download_versioned_apk(filename: str):
+    from Backend.routes.system_impl.local_apk import file_response
+    return file_response(filename)
 
 
 @router.get("/api/health")
@@ -1076,6 +1091,18 @@ async def upload_character_voice_reference_audio(
     }
 
 
+@router.post("/api/chat_images/{filename}/received")
+async def acknowledge_web_image(filename: str, x_chat_auth: Optional[str] = Header(None, alias="X-Chat-Auth")):
+    from .auth import auth_token_verify
+    from ..chat_image_transfer import discard_web_image_transfer
+    username = await auth_token_verify((x_chat_auth or '').strip())
+    if not username:
+        raise HTTPException(status_code=401, detail="需要登录")
+    if not discard_web_image_transfer(filename, username):
+        raise HTTPException(status_code=404, detail="图片不存在")
+    return {'deleted': True}
+
+
 @router.get("/chat_images/{filename}")
 async def get_chat_image(filename: str):
     """聊天图片服务接口 - 从数据库读取消息中的图片二进制数据"""
@@ -1088,9 +1115,11 @@ async def get_chat_image(filename: str):
         if result:
             data, mime_type = result
             headers = {
-                "Cache-Control": "public, max-age=31536000, immutable",
+                "Cache-Control": "no-store" if filename.startswith('tmp_') else "public, max-age=31536000, immutable",
                 "X-Content-Type-Options": "nosniff",
             }
+            if filename.startswith('tmp_'):
+                headers['X-Accel-Buffering'] = 'no'
             return Response(content=data, media_type=mime_type, headers=headers)
         return Response(status_code=404)
     except Exception as e:

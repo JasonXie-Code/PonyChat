@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from Backend.galgame.memory import (
-    _split_step10_memory_payload,
+    _split_memory_agent_payload,
     format_repetition_profile_for_prompt,
     normalize_repetition_profile,
 )
 
 
-def test_splits_structured_step10_payload() -> None:
+def test_splits_structured_memory_agent_payload() -> None:
     raw = {
         "memory_entry": {
             "turn": 108,
@@ -34,7 +34,7 @@ def test_splits_structured_step10_payload() -> None:
         },
     }
 
-    entry, profile = _split_step10_memory_payload(raw)
+    entry, profile = _split_memory_agent_payload(raw)
 
     assert entry == raw["memory_entry"]
     assert profile["avoid_next_turn"] == ["不要继续用同一微动作表现害羞。"]
@@ -42,8 +42,8 @@ def test_splits_structured_step10_payload() -> None:
     assert profile["semantic_loops"][0]["suggested_alternatives"] == ["转移话题", "生活化动作"]
 
 
-def test_legacy_step10_payload_still_works() -> None:
-    entry, profile = _split_step10_memory_payload(
+def test_legacy_memory_payload_still_works() -> None:
+    entry, profile = _split_memory_agent_payload(
         {
             "turn": 12,
             "player_action": "玩家提问。",
@@ -107,7 +107,7 @@ def test_formats_repetition_profile_for_next_turn_prompt() -> None:
         }
     )
 
-    assert "上一轮第10步去重档案" in text
+    assert "上一轮记忆 Agent 去重档案" in text
     assert "不要继续用翅根抖表达害羞" in text
     assert "被温柔称赞后立刻回避" in text
     assert "短促台词" in text

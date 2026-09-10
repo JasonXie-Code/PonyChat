@@ -5,7 +5,7 @@ import time
 import asyncio
 import re
 import uuid
-from typing import List, Optional, Dict, Set, Any
+from typing import List, Optional, Dict, Set, Any, Literal
 from pathlib import Path
 from pydantic import AliasChoices, BaseModel, Field
 from .runtime_paths import resolve_database_path
@@ -145,6 +145,7 @@ class ChatRequest(BaseModel):
     )
     username: Optional[str] = None  # 可选：用于更新用户活跃时间
     mode: str = "normal"  # "normal" or "galgame"
+    normal_engine: Literal["pipeline", "harness"] = "harness"
     character_id: Optional[str] = None # 用于Galgame模式查找角色数据
     conversation_id: Optional[str] = None  # 🔧 [多设备修复] 对话ID，用于精确定位消息保存位置
     reply_character_id: Optional[str] = Field(
@@ -189,7 +190,7 @@ class ChatRequest(BaseModel):
     memory_enabled: Optional[bool] = True
     # 危机热线显示开关（默认开启）
     crisis_hotline_enabled: Optional[bool] = True
-    # 指定使用的模型 ID（Web 端固定传 doubao-2-0-lite，Android 端不传则沿用服务端活跃模型）
+    # 指定模型 ID；Web 使用统一 DeepSeek 视觉模型，Android 默认沿用服务端模型。
     model_id: Optional[str] = None
     # 客户端环境上下文（时间/设备/位置/天气），每次请求时由 Android 端上报
     client_context: Optional["ClientContext"] = None
@@ -977,6 +978,11 @@ async def save_chat_debug_log(
     方便直接看到传给模型的温度、Token 上限、思考开关、思考深度、联网状态等。
     """
     try:
+        from .chat_modules.agent_logging import current_params, snapshot
+        agent_params = current_params()
+        if agent_params:
+            params = snapshot({**agent_params, **(params or {})})
+            data = snapshot(data)
         from datetime import datetime
         now = datetime.now()
         day_dir = now.strftime("%Y-%m-%d")
@@ -1012,7 +1018,9 @@ async def save_chat_debug_log(
             filename_character = primary_character_id or "none"
             display_character_name = primary_character_name
             speaker_character_id = ""
-        filename = os.path.join(logs_dir, f"{timestamp}_{mode}_{stage}_{filename_character}.js")
+        # Concurrent Agent events can share the same millisecond and stage.
+        suffix = ('-' + uuid.uuid4().hex[:12]) if agent_params else ''
+        filename = os.path.join(logs_dir, f"{timestamp}{suffix}_{mode}_{stage}_{filename_character}.js")
         log_content: dict = {
             "timestamp": datetime.now().isoformat(),
             "username": username,
@@ -1046,6 +1054,59 @@ _CHAR_HASH_FIELDS = [
     'name', 'prompt', 'bio', 'description',
     'preview', 'avatar', 'tags', 'instruction', 'temperature', 'model'
 ]
+
+# 角色主页“最近更新”跟随名字、设定、主要视觉素材与音色。
+# 点赞、添加次数、公开状态、聊天时间和同步元数据不参与。
+_CHARACTER_SETTING_FIELDS = {
+    "name": ("name",),
+    "avatar": ("avatar",),
+    "profile_cover": ("profileCover", "profile_cover"),
+    "prompt": ("prompt", "persona", "systemPrompt"),
+    "bio": ("bio",),
+    "description": ("description",),
+    "preview": ("preview",),
+    "signature": ("signature",),
+    "tags": ("tags",),
+    "instruction": ("instruction",),
+    "temperature": ("temperature",),
+    "model": ("model",),
+    "example_dialogue": ("exampleDialogue", "example_dialogue"),
+    "profile_gender": ("profileGender", "profile_gender"),
+    "profile_species": ("profileSpecies", "profile_species"),
+    "profile_age": ("profileAge", "profile_age"),
+    "profile_personality": ("profilePersonality", "profile_personality"),
+    "profile_interests": ("profileInterests", "profile_interests"),
+    "profile_intro": ("profileIntro", "profile_intro"),
+    "profile_mbti": ("profileMbti", "profile_mbti"),
+    "voice_id": ("voiceId", "voice_id"),
+    "voice_source_mode": ("voiceSourceMode", "voice_source_mode"),
+    "voice_instruct": ("voiceInstruct", "voice_instruct"),
+    "voice_reference_audio_url": (
+        "voiceReferenceAudioUrl",
+        "voice_reference_audio_url",
+    ),
+}
+
+
+def compute_character_setting_hash(char: dict) -> str:
+    """计算角色主页有效内容的稳定哈希，用于更新时间判定。"""
+    source = char if isinstance(char, dict) else {}
+    subset = {}
+    for canonical, aliases in _CHARACTER_SETTING_FIELDS.items():
+        value = next((source[key] for key in aliases if key in source), None)
+        if isinstance(value, list):
+            value = sorted(str(item).strip() for item in value if str(item).strip())
+        elif isinstance(value, str):
+            value = value.replace("\r\n", "\n").strip()
+        elif isinstance(value, float):
+            value = round(value, 6)
+        subset[canonical] = value
+    payload = json.dumps(subset, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def character_setting_changed(before: dict, after: dict) -> bool:
+    return compute_character_setting_hash(before) != compute_character_setting_hash(after)
 
 
 def compute_character_hash(char: dict) -> str:

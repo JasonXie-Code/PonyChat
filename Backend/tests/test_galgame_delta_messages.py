@@ -60,7 +60,7 @@ def test_galgame_messages_rebuild_history_from_server_state_with_delta_user(monk
 
     dialogue = [m for m in result if m.get("role") in ("user", "assistant")]
     assert result[0]["role"] == "system"
-    assert result[1] == {"role": "system", "content": "client context"}
+    assert result[0] == {"role": "system", "content": "client context"}
     assert dialogue[0] == {"role": "user", "content": "开场选择：图书馆"}
     assert dialogue[-1] == {"role": "user", "content": "继续观察她的反应"}
     assert any(m.get("role") == "assistant" and "她抬头看向你" in m.get("content", "") for m in dialogue)

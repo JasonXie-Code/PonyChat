@@ -10,6 +10,17 @@ import time
 import uuid
 from typing import Any
 
+from .normal_parts import (
+    _BRACKET_CHAR_RE,
+    _NORMAL_STAGE3_BRACKET_PART_KINDS,
+    _NORMAL_STAGE3_PART_KINDS,
+    _merge_adjacent_normal_bracket_descriptions,
+    _normal_stage3_clean_field_text,
+    _normal_stage3_render_parts_bubble,
+    _normal_stage3_strip_bracket_terminal_period,
+    _normal_stage3_strip_terminal_speech_period,
+)
+
 import httpx
 from fastapi.responses import JSONResponse, StreamingResponse
 
@@ -54,8 +65,6 @@ from .runtime import (
 )
 from .state import is_generation_current, is_summary_placeholder_message
 
-_NORMAL_HANDOFF_ROUTER_RECENT_ASSISTANT_TURNS = 8
-_MAX_STAGE3_STRUCTURE_RETRIES = 1
 
 _NORMAL_STAGE3_OLD_QUOTE_RE = re.compile(r"[“\"『「]([^“”\"『』「」]{2,120})[”\"』」]")
 _NORMAL_STAGE3_OLD_REFERENCE_RE = re.compile(
@@ -93,11 +102,6 @@ _LEADING_SHORTCUT_AT_RE = re.compile(
 )
 _DESCRIPTION_NONHUMAN_LIMB_RE = re.compile(
     r"(手指|指尖|手掌|掌心|手腕|手臂|双手|拳头|中指|竖中指|比中指)"
-)
-_SUPPORTIVE_LOW_INFO_GUARD_MARKERS = (
-    "压力/疲惫倾诉后只回了一个低信息承接词",
-    "低信息承接后，若使用动作，必须配一小句",
-    "倾诉后低信息回应不得只输出纯动作",
 )
 
 _DESCRIPTION_PONY_SPECIES_KEYWORDS = (
@@ -164,29 +168,6 @@ def _description_is_human_species(species: str) -> bool:
     if any(marker in text for marker in ("非人类", "不是人类", "非人族", "non-human", "nonhuman")):
         return False
     return _description_species_has_any(species, _DESCRIPTION_HUMAN_SPECIES_KEYWORDS)
-
-
-def _build_profile_equine_mammary_anatomy_guidance(
-    species: str,
-    *,
-    explicit_profile_species: bool = False,
-) -> str:
-    if not explicit_profile_species:
-        return ""
-    if not _description_species_has_any(species, _DESCRIPTION_PONY_SPECIES_KEYWORDS):
-        return ""
-    return (
-        "【角色档案种族解剖学补充】"
-        f"角色主页档案的种族字段为「{species}」，属于马/小马类体态。"
-        f"{equine_species_prompt_line(species)}"
-        "日常描写和身体介绍里自然使用蹄子、前蹄、蹄尖等符合蹄类体态的表达，不要主动罗列缺失部位；"
-        "只有用户直接询问手、手指、中指或替代写法时，才简短说明应按蹄类体态理解，并给出蹄尖/前蹄等替代表达。"
-        "同种幼驹/小马驹/小雌驹/小雄驹也按四蹄体态理解；健康、全乎或完整不能写成六只蹄子、六蹄或额外蹄肢。"
-        "若本轮需要回答或描写当前角色自己的乳房位置，按事实解剖学定义为位于胯间、后腿之间，一共两个乳房；"
-        "不要写成四个或两对乳房，也不要把乳头数量当作乳房数量；"
-        "不要写成人类胸前、胸口、胸部或上半身位置。"
-        "只有角色主页档案种族字段明确属于马/小马类时才启用本条；详细设定正文或默认兜底不触发。"
-    )
 
 
 def _build_character_species_description_guidance(species: str) -> str:
@@ -262,72 +243,48 @@ def _description_shortcut_target(text: str) -> str:
 def _description_shortcut_focus_guidance(target: str) -> str:
     target = str(target or "").strip() or "心理活动"
     common = (
-        "用户明确点名要哪一种描写，就以该内容为主；不要把心理、身体、动作、环境、画面全部混成固定四件套。\n"
-        "每个气泡只承载一个同类层次，宁可收束，也不要堆叠多种身体动作、物件、视线和环境细节。\n"
-        "发言主体必须按历史消息角色保持：assistant/角色上一轮说过的话仍然是角色自己说的，不能写成用户问过、用户说过、用户牵着角色或用户主动提出；本轮快捷消息只是在请求描写角色此刻状态，不会改变前文发言归属。\n"
-        "选项归属也必须保持：若前文是用户问角色“你想 A 还是 B/要选哪个”，随后 assistant/角色回答了某个选项，则该选项是角色自己的选择或偏好，不是用户选择；本轮描写不能写成“用户选择/用户决定/用户让我这样”。\n"
+        "用户指定描写类型时，以该类型为主，每个气泡只承载一个同类层次，不混成固定的心理、身体、动作和环境组合。\n"
+        "回顾前文时，保留assistant与user的发言和行为归属；用户提出选项、角色作出选择时，将选择归属于角色，不能改成用户决定。\n"
     )
     if target == "心理活动":
-        return (
-            "【描写内容主轴｜心理活动】\n"
-            + common
-            + "主内容写角色此刻的念头、判断、犹豫、害怕、压抑、关系理解或自我说服；外显动作/身体反应只作少量锚点。\n"
-            "整轮最多使用 1-2 个很短的动作或身体锚点，可用呼吸、视线、姿态、表情或符合角色种族的部位；不要连续堆叠身体动作清单。\n"
-            "不要把身体反应清单当成主要内容；这些只能服务于内心变化。\n"
-        )
+        return ("【描写内容主轴｜心理活动】\n" + common
+                + "目标是心理活动时，主要写角色此刻的念头、判断、感受与内在动机；需要外显动作或身体反应作锚点时，整轮最多1到2个很短的锚点，且符合角色物种，不能用身体动作清单代替心理。\n")
     if target == "身体状态":
-        return (
-            "【描写内容主轴｜身体状态】\n"
-            + common
-            + "主内容写身体感觉、姿态、疲惫、紧绷、疼痛、温度、呼吸、重心或肌肉反应；心理只可作为一句背景，不展开成内心独白。\n"
-            "不要大段分析关系、回忆、猜测或情绪理由；环境只保留与身体接触有关的必要物件。\n"
-        )
+        return ("【描写内容主轴｜身体状态】\n" + common
+                + "目标是身体状态时，主要写身体感觉、姿态和当前生理反应；心理最多作为一句背景，不展开内心独白、关系分析或回忆。涉及环境时，只保留与身体接触有关的必要物件。\n")
     if target == "看到的画面":
-        return (
-            "【描写内容主轴｜看到的画面】\n"
-            + common
-            + "主内容写视野里的对象、位置、动作、颜色、遮挡、远近和画面变化；只写看得见的内容。\n"
-            "不要写角色看不见的心理推理、身体内部感觉或环境泛化氛围，除非它直接出现在画面里。\n"
-        )
+        return ("【描写内容主轴｜看到的画面】\n" + common
+                + "目标是看到的画面时，只写视野内的对象、位置、动作、颜色、遮挡、远近和变化；看不见的心理、体内感觉及泛化氛围不作为画面。\n")
     return "【描写内容主轴】\n" + common
 
 
 def _description_shortcut_stage3_contract(*, character_species: str = "", target: str = "心理活动") -> str:
     return (
         "【描写回合硬性输出合同】\n"
-        "本轮是描写回合，不是普通聊天回合；dialogue_allowed=false。\n"
-        "最终 bubbles[*].parts 只能写当前角色视角下的描写内容；每个 bubble.parts 只能包含一个非 speech part，不得包含 speech。\n"
-        "非 speech part 的 kind 只能从 action/thought/body_state/expression/gaze/voice_state/scene/visual/sensory/emotion 中选择；后端会自动加全角括号。\n"
-        "parts[*].text 里不能自己写括号，也不能写角色台词、普通聊天、反问、解释、补充说明、系统说明或“我是不是/你和她/要不要/可以吗”等对用户说出口的话。\n"
-        "非 speech part 只能写当前角色的心理活动、身体状态、动作、神态、声音状态或当前画面；不能把准备说出口的话、聊天反问或解释塞进描写里。\n"
-        "可以描写角色想说却没有说出口、喉咙发紧、视线停顿、动作迟疑，但不能让角色真的开口发问或推进对话。\n"
-        "前文 assistant/角色消息里的“我”指角色自己，“你”指用户；用户本轮快捷请求里的“你”只指定描写对象是当前角色，不能倒改历史发言主体。\n"
-        "若前文是用户给出 A/B 选项并询问角色想选哪个，assistant/角色回答某个选项，该选择归属于角色；本轮不得写成用户替角色选择、用户决定或用户让角色选了该项。\n"
+        "1. 本轮为描写回合时，dialogue_allowed=false；每个bubble.parts只能包含一个非speech片段，不得包含speech。\n"
+        "2. 选择kind时，只能使用action/thought/body_state/expression/gaze/voice_state/scene/visual/sensory/emotion；text不写括号，由后端添加全角括号。\n"
+        "3. 生成片段时，只呈现角色视角下的当前描写；不能混入台词、聊天反问、解释、补充说明或系统说明，不能用描写标签包装实际对白。\n"
+        "4. 引用历史时，assistant消息中的我归角色、你归用户；用户的快捷请求不改变此前的发言主体。\n"
+        "5. 用户提供选项而角色作出选择时，选择归属于角色；不能写成用户决定或替角色选择。\n"
         f"{_description_shortcut_focus_guidance(target)}"
         f"{_build_character_species_description_guidance(character_species)}"
     )
 
 
 def _story_progression_shortcut_guidance() -> str:
-    return (
-        "【继续下一步｜后续动作素材】\n"
-        "用户给出继续下一步信号，不是角色台词、单纯环境描写，也不是要求角色停在原地反问用户。\n"
-        "无论角色偏内向还是外向，都必须基于当前已发生事实、角色性格、关系阶段和场景约束，合理推演接下来可能自然出现的事情。\n"
-        "回复要让用户直接看到后续一小段世界内进展：必须至少落到一个具体可见的后续事件，例如角色走到某处、拿到/发现某物、打开门、进入某个房间、遇到新阻碍、听见新的动静、完成当前任务的一步，或让第三方角色产生明确反应。\n"
-        "可以主动推进数个小节拍，但不得改写既有事实，不得替用户做明确决定、说用户台词或强迫用户动作；用户的反应应留出可接入空间。\n"
-        "弱推进不合格：只写“嗯/好/走吧/带路吧/我们走/她迈步/跟上脚步/开始移动”，但没有新的地点、物品、发现、阻碍、任务进展或第三方反应。\n"
-        "低证据支线禁入：除非最近真实对话、当前用户消息、场景锚点或角色设定已经出现，不得凭空把当前工作场景切成点餐、咖啡、蛋糕、快递、订单、签收、外卖、新客人、厨房/门口杂务等相邻日常支线；如果需要第三方反应，必须来自当前已在场角色或用户刚点名/刚播种的角色，并服务当前任务。\n"
-        "如果上一轮或近几轮角色已经明确提出目标、任务或下一阶段，本轮必须越过原地准备、旧过渡点、重复许可和单纯带路，直接写抵达/进入该目标，或在该目标处开始任务、发现新情况、遇到阻碍或触发第三方反应。若最近证据显示前一任务或旧目标已经完成，并出现新的行动方向，旧任务只能作为历史背景，不得重新写成当前活动。\n"
-        "如果现场是当前角色熟悉的地点、住所、家里、房间、店铺、工作地或她刚才明确知道目标位置，必须由当前角色自己带路、自己走向目标、自己指出方向或自己处理下一步；禁止让用户“带路/领路/你带我去/你想往哪边走”。\n"
-        "如果上文硬锚说明当前是成人合意亲密场景里的内部继续信号：只有最近对话或当前事实锚已经明确出现高潮、顶峰、释放、余韵或事后，才可以写余韵、安抚、清理、确认感受、抱住休息或温柔收束；否则不要转去睡觉、休息、喝水、吃东西、聊天、散步、换地点、清理、毛巾、热水、厨房、饰品、动物、农场、任务或其他非亲密内容，必须把用户的继续信号当成亲密正反馈，保持当前亲密接触并继续加深到下一层节奏。反复收到继续信号时，每次都要比上一轮更接近当前亲密段落的高点；外向角色可以更快抵达，内向/害羞/温柔角色允许慢热但仍要主动推进。通用压力、第三人、公开场合和隐私边界低于已建立的特殊亲密关系或玩法约定；当前用户明确停止、不适、退出或不要继续时才按退出信号中断。\n"
-        "如果当前关系或安全边界不允许某种升级，就把它推进到当前关系阶段允许的具体互动或事件，不要空泛地说“你决定吧/接下来会怎样”。\n"
-    )
-
-
-def _should_emit_json_compat_delta(*, voice_reply_generated: bool) -> bool:
-    # JSON normal chat keeps the old OpenAI-style delta for text replies only.
-    # Voice replies must arrive through assistant_paragraph so the app can attach audio state.
-    return not bool(voice_reply_generated)
+    return """【继续下一步】
+1. 用户发出继续信号时，基于当前事实、角色性格、关系阶段和场景，呈现接下来一小段实际进展。
+2. 回复只有同意、出发或准备而没有结果时，补出至少一个具体可见的事件或任务进展，不能停在原地表态。
+3. 近几轮已明确目标且尚未完成时，直接抵达、进入目标或在目标处推进任务；旧任务已完成且出现新方向时，将旧任务作为历史，不重新写成当前活动。
+4. 地点为角色熟悉的住所或工作地，或角色已知目标位置时，由角色自己带路或处理下一步，不让用户替其指路。
+5. 需要新增支线时，核对近期对话、当前消息、场景锚点或角色设定；没有依据时不插入相邻日常支线。需要第三方反应时，使用当前在场或用户刚点名的角色，并服务当前任务。
+6. 推进数个小节拍时，保留既有事实，不替用户作出决定、说台词或强迫动作；依赖用户回应的部分留出接入空间。
+7. 当前关系或边界不允许某种升级时，推进允许范围内的具体互动或事件，不以空泛反问代替进展。
+8. 如果上文硬锚说明当前是成人合意亲密场景里的内部继续信号：只有最近对话或当前事实锚已经明确出现高潮、顶峰、释放、余韵或事后，才可以写余韵、安抚、清理、确认感受、抱住休息或温柔收束；
+   否则不要转去睡觉、休息、喝水、吃东西、聊天、散步、换地点、清理、毛巾、热水、厨房、饰品、动物、农场、任务或其他非亲密内容，必须把用户的继续信号当成亲密正反馈，保持当前亲密接触并继续加深到下一层节奏。反复收到继续信号时，每次都要比上一轮更接近当前亲密段落的高点；
+   外向角色可以更快抵达，内向/害羞/温柔角色允许慢热但仍要主动推进。通用压力、第三人、公开场合和隐私边界低于已建立的特殊亲密关系或玩法约定；
+   当前用户明确停止、不适、退出或不要继续时才按退出信号中断。
+"""
 
 
 def _normalize_normal_reply_dash_style(text: str, *, single_bubble: bool = False) -> str:
@@ -370,43 +327,7 @@ def _normalize_normal_reply_dash_style(text: str, *, single_bubble: bool = False
     return normalized
 
 
-def _merge_adjacent_normal_bracket_descriptions(text: str) -> str:
-    """Merge immediately adjacent full-bracket description fragments in one bubble."""
-    merged = str(text or "")
-    if not merged:
-        return merged
-    previous = None
-    while previous != merged:
-        previous = merged
-        merged = re.sub(r"）[ \t\f\v]*（", "", merged)
-        merged = re.sub(r"\)[ \t\f\v]*\(", "", merged)
-    return merged
-
-
-def _sanitize_normal_visible_reply(text: str, *, single_bubble: bool = False) -> str:
-    text = sanitize_assistant_close_leading_fullwidth_parens(text)
-    parts = re.split(r"(\n+)", text)
-    fixed: list[str] = []
-    for part in parts:
-        if not part or part.startswith("\n"):
-            fixed.append(part)
-            continue
-        opens = part.count("（")
-        closes = part.count("）")
-        if closes > opens:
-            first_open = part.find("（")
-            first_close = part.find("）")
-            if first_close >= 0 and (first_open < 0 or first_close < first_open):
-                left_ws_len = len(part) - len(part.lstrip())
-                part = part[:left_ws_len] + "（" + part[left_ws_len:]
-        fixed.append(part)
-    text = "".join(fixed)
-    text = _normalize_normal_reply_dash_style(text, single_bubble=single_bubble)
-    return _merge_adjacent_normal_bracket_descriptions(text)
-
-
 _BRACKET_SEGMENT_RE = re.compile(r"[（(]([^（）()]*)[）)]")
-_BRACKET_CHAR_RE = re.compile(r"[（）()]")
 _FULL_BRACKET_BUBBLE_RE = re.compile(r"^[（(][^（）()]{1,80}[）)]$")
 
 
@@ -438,41 +359,6 @@ def _normal_reply_level_from_count(count: int, speech_activity: int | None = Non
     return 5
 
 
-def _normal_stage3_reply_level_from_planner(planner_result: dict | None) -> int:
-    p = planner_result or {}
-    if "speech_activity" in p:
-        try:
-            return _normal_reply_level_from_speech_activity(int(p.get("speech_activity") or 45))
-        except Exception:
-            return _normal_reply_level_from_speech_activity(45)
-    try:
-        return _normal_reply_level_from_count(int(p.get("bubble_count") or 1))
-    except Exception:
-        return _normal_reply_level_from_count(1)
-
-
-def _normal_stage3_expected_bubble_count(planner_result: dict | None) -> int:
-    p = planner_result or {}
-    try:
-        count = max(1, min(6, int(p.get("bubble_count") or 1)))
-    except Exception:
-        count = 1
-
-    if "speech_activity" not in p:
-        return count
-
-    level = _normal_stage3_reply_level_from_planner(p)
-    min_max_by_level = {
-        1: (1, 1),
-        2: (1, 1),
-        3: (1, 2),
-        4: (3, 4),
-        5: (5, 6),
-    }
-    min_count, max_count = min_max_by_level.get(level, (1, 2))
-    return max(min_count, min(max_count, count))
-
-
 def _normal_reply_level_label(reply_level: int) -> str:
     return {
         1: "第一档：角色不回复",
@@ -489,19 +375,6 @@ def _compact_visible_chars(text: str) -> int:
 
 def _is_full_bracket_bubble(text: str) -> bool:
     return bool(_FULL_BRACKET_BUBBLE_RE.match(str(text or "").strip()))
-
-
-def _supportive_low_info_guard_active(planner_result: dict | None) -> bool:
-    if not isinstance(planner_result, dict):
-        return False
-    haystack = "\n".join(
-        [
-            str(planner_result.get("proactive_seed") or ""),
-            str(planner_result.get("expression_policy") or ""),
-            "\n".join(str(x or "") for x in (planner_result.get("avoid_contradictions") or [])),
-        ]
-    )
-    return any(marker in haystack for marker in _SUPPORTIVE_LOW_INFO_GUARD_MARKERS)
 
 
 def _normal_stage3_quote_guard_norm(text: str) -> str:
@@ -677,24 +550,6 @@ def _normal_stage3_repair_description_boundaries(
     return repaired, warnings
 
 
-def _normal_stage3_error_requires_retry(error: str) -> bool:
-    return bool(str(error or "").strip())
-
-
-def _normal_stage3_source_text_from_messages(messages: list | None) -> str:
-    parts: list[str] = []
-    for msg in messages or []:
-        if not isinstance(msg, dict):
-            continue
-        role = str(msg.get("role") or "")
-        if role not in {"system", "user", "assistant"}:
-            continue
-        content = str(msg.get("content") or "").strip()
-        if content:
-            parts.append(content)
-    return "\n\n".join(parts)
-
-
 def _normal_stage3_reply_level_violation(
     texts: list[str],
     *,
@@ -773,150 +628,6 @@ def _loads_normal_stage3_json_object(raw: str) -> dict | None:
         return data if isinstance(data, dict) else None
     except Exception:
         return None
-
-
-_STAGE3_JSON_SCAFFOLD_KEY_RE = re.compile(
-    r'(?m)^\s*,?\s*"(?:bubble_count|bubbles|index|type|content|purpose|used_facts)"\s*:'
-)
-_STAGE3_JSON_SCAFFOLD_LINE_RE = re.compile(r"^\s*[\{\}\[\]],?\s*$")
-_STAGE3_CONTENT_KEY_RE = re.compile(r'(?m)(?<!\\)"content"\s*:')
-
-
-def _looks_like_stage3_json_scaffold(text: str) -> bool:
-    raw = str(text or "").strip()
-    if not raw:
-        return False
-    if raw.startswith("```"):
-        raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE)
-        raw = re.sub(r"\s*```$", "", raw).strip()
-    if _STAGE3_JSON_SCAFFOLD_KEY_RE.search(raw):
-        return True
-    lines = [line.strip() for line in raw.splitlines() if line.strip()]
-    scaffold_lines = sum(1 for line in lines if _STAGE3_JSON_SCAFFOLD_LINE_RE.match(line))
-    return scaffold_lines >= 2 and any('"' in line and ":" in line for line in lines)
-
-
-def _extract_stage3_content_fragments_from_json_scaffold(text: str) -> list[str]:
-    raw = str(text or "").strip()
-    if not raw:
-        return []
-    if raw.startswith("```"):
-        raw = re.sub(r"^```(?:json)?\s*", "", raw, flags=re.IGNORECASE)
-        raw = re.sub(r"\s*```$", "", raw).strip()
-
-    decoder = json.JSONDecoder()
-    fragments: list[str] = []
-    seen: set[str] = set()
-    for match in _STAGE3_CONTENT_KEY_RE.finditer(raw):
-        idx = match.end()
-        while idx < len(raw) and raw[idx].isspace():
-            idx += 1
-        if idx >= len(raw):
-            continue
-
-        value = ""
-        if raw[idx] == '"':
-            try:
-                decoded, _end = decoder.raw_decode(raw[idx:])
-                if isinstance(decoded, str):
-                    value = decoded
-            except Exception:
-                line_end = raw.find("\n", idx)
-                candidate = raw[idx:] if line_end < 0 else raw[idx:line_end]
-                candidate = candidate.strip().rstrip(",").strip()
-                if candidate.startswith('"') and candidate.endswith('"'):
-                    try:
-                        decoded = json.loads(candidate)
-                        if isinstance(decoded, str):
-                            value = decoded
-                    except Exception:
-                        value = candidate[1:-1]
-        else:
-            line_end = raw.find("\n", idx)
-            candidate = raw[idx:] if line_end < 0 else raw[idx:line_end]
-            value = candidate.strip().rstrip(",").strip()
-
-        value = re.sub(r"[\r\n]+", " ", str(value or "")).strip()
-        if value and value not in seen and not _looks_like_stage3_json_scaffold(value):
-            seen.add(value)
-            fragments.append(value)
-    return fragments
-
-
-def _normal_stage3_clean_field_text(value: Any) -> str:
-    return re.sub(r"[\r\n]+", " ", str(value or "")).strip()
-
-
-def _normal_stage3_strip_bracket_terminal_period(text: str) -> str:
-    return re.sub(r"。+$", "", str(text or "").rstrip()).rstrip()
-
-
-def _normal_stage3_strip_terminal_speech_period(text: str) -> str:
-    return re.sub(r"。+$", "", str(text or "").rstrip()).rstrip()
-
-
-_NORMAL_STAGE3_PART_KINDS: set[str] = {
-    "speech",
-    "action",
-    "thought",
-    "body_state",
-    "expression",
-    "gaze",
-    "voice_state",
-    "scene",
-    "visual",
-    "sensory",
-    "emotion",
-}
-_NORMAL_STAGE3_BRACKET_PART_KINDS = _NORMAL_STAGE3_PART_KINDS - {"speech"}
-
-
-def _normal_stage3_render_parts_bubble(item: dict, pos: int) -> tuple[str, dict[str, Any], str]:
-    parts = item.get("parts")
-    if not isinstance(parts, list) or not parts:
-        return "", {}, f"第 {pos} 个 bubble 必须包含非空 parts 数组；旧 content/bracket_content/speech_content 格式不再接受。"
-
-    rendered_parts: list[str] = []
-    kind_counts: dict[str, int] = {}
-    speech_chars = 0
-    bracket_chars = 0
-    for part_pos, part in enumerate(parts, start=1):
-        if not isinstance(part, dict):
-            return "", {}, f"第 {pos} 个 bubble.parts[{part_pos}] 必须是 object，包含 kind/text。"
-        kind = str(part.get("kind") or "").strip().lower()
-        if kind not in _NORMAL_STAGE3_PART_KINDS:
-            allowed = "/".join(sorted(_NORMAL_STAGE3_PART_KINDS))
-            return "", {}, f"第 {pos} 个 bubble.parts[{part_pos}].kind 必须是 {allowed} 之一，当前为 {kind or '空'}。"
-        raw_text = str(part.get("text") or "")
-        if "\n" in raw_text or "\r" in raw_text:
-            return "", {}, f"第 {pos} 个 bubble.parts[{part_pos}].text 内部含换行；每个 part 文本内部不得换行。"
-        text = _normal_stage3_clean_field_text(raw_text)
-        if not text:
-            return "", {}, f"第 {pos} 个 bubble.parts[{part_pos}].text 不能为空。"
-        if _BRACKET_CHAR_RE.search(text):
-            return "", {}, f"第 {pos} 个 bubble.parts[{part_pos}].text 不得包含括号；后端会根据 kind 统一添加全角括号。"
-        kind_counts[kind] = kind_counts.get(kind, 0) + 1
-        if kind == "speech":
-            rendered_parts.append(text)
-            speech_chars += len(text)
-        else:
-            text = _normal_stage3_strip_bracket_terminal_period(text)
-            if not text:
-                return "", {}, f"第 {pos} 个 bubble.parts[{part_pos}].text 去掉括号内句号后不能为空。"
-            rendered_parts.append(f"（{text}）")
-            bracket_chars += len(text)
-
-    rendered = _merge_adjacent_normal_bracket_descriptions("".join(rendered_parts).strip())
-    rendered = _normal_stage3_strip_terminal_speech_period(rendered)
-    if not rendered:
-        return "", {}, f"第 {pos} 个 bubble.parts 渲染后为空。"
-    return rendered, {
-        "render_mode": "parts",
-        "part_count": len(parts),
-        "part_kinds": kind_counts,
-        "speech_chars": speech_chars,
-        "bracket_chars": bracket_chars,
-    }, ""
 
 
 def _normal_stage3_has_strict_description_contract(source_text: str) -> bool:
@@ -1061,82 +772,6 @@ def _coerce_normal_stage3_bubbles(
     return "\n".join(bubbles), parsed, ""
 
 
-def _best_effort_normal_stage3_bubbles(
-    raw: str,
-    *,
-    expected_count: int,
-) -> tuple[str, dict]:
-    expected = max(1, min(6, int(expected_count or 1)))
-    data = _loads_normal_stage3_json_object(raw)
-    bubbles: list[str] = []
-    declared_count = None
-    repaired_json_scaffold = False
-    if isinstance(data, dict):
-        try:
-            declared_count = int(data.get("bubble_count"))
-        except Exception:
-            declared_count = None
-        raw_bubbles = data.get("bubbles")
-        if isinstance(raw_bubbles, list):
-            for pos, item in enumerate(raw_bubbles, start=1):
-                if isinstance(item, dict):
-                    content, _field_meta, _field_error = _normal_stage3_render_parts_bubble(item, pos)
-                else:
-                    content = item
-                text = re.sub(r"[\r\n]+", " ", str(content or "")).strip()
-                if text:
-                    bubbles.append(text)
-        if not bubbles:
-            for key in ("content", "text", "reply", "message"):
-                text = re.sub(r"[\r\n]+", " ", str(data.get(key) or "")).strip()
-                if text:
-                    bubbles.append(text)
-                    break
-
-    if not bubbles:
-        text = str(raw or "").strip()
-        text = re.sub(r"^```(?:json)?\s*", "", text, flags=re.IGNORECASE)
-        text = re.sub(r"\s*```$", "", text).strip()
-        if text:
-            scaffold_like = _looks_like_stage3_json_scaffold(text) or text.startswith(("{", "["))
-            if scaffold_like:
-                repaired = _extract_stage3_content_fragments_from_json_scaffold(text)
-                if repaired:
-                    bubbles = repaired
-                    repaired_json_scaffold = True
-                else:
-                    return "", {
-                        "best_effort": True,
-                        "declared_bubble_count": declared_count,
-                        "rendered_bubble_count": 0,
-                        "json_scaffold_unrepairable": True,
-                    }
-            else:
-                bubbles = [line.strip() for line in re.split(r"\n+", text) if line.strip()]
-
-    if not bubbles:
-        return "", {
-            "best_effort": True,
-            "declared_bubble_count": declared_count,
-            "rendered_bubble_count": 0,
-        }
-
-    if expected == 1:
-        rendered = [" ".join(bubbles)]
-    elif len(bubbles) > expected:
-        rendered = bubbles[: expected - 1] + [" ".join(bubbles[expected - 1 :])]
-    else:
-        rendered = bubbles
-    meta = {
-        "best_effort": True,
-        "declared_bubble_count": declared_count,
-        "rendered_bubble_count": len(rendered),
-    }
-    if repaired_json_scaffold:
-        meta["json_scaffold_repaired"] = True
-    return "\n".join(rendered), meta
-
-
 def _normal_stage3_handoff_candidates(request, *, current_character_id: str = "") -> list[dict[str, str]]:
     current_character_id = str(current_character_id or "").strip()
     candidates: list[dict[str, str]] = []
@@ -1164,20 +799,3 @@ def _normal_stage3_handoff_candidates(request, *, current_character_id: str = ""
         sname = str(getattr(msg, "speaker_name", "") or "").strip()
         add(sid, sname or (main_display_name(request) if sid == main_character_id(request) else sid), "recent_speaker")
     return candidates[:6]
-
-
-def _normal_handoff_message_visible(msg) -> bool:
-    if getattr(msg, "isHidden", False):
-        return False
-    try:
-        if is_summary_placeholder_message(msg):
-            return False
-    except Exception:
-        pass
-    return getattr(msg, "role", None) in {"user", "assistant"}
-
-
-def _normal_handoff_speaker_id_for_message(request, msg) -> str:
-    if getattr(msg, "role", None) != "assistant":
-        return ""
-    return str(getattr(msg, "speaker_character_id", "") or "").strip() or main_character_id(request)

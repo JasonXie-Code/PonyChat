@@ -14,6 +14,8 @@ def apply_normal_thinking_switch(
     enable_high_thinking: bool,
 ) -> ReasoningPolicy:
     """Apply the normal-chat thinking switch to one request's reasoning policy."""
+    if reasoning_policy.is_deepseek_v4 and reasoning_policy.deepseek_v4_api_reasoning_effort == "low":
+        return reasoning_policy
     if enable_high_thinking:
         reasoning_policy.thinking_type = "enabled"
         reasoning_policy.reasoning_effort = "high"

@@ -2,7 +2,7 @@
   <div class="wc-root">
     <div v-if="phase === 'loading'" class="splash">
       <div class="spin" />
-      <p class="splash-text">正在连接...</p>
+      <p class="splash-text">{{ t('connecting') }}</p>
     </div>
 
     <div v-else-if="phase === 'pick'" class="pick-screen">
@@ -11,18 +11,19 @@
           <img :src="logoSrc" alt="" width="30" height="30" />
           <span>PonyChat</span>
         </RouterLink>
-        <span class="pick-badge">网页体验版</span>
+        <LanguageSwitcher />
+        <span class="pick-badge">{{ t('webEdition') }}</span>
       </header>
 
       <main class="pick-body">
-        <h1 class="pick-title">选择角色，开始对话</h1>
+        <h1 class="pick-title">{{ t('pickCharacter') }}</h1>
         <p class="pick-sub">
-          {{ characters.length ? '选一位角色，无需注册即可开始纯文本聊天' : loadErr ? '' : '正在加载...' }}
+          {{ characters.length ? t('noSignup') : loadErr ? '' : t('loading') }}
         </p>
 
         <div v-if="loadErr" class="notice notice-err">{{ loadErr }}</div>
         <div v-else-if="!characters.length" class="notice notice-empty">
-          暂无可用网页角色。请管理员在后台“网页角色”处勾选并保存。
+          {{ t('noWebCharacters') }}
         </div>
 
         <div class="char-grid">
@@ -39,7 +40,7 @@
             </div>
             <div class="cc-meta">
               <span class="cc-name">{{ c.name }}</span>
-              <span class="cc-bio">{{ excerpt(characterSignature(c) || '还没有留下签名。', 72) }}</span>
+              <span class="cc-bio">{{ excerpt(characterSignature(c) || t('noSignature'), 72) }}</span>
             </div>
             <svg class="cc-arr" viewBox="0 0 24 24" fill="none" width="16" height="16" aria-hidden="true">
               <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -49,7 +50,7 @@
       </main>
 
       <footer class="pick-foot">
-        <a href="https://ponychat.org" class="pick-foot-link">完整体验请下载 App 或访问主站</a>
+        <a href="https://ponychat.org" class="pick-foot-link">{{ t('fullExperience') }}</a>
       </footer>
     </div>
 
@@ -60,9 +61,10 @@
             <svg viewBox="0 0 24 24" fill="none" width="17" height="17" aria-hidden="true">
               <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
-            返回
+            {{ t('back') }}
           </button>
 
+          <LanguageSwitcher />
           <div class="hd-char">
             <div class="hd-av-wrap">
               <img v-if="activeChar?.avatar" :src="avatarUrl(activeChar.avatar)" class="hd-av" alt="" />
@@ -85,8 +87,8 @@
             <div v-else class="wc-av wc-av-ph">{{ firstChar(activeChar?.name) }}</div>
           </div>
           <p class="wc-name">{{ activeChar?.name }}</p>
-          <p class="wc-hint">{{ characterSignature(activeChar) || '发送一条消息，开始对话。' }}</p>
-          <p class="wc-tip">纯文本体验，不支持图片发送；刷新后本页记录会清空</p>
+          <p class="wc-hint">{{ characterSignature(activeChar) || t('startMessage') }}</p>
+          <p class="wc-tip">{{ t('textOnly') }}</p>
         </div>
 
         <div
@@ -97,7 +99,7 @@
         >
           <div class="msg-shell">
             <div class="msg-head" :class="m.role">
-              <span class="msg-name">{{ m.role === 'user' ? '我' : activeChar?.name }}</span>
+              <span class="msg-name">{{ m.role === 'user' ? t('me') : activeChar?.name }}</span>
               <span class="msg-time">{{ formatTime(m.timestamp) }}</span>
             </div>
             <div class="msg-line" :class="m.role">
@@ -107,7 +109,7 @@
               </div>
               <div class="bubble" :class="[m.role, { error: m.isError }]">{{ m.text }}</div>
               <div v-if="m.role === 'user'" class="msg-av-wrap">
-                <img :src="logoSrc" class="msg-av user-av" alt="我" />
+                <img :src="logoSrc" class="msg-av user-av" :alt="t('me')" />
               </div>
             </div>
           </div>
@@ -117,7 +119,7 @@
           <div class="msg-shell">
             <div class="msg-head assistant">
               <span class="msg-name">{{ activeChar?.name }}</span>
-              <span class="msg-time">正在思考</span>
+              <span class="msg-time">{{ t('thinking') }}</span>
             </div>
             <div class="msg-line assistant">
               <div class="msg-av-wrap">
@@ -142,7 +144,7 @@
               ref="inputEl"
               v-model="input"
               class="c-inp"
-              :placeholder="sending ? '等待角色回复中......' : '输入消息...'"
+              :placeholder="sending ? t('waitReply') : t('typeMessage')"
               rows="1"
               :disabled="sending"
               @keydown="onKey"
@@ -155,14 +157,14 @@
               type="submit"
               class="c-send"
               :disabled="sending || !input.trim()"
-              title="发送"
+              :title="t('send')"
             >
               <svg viewBox="0 0 24 24" fill="none" width="20" height="20" aria-hidden="true">
                 <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </button>
           </form>
-          <p class="composer-tip">Enter 发送&nbsp;·&nbsp;Shift+Enter 换行</p>
+          <p class="composer-tip">{{ t('sendHint') }}</p>
         </div>
       </div>
     </div>
@@ -170,6 +172,9 @@
 </template>
 
 <script setup>
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import { useSiteI18n } from '../i18n/index.js'
+const { t, locale } = useSiteI18n()
 import { nextTick, onMounted, ref } from 'vue'
 import { usePublicUrl } from '../composables/usePublicUrl'
 import { fetchPublicWebCharacters, guestLogin } from '../api/web'
@@ -194,11 +199,11 @@ let clientId = ''
 let conversationId = ''
 let replyRunId = 0
 
-const QUOTA_DISPLAY_MESSAGE = '试用结束，请下载App继续体验更多功能~'
+const quotaDisplayMessage = () => t('quotaEnd')
 const QUICK_QUOTA_COMMAND = '（额度）'
 
 function quotaDisplayError() {
-  const e = new Error(QUOTA_DISPLAY_MESSAGE)
+  const e = new Error(quotaDisplayMessage())
   e.isQuotaDisplay = true
   return e
 }
@@ -253,8 +258,8 @@ function autoResize() {
 function formatTime(ts) {
   const date = new Date(ts || Date.now())
   const diff = Date.now() - date.getTime()
-  if (diff >= 0 && diff < 60_000) return '刚刚'
-  if (diff >= 0 && diff < 3_600_000) return `${Math.floor(diff / 60_000)}分钟前`
+  if (diff >= 0 && diff < 60_000) return t('justNow')
+  if (diff >= 0 && diff < 3_600_000) return new Intl.RelativeTimeFormat(locale.value, { numeric: 'always' }).format(-Math.floor(diff / 60_000), 'minute')
   const hh = String(date.getHours()).padStart(2, '0')
   const mm = String(date.getMinutes()).padStart(2, '0')
   return `${hh}:${mm}`
@@ -369,7 +374,7 @@ function onPaste(e) {
   const items = Array.from(e.clipboardData?.items || [])
   if (items.some(item => item.kind === 'file')) {
     e.preventDefault()
-    err.value = '网页体验版仅支持纯文本对话，不能发送图片。'
+    err.value = t('imagesUnsupported')
   }
 }
 
@@ -378,7 +383,7 @@ async function send() {
   if (!text || !activeChar.value || sending.value) return
 
   if (text === QUICK_QUOTA_COMMAND) {
-    err.value = QUOTA_DISPLAY_MESSAGE
+    err.value = quotaDisplayMessage()
     input.value = ''
     nextTick(autoResize)
     return
@@ -422,8 +427,9 @@ async function send() {
         memory_enabled: false,
         crisis_hotline_enabled: true,
         conversation_id: conversationId || null,
-        model_id: 'doubao-2-0-mini',
-        enable_thinking: false,
+        model_id: 'deepseek-v4-flash-vision-exp',
+        enable_thinking: true,
+        reasoning_effort: 'low',
         voice_enabled: false,
         enable_voice: false,
       }),
@@ -441,7 +447,7 @@ async function send() {
     if (ctype.includes('application/json')) {
       const json = await res.json()
       if (json.conversation_id) noteConversationId(json.conversation_id)
-      if (json.job_id) throw new Error('当前模型为 Job 模式，网页体验版暂不支持，请联系管理员切换模型。')
+      if (json.job_id) throw new Error(t('unsupportedModel'))
       if (Array.isArray(json.events)) {
         for (const event of json.events) {
           await handleChatEvent(event, { respectEventDelay: true, runId })
@@ -471,7 +477,7 @@ async function send() {
   } catch (e) {
     if (runId !== replyRunId) return
     const quotaError = isQuotaDisplayError(e)
-    err.value = quotaError ? QUOTA_DISPLAY_MESSAGE : (e.message || String(e))
+    err.value = quotaError ? quotaDisplayMessage() : (e.message || String(e))
     if (!quotaError && assistantCount === 0 && !accumulated.trim()) {
       replyPending.value = false
       messages.value.push(newMessage('assistant', err.value, { isError: true }))
@@ -529,11 +535,11 @@ async function send() {
     }
 
     if (d.type === 'cancelled') {
-      throw new Error('本轮回复已被新的消息取代。')
+      throw new Error(t('replyReplaced'))
     }
 
     if (d.type === 'error') {
-      throw new Error(d.message || '生成失败')
+      throw new Error(d.message || t('operationFailed'))
     }
 
     if (d.type === 'done' || d.type === 'crisis_triggered') return

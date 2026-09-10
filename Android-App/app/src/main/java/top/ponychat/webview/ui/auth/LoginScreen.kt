@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.rounded.Monitor
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
@@ -55,7 +56,9 @@ fun LoginScreen(
     viewModel: AuthViewModel,
     onLoginSuccess: () -> Unit,
     onNavigateToRegister: () -> Unit,
-    onNavigateToNetwork: () -> Unit = {}
+    onNavigateToNetwork: () -> Unit = {},
+    showDeviceHomeButton: Boolean = false,
+    onNavigateToDeviceHome: () -> Unit = {},
 ) {
     val loginState by viewModel.loginState.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -428,6 +431,22 @@ fun LoginScreen(
                     contentDescription = "网络连接设置",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+        }
+        if (showDeviceHomeButton) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .windowInsetsPadding(WindowInsets.systemBars)
+                    .padding(4.dp),
+            ) {
+                IconButton(onClick = onNavigateToDeviceHome) {
+                    Icon(
+                        imageVector = Icons.Rounded.Monitor,
+                        contentDescription = "进入设备主页",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

@@ -394,7 +394,7 @@ fun MessageBubble(
         onActionBarVisible?.invoke()
     }
     val stickerAttachments = remember(message.attachments) {
-        message.attachments.filter { it.type == "sticker" || it.type == "emoji_asset" }
+        message.attachments.filter { it.type == "sticker" || it.type == "emoji_asset" || it.type == "image" }
     }
     var showContentActionMenu by remember(message.id) { mutableStateOf(false) }
     var contentActionMenuPosition by remember(message.id) { mutableStateOf(IntOffset.Zero) }
@@ -423,6 +423,7 @@ fun MessageBubble(
         contentDescription: String,
         contentScale: ContentScale,
         fixedSize: Dp? = null,
+        previewUrl: String = model,
     ) {
         var thumbTopLeft by remember(model) { mutableStateOf(Offset.Zero) }
         var thumbSize by remember(model) { mutableStateOf(IntSize.Zero) }
@@ -450,7 +451,9 @@ fun MessageBubble(
                     thumbSize = coords.size
                 }
                 .combinedClickable(
-                    onClick = { onImagePreview?.invoke(model) },
+                    onClick = {
+                        onImagePreview?.invoke(localUrlForRemoteChatImage(context, previewUrl) ?: previewUrl)
+                    },
                     onLongClick = { openContentActionMenu(thumbTopLeft, thumbSize) }
                 )
         ) {
@@ -470,8 +473,22 @@ fun MessageBubble(
                 val stickerUrl = att.url ?: att.assetId?.let { "/api/admin/assets/$it/file" }
                     ?: att.userStickerId?.let { "/api/assets/stickers/$it/file" }
                 if (!stickerUrl.isNullOrBlank()) {
+                    val context = LocalContext.current
+                    var displayUrl by remember(stickerUrl) {
+                        mutableStateOf(localUrlForRemoteChatImage(context, stickerUrl) ?: stickerUrl)
+                    }
+                    LaunchedEffect(stickerUrl) {
+                        if (att.type == "image" && att.metadata?.get("source") == "web_search") {
+                            top.ponychat.webview.data.repo.WebImageReceiver.receive(
+                                top.ponychat.webview.data.prefs.AppPreferences(context), att)
+                            displayUrl = localUrlForRemoteChatImage(context, stickerUrl) ?: stickerUrl
+                        }
+                    }
                     ChatMediaThumb(
-                        model = stickerUrl,
+                        model = displayUrl,
+                        // Resolve the original reference at click time: receipt can
+                        // finish while the thumbnail still holds its previous URL.
+                        previewUrl = stickerUrl,
                         contentDescription = att.name.ifBlank { "表情" },
                         contentScale = ContentScale.Fit
                     )
@@ -807,6 +824,7 @@ fun MessageBubble(
                                             text = bubbleText,
                                             validMentionNames = validMentionNames,
                                             color = if (message.isError) ErrorColor else Color.White,
+                                            selectionTint = Color.White,
                                             style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
                                             selectionRange = if (isSelectingText) selectionRange else null,
                                             onSelectionRangeChange = { selectionRange = it },

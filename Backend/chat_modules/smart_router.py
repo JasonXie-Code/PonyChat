@@ -1,9 +1,11 @@
 """
-智能模型路由：for_chat_router 模型（当前为 DeepSeek 非思考）分类对话氛围；豆包作联网搜索工具。
+智能模型路由：DeepSeek 视觉模型以 low 思考模式分类对话氛围；联网能力由模型清单显式声明。
 所有 LLM 往返经 save_chat_debug_log 落盘（var/.chatlogs），供 ChatMonitor 同步。
 """
 
 from __future__ import annotations
+
+from .Prompts import SMART_ROUTER_CLASSIFIER_SYSTEM, SMART_ROUTER_SEARCH_SYSTEM
 
 import json
 import re
@@ -17,13 +19,6 @@ from ..reasoning_config import apply_llm_task_payload_config, llm_task_float
 from ..reasoning_policy import resolve_software_reasoning_policy
 from ..utils import save_chat_debug_log
 
-_CLASSIFIER_SYSTEM = """你是对话路由器。只根据给出的最近若干条 user/assistant 对话，判断：
-1) web_search：用户是否明确需要**实时外部信息**（新闻、天气、股价、赛事、当前时间地点事实、"今天/最新"等）；日常情感闲聊、虚构角色扮演不需要联网则为 false。
-2) search_query：若 web_search 为 true，给出**中文或英文关键词**，只保留事实检索词；若不需要搜索则为 null。
-
-**只输出一行合法 JSON**，键名与类型固定，禁止 markdown、禁止解释：
-{"web_search": true/false, "search_query": "关键词或null"}
-"""
 
 
 def _strip_code_fence(text: str) -> str:
@@ -105,7 +100,7 @@ async def classify_conversation(
     if not blocks.strip():
         return default_router_result()
 
-    model_name = router_cfg.get("model_name") or "deepseek-v4-flash"
+    model_name = router_cfg.get("model_name") or "deepseek-flash"
     reasoning_policy = resolve_software_reasoning_policy(
         "smart_router_classify",
         model_name=model_name,
@@ -116,7 +111,7 @@ async def classify_conversation(
     payload: Dict[str, Any] = {
         "model": model_name,
         "messages": [
-            {"role": "system", "content": _CLASSIFIER_SYSTEM},
+            {"role": "system", "content": SMART_ROUTER_CLASSIFIER_SYSTEM},
             {"role": "user", "content": f"【对话片段】\n{blocks}"},
         ],
         "stream": False,
@@ -179,17 +174,11 @@ async def classify_conversation(
         return default_router_result()
 
 
-_SEARCH_SYSTEM = (
-    "你是联网搜索摘要助手。根据用户给出的搜索关键词，利用联网能力检索并**只用客观短句**总结与关键词最相关的事实"
-    "（日期、数字、结论），勿编造；勿输出成人或色情内容；勿使用 Markdown。"
-    "若无法检索到有效信息，明确说「未查到可靠结果」。"
-    "\n\n最后执行要求：直接输出可交给下一阶段使用的搜索摘要，不要解释你的检索过程。"
-)
 
 
 async def run_web_search(
     search_query: str,
-    doubao_cfg: Optional[dict] = None,
+    model_cfg: Optional[dict] = None,
     *,
     username: Optional[str] = None,
     character_id: Optional[str] = None,
@@ -197,11 +186,14 @@ async def run_web_search(
     debug_stage: str = "REQUEST",
     debug_role_params: Optional[dict] = None,
 ) -> str:
-    """调用豆包 mini（联网工具），返回纯文本摘要。"""
-    cfg = doubao_cfg or model_manager.get_model_for_task("web_search")
+    """调用具备联网能力的模型，返回纯文本摘要。"""
+    cfg = model_cfg or model_manager.get_model_for_task("web_search")
     if not cfg or not cfg.get("api_key"):
-        logger.warning("[SmartRouter] 无豆包联网配置，跳过搜索")
+        logger.warning("[SmartRouter] 无联网配置，跳过搜索")
         return ""
+
+    if not cfg.get("supports_web_search"):
+        return "当前未配置实时联网检索工具；不能声称已检索或提供已核实的实时信息。"
 
     q = (search_query or "").strip()
     if not q:
@@ -221,7 +213,7 @@ async def run_web_search(
     payload: Dict[str, Any] = {
         "model": model_id,
         "messages": [
-            {"role": "system", "content": _SEARCH_SYSTEM},
+            {"role": "system", "content": SMART_ROUTER_SEARCH_SYSTEM},
             {
                 "role": "user",
                 "content": (

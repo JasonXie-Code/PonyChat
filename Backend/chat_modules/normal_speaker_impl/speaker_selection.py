@@ -10,6 +10,8 @@ is exposed only as the temporary group scene.
 
 from __future__ import annotations
 
+from Backend.chat_modules.Prompts import USER_SPEAKER_INTENT_SYSTEM
+
 import json
 import hashlib
 import re
@@ -258,6 +260,8 @@ def mark_normal_forced_reply_characters(request: ChatRequest, values: list[Any])
 
 
 def normal_forced_reply_character_ids(request: ChatRequest) -> list[str]:
+    if getattr(request, "_normal_auto_handoff", False):
+        return []
     marked = getattr(request, "_normal_forced_reply_character_ids", None)
     if isinstance(marked, str):
         marked_ids = [part for part in re.split(r"[,，\s]+", marked) if part]
@@ -269,6 +273,47 @@ def normal_forced_reply_character_ids(request: ChatRequest) -> list[str]:
     if ids:
         return ids
     return _dedupe_character_ids(requested_reply_character_ids(request))
+
+
+def explicit_user_at_reply_requested(request: ChatRequest, speaker: str) -> bool:
+    """A current user @/speaker selection, never an automatic handoff or trigger."""
+    if (getattr(request, "_normal_auto_handoff", False)
+            or getattr(request, "_normal_internal_proactive_trigger", False)):
+        return False
+    speaker = str(speaker or "").strip()
+    if not speaker or speaker not in normal_forced_reply_character_ids(request):
+        return False
+    selected = getattr(request, "_normal_user_selected_reply_character_ids", None)
+    if selected is None:
+        selected = _explicit_reply_character_ids(request)
+    return speaker in selected or bool(extract_at_mention_names(_latest_visible_user_text(request)))
+
+
+def agent_speaker_context(request: ChatRequest) -> str:
+    """Explain the live group scene to the current Agent without a legacy router."""
+    speaker = effective_speaker_character_id(request)
+    main = main_character_id(request)
+    guests = [sid for sid in _recent_visible_assistant_speaker_ids(
+        request, include_latest_user=True) if sid != main]
+    if not is_guest_speaker(request) and not guests:
+        return ""
+    if getattr(request, "_normal_auto_handoff", False):
+        cause = "上一位在场角色通过 handoff_reply 把话交给你"
+    elif is_guest_speaker(request):
+        cause = "用户选择你参与当前话题"
+    else:
+        cause = "当前继续这个窗口中的共同话题"
+    return (
+        "【当前临时群聊】\n"
+        f"当前窗口属于「{main_display_name(request)}」({main})；"
+        f"本轮只由「{speaker_display_name(request)}」({speaker}) 发言。{cause}。\n"
+        "使用当前发言角色自己的完整档案、记忆、关系与状态。历史中的 assistant 消息可能来自不同角色，"
+        "按 speaker_character_id/speaker_name 归属，不能把其他角色说过的话、经历或私有记忆当成自己的。\n"
+        "你在同一临时群聊中能看到当前话题；仅 @ 表示请你接住前面的话题参与，不是签到，"
+        "也不是要求当前窗口的主角色模仿你。正文只写你自己的发言和动作。\n"
+        "如果确实要把下一句话交给工具候选中的另一位在场角色，使用 handoff_reply；"
+        "由对方自己的 Agent 继续。用户没有要求其他人接话时可以自然结束，不必总是交接。"
+    )
 
 
 def requested_reply_character_id(request: ChatRequest) -> str:
@@ -295,6 +340,8 @@ def _recent_visible_assistant_speaker_ids(
 def normal_at_event_context(request: ChatRequest) -> dict[str, Any]:
     """Structured meaning of explicit @ / reply-speaker selection for this turn."""
     latest = _latest_visible_user_text(request)
+    if getattr(request, "_normal_auto_handoff", False):
+        return {}
     requested_ids = normal_forced_reply_character_ids(request)
     explicit_ids = requested_reply_character_ids(request)
     original_ids_raw = getattr(request, "_normal_multi_original_reply_character_ids", None)
@@ -463,6 +510,7 @@ def normal_role_debug_params(request: ChatRequest, extra: dict[str, Any] | None 
         "speaker_character_name": speaker_display_name(request),
         "guest_speaker": bool(speaker_id and main_id and speaker_id != main_id) or is_guest_speaker(request),
     }
+    out.update(getattr(request, '_agent_log_params', None) or {})
     if extra:
         out.update(extra)
     return out
@@ -801,41 +849,6 @@ def _coerce_user_speaker_intent_result(value: Any, candidates: list[dict[str, st
     return [cid for cid in _dedupe_character_ids(ids) if cid in allowed][:6]
 
 
-_USER_SPEAKER_INTENT_SYSTEM = """【普通对话首轮发言者 Router】
-你只做一件事：读用户最新一句和近期现场，判断本轮是否应让最近在场角色直接发言。
-不要写角色正文，不要判断事实真假，不要改写用户内容，不要输出解释。
-
-只输出 JSON object：
-{"mode":"none","reply_character_ids":[],"reason":""}
-
-判断规则：
-0. 先只看【用户最新一句】，再看【候选角色】，最后才看【近期现场】；近期现场只能辅助理解“你们/大家”等代词，不能覆盖最新一句的呼叫对象。
-1. 只有候选列表中出现的角色可被选择；候选来自最近 8 条可见角色回复和主角色。
-2. 如果用户最新一句以候选角色的 name 开头，或以候选 name 的清晰简称/前缀开头，且后面是“，”“,”“：”“:”“、”“ ”或直接进入请求语气，这就是直接呼叫。这一步是文本匹配任务，不是语义推理任务。必须输出 mode="single"，reply_character_ids=[句首 name/简称 对应的 reply_character_id]。例如“紫悦你觉得那本书怎么样”必须选紫悦，“玉琪派”的候选被用户称作“玉琪”也必须选玉琪派。
-3. 如果用户最新一句以请求语气开头、并在句尾/句末短语点名候选角色 C，或点名 C 的清晰简称/前缀，例如“你来说说你的看法吧 C”“这本书怎么样 C”“C 呢”一类，这也是直接呼叫 C。必须输出 mode="single"，reply_character_ids=["C的id"]。
-4. 直接呼叫时不要做推理，不要看谁最近发言，不要看谁是主角色，不要根据正文里出现的其他名字改选。被呼叫的 name 是唯一发言者。
-5. 如果用户在句中明确点名候选角色 C 发表意见，例如“我想听 C 的看法”“让 C 评价一下”，输出 mode="single"，reply_character_ids=["C的id"]。
-6. “我和 X”“我与 X”“我跟 X”“评价我和 X 的观点”里的 X 通常是被谈论对象，不是发言者；不能只因为 X 是主角色或正文里出现 X 就选择 X。例外：如果同一句已经用“你们都/大家都/所有人都/全员”并配合“分别/各自/每人/一人一句”等明确要求在场候选分别发言，X 即使也是被评价对象，仍然可以作为被“你们”覆盖的在场候选发言。
-7. 如果用户最新一句以“你觉得/你认为/你看/你说/你猜/你觉得呢”这类询问当前对话对象意见的表达开头，后面出现候选角色 X，例如“你觉得 X 喜欢我吗”“你认为 X 刚才什么意思”“你看 X 会不会同意”，X 是被判断对象，不是发言者。除非句首或句尾另有直接呼叫 X，或明确说“让 X 回答/听 X 说”，否则输出 mode="none"。
-8. 只有用户明确要求多个角色分别/各自发言时，才输出 mode="parallel"。典型表达包括“分别说说/各自说说/每个人都说/一人一句/你们都评价一下/都来说一句/都过来看看并分别评价”。按自然展示顺序列出需要发言的候选角色；如果主角色也在最近 8 轮可见角色中，或用户明确说“所有人都/你们都分别/大家都各自”，主角色也应包含在 reply_character_ids 中。遇到“我让你们都过来看看这个书，分别评价一下我和柔柔的观点”这类句子时，“你们都+分别评价”是全员分别发言指令；如果柔柔是候选主角色，她也应被包含，而不是只选择旁支角色。
-9. 如果用户只是用“你们/大家/你们几个/几个姐妹”询问共同事实、共同状态、习惯、安排、是否如此、住在哪里、平时怎样等问题，不能并发；这类问题只需要一个角色代表回答。输出 mode="none" 让主角色回答，或 mode="single" 选择一个最自然的候选角色，但 reply_character_ids 最多只能有 1 个。例如“你们几个姐妹平时都是分开睡的吧”“你们平时都住哪边”“大家是不是都认识她”都不是 parallel。
-10. 如果用户只是继续跟主角色聊天，或没有明确让近期在场角色说话，输出 mode="none"。
-11. 如果用户包含停下、先别聊、不用接、别继续、暂停、到此为止等停止含义，输出 mode="stop" 且 reply_character_ids=[]。
-12. 不要选择最近 8 条可见角色回复里没有出现过、且不是主角色的角色。
-
-反例：
-- 用户最新一句“碧琪，你评价一下我和柔柔的观点。”候选里有碧琪和紫悦时，只能选碧琪，不能选紫悦。
-- 用户最新一句“碧琪，请你评价我和柔柔刚才的观点，只要碧琪回答。”候选里有碧琪和柔柔时，只能选碧琪，不能选柔柔；“我和柔柔”里的柔柔是被评价对象。
-- 用户最新一句“紫悦，你接着说。”候选里有碧琪和紫悦时，只能选紫悦，不能因为碧琪刚发过言而选碧琪。
-- 用户最新一句“你来说说你的看法吧碧琪。”候选里有碧琪时，只能选碧琪。
-- 用户最新一句“紫悦你觉得那本书怎么样。”候选里有紫悦时，只能选紫悦。
-- 候选 name 是“玉琪派”，用户最新一句“玉琪，你来说说你的看法。”时，只能选玉琪派。
-- 候选 name 是“玉琪派”，用户最新一句“你觉得玉琪喜欢我吗。”时，是在问当前对话对象对玉琪的看法；只能输出 mode="none"，不能选玉琪派。
-- 用户最新一句“你认为紫悦刚才是什么意思？”是在问当前对话对象判断紫悦，不是让紫悦发言；不能选紫悦。
-- 用户最新一句“你们几个姐妹平时都是分开睡的吧。”是在问共同事实，只能让一个角色代表回答或让主角色回答，不能 parallel。
-- 用户最新一句“你们平时都住哪边？”是在问共同安排，只能让一个角色代表回答或让主角色回答，不能 parallel。
-- 用户最新一句“我让你们都过来看看这个书，分别评价一下我和柔柔的观点。”且候选里有柔柔(role=main)、碧琪、紫悦时，应选择柔柔、碧琪、紫悦；不能因为“我和柔柔”把柔柔当作纯被谈论对象而排除。
-"""
 
 
 async def run_normal_user_speaker_intent_router(
@@ -871,7 +884,7 @@ async def run_normal_user_speaker_intent_router(
     scene = _speaker_intent_scene_text(request)
     if not scene:
         return []
-    model_name = router_cfg.get("model_name") or "deepseek-v4-flash"
+    model_name = router_cfg.get("model_name") or "deepseek-flash"
     candidate_text = json.dumps(
         [
             {
@@ -886,7 +899,7 @@ async def run_normal_user_speaker_intent_router(
     payload = {
         "model": model_name,
         "messages": [
-            {"role": "system", "content": _USER_SPEAKER_INTENT_SYSTEM},
+            {"role": "system", "content": USER_SPEAKER_INTENT_SYSTEM},
             {
                 "role": "user",
                 "content": (

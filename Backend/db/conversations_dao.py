@@ -188,7 +188,8 @@ class ConversationsDAO:
         self,
         username: str,
         char_id: str,
-        conversation: Dict
+        conversation: Dict,
+        *, before_commit=None,
     ) -> bool:
         """
         保存对话到数据库
@@ -714,8 +715,10 @@ class ConversationsDAO:
                                     },
                                 )
                     
+                    if before_commit is not None:
+                        await before_commit(conn)
                     await conn.execute("COMMIT")
-                except Exception:
+                except BaseException:
                     await conn.execute("ROLLBACK")
                     raise
                 
@@ -731,7 +734,9 @@ class ConversationsDAO:
     async def load_conversations(
         self,
         username: str,
-        char_id: str
+        char_id: str,
+        *,
+        visible_delivery_only: bool = False,
     ) -> List[Dict]:
         """
         加载角色的所有对话
@@ -796,6 +801,10 @@ class ConversationsDAO:
                         )
                     await conn.commit()
                 
+                if visible_delivery_only:
+                    # Client-only view: serialize its snapshot with delivery
+                    # release/cancellation. Agent/persistence reads stay full.
+                    await conn.execute('BEGIN IMMEDIATE')
                 # 查询对话（含 updated_at，供保存时按时间比较避免旧数据覆盖）
                 async with conn.execute(
                     """SELECT id, title, timestamp, version, summary,
@@ -816,6 +825,10 @@ class ConversationsDAO:
                         
                         # 加载消息
                         messages = []
+                        pending = set()
+                        if visible_delivery_only:
+                            from ..chat_modules.normal_delivery import pending_message_ids
+                            pending = pending_message_ids(username, char_id, conv_id)
                         async with conn.execute(
                             """SELECT role, content, raw_content, image_url, timestamp, message_id, 
                                       sequence_number, previous_message_id, suggestions, suggestions_status, client_id, think_translations, generation_duration_ms, quoted_message_json,
@@ -827,6 +840,8 @@ class ConversationsDAO:
                             (conv_id,)
                         ) as msg_cursor:
                             async for msg_row in msg_cursor:
+                                if str(msg_row[5] or '') in pending:
+                                    continue
                                 role, content, raw_content, image_url, msg_timestamp, message_id, \
                                 sequence_number, previous_message_id, suggestions_json, suggestions_status, client_id, think_translations_json, \
                                 generation_duration_ms, quoted_message_json, speaker_character_id, speaker_name, speaker_avatar, \

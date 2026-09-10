@@ -4,6 +4,12 @@ import json
 import os
 from typing import Optional
 
+if os.path.exists(os.path.join(os.path.dirname(__file__), "..", ".ponychat-models-paused")):
+    raise RuntimeError(
+        "PonyChat model calls are paused. Restore with: "
+        "P:/Tools/python/python.exe scripts/ops/model_calls_pause.py resume"
+    )
+
 from .config import (
     app,
     logger,
@@ -20,6 +26,7 @@ from .routes import (
     data_export, drive, mlp_database, relationship, minigames,
 )
 from .websocket import manager
+from .login_control import LOGIN_CONTROL_LOGOUT_REASON, is_app_login_allowed
 from .routes.admin import terminal as admin_terminal_ws
 from .routes.admin import log_stream as admin_console_ws
 from .static_response import js_content_with_cache_bust
@@ -297,6 +304,12 @@ async def websocket_heartbeat(websocket: WebSocket):
              logger.warning("[Heartbeat] No username in init message")
              await websocket.close(code=1008)
              return
+
+        if not is_app_login_allowed(username):
+             logger.warning(f"🚫 [登录管控] 拒绝非白名单心跳连接: {username}")
+             await websocket.send_json({"type": "force_logout", "reason": LOGIN_CONTROL_LOGOUT_REASON})
+             await websocket.close(code=4003, reason="Login restricted")
+             return
              
         # 2. 经 manager 注册（不再重复 accept）
         registered = await manager.register_connection(websocket, username)
@@ -339,6 +352,13 @@ async def websocket_endpoint(websocket: WebSocket, username: str, client_id: str
     # 如果 client_id 为 None，尝试从 query params 获取 (虽然 FastAPI 会自动映射，但显式处理更安全)
     if not client_id:
         client_id = websocket.query_params.get("client_id")
+
+    if not is_app_login_allowed(username):
+        logger.warning(f"🚫 [登录管控] 拒绝非白名单 WebSocket 连接: {username}")
+        await websocket.accept()
+        await websocket.send_json({"type": "force_logout", "reason": LOGIN_CONTROL_LOGOUT_REASON})
+        await websocket.close(code=4003, reason="Login restricted")
+        return
 
     await manager.connect(websocket, username)
 
@@ -385,6 +405,10 @@ async def websocket_endpoint(websocket: WebSocket, username: str, client_id: str
                     continue
                 try:
                     obj = json.loads(data)
+                    if isinstance(obj, dict) and obj.get("type") == "history_image_response":
+                        from .chat_modules.history_image_transfer import receive_original
+                        receive_original(username, obj, websocket)
+                        continue
                     if isinstance(obj, dict) and obj.get("type") == "msg_ack":
                         ids = obj.get("outbox_ids") or []
                         if ids:

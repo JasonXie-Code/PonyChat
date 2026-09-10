@@ -54,5 +54,10 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 4173,
     strictPort: true,
+    // Preview must serve built /assets and /logo itself, not inherit dev proxies.
+    proxy: {
+      '/api': { target: 'https://www.ponychat.org', changeOrigin: true },
+      '/download': { target: 'https://www.ponychat.org', changeOrigin: true },
+    },
   },
 })

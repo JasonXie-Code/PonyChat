@@ -211,6 +211,9 @@ async def _init_normal_test_db(db: Database) -> None:
         )
         await conn.commit()
 
+    from Backend.agent_memory.jobs import initialize
+    initialize(db.db_path)
+
 
 def test_normal_save_enforces_one_visible_conversation(tmp_path: Path):
     async def run() -> None:
@@ -374,6 +377,28 @@ def test_reset_character_chat_clears_normal_scene_state(tmp_path: Path, monkeypa
                    (id, user_id, character_id, title)
                    VALUES ('sess1', 1, 'char_reset', 'old companion')"""
             )
+            await conn.execute(
+                """CREATE TABLE relationship_presence_states (
+                       id TEXT PRIMARY KEY,
+                       username TEXT NOT NULL,
+                       character_id TEXT NOT NULL,
+                       conversation_id TEXT NOT NULL DEFAULT '',
+                       relationship_stage TEXT NOT NULL DEFAULT 'uncertain',
+                       relationship_page_json TEXT NOT NULL DEFAULT '{}',
+                       relationship_page_updated_at_ms INTEGER NOT NULL DEFAULT 0,
+                       created_at_ms INTEGER NOT NULL,
+                       updated_at_ms INTEGER NOT NULL
+                   )"""
+            )
+            await conn.execute(
+                """INSERT INTO relationship_presence_states
+                   (id, username, character_id, conversation_id, relationship_stage,
+                    relationship_page_json, relationship_page_updated_at_ms,
+                    created_at_ms, updated_at_ms)
+                   VALUES ('rel1', 'tester', 'char_reset', 'conv_reset', 'intimate_partner',
+                           '{"overview":"旧关系摘要","remembered_items":["旧关系小事"]}',
+                           1005, 1005, 1005)"""
+            )
             await ensure_normal_lifecycle_table_on_connection(conn)
             await conn.execute(
                 """INSERT INTO normal_character_lifecycle
@@ -413,6 +438,7 @@ def test_reset_character_chat_clears_normal_scene_state(tmp_path: Path, monkeypa
         assert result["hidden_messages"] == 1
         assert result["hidden_memories"] == 1
         assert result["cleared_scene_states"] == 1
+        assert result["cleared_relationship_states"] == 1
         assert result["reset_lifecycle_states"] == 1
         assert result["opening_greeting"]["scheduled"] is True
         assert scheduled_opening["args"][:2] == ("tester", "char_reset")
@@ -427,6 +453,7 @@ def test_reset_character_chat_clears_normal_scene_state(tmp_path: Path, monkeypa
                 "normal_image_contexts",
                 "normal_image_context_state",
                 "companion_sessions",
+                "relationship_presence_states",
             ):
                 row = await (
                     await conn.execute(

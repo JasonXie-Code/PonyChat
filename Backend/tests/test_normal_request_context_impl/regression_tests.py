@@ -175,23 +175,3 @@ def test_load_character_prompts_prepends_profile_block(monkeypatch):
     assert "16人格：ESTP（性格倾向参考）" in persona
     assert "企业家" not in persona
     assert "行动、直接、冒险" in persona
-
-
-def test_stage2_memory_loaders_respect_memory_enabled_switch():
-    import inspect
-
-    from Backend.chat_modules.service import handle_chat_request
-
-    source = inspect.getsource(handle_chat_request)
-    context_loader_start = source.index("async def _load_stage2_context_memory()")
-    long_loader_start = source.index("async def _load_stage2_long_memory()")
-    image_loader_start = source.index("async def _load_stage2_image_state()")
-
-    context_loader = source[context_loader_start:long_loader_start]
-    long_loader = source[long_loader_start:image_loader_start]
-
-    guard = 'getattr(request, "memory_enabled", True) is False'
-    assert guard in context_loader
-    assert guard in long_loader
-    assert context_loader.index(guard) < context_loader.index("load_context_memory")
-    assert long_loader.index(guard) < long_loader.index("recall_memories_layered")

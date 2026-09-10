@@ -11,7 +11,7 @@ from backend.model_manager import load_merged_model_config
 
 cfg = load_merged_model_config()
 for m in cfg.get("models", []):
-    if m.get("id") == "doubao-2-0-mini":
+    if m.get("id") == "deepseek-flash":
         ENDPOINT, API_KEY, MODEL = m["endpoint"], m["api_key"], m["model_name"]
         break
 
@@ -20,15 +20,16 @@ HEADERS = {"Content-Type": "application/json", "Authorization": f"Bearer {API_KE
 
 text = (Path(__file__).parent / "clean" / "Ace Point.txt").read_text(encoding="utf-8")[:800]
 
-# 测试1: reasoning_effort=none（关掉思考）
-for effort, max_tok in [("none", 8192), ("minimal", 8192), ("low", 8192)]:
+# 统一模型 low 思考冒烟
+for effort, max_tok in [("low", 8192)]:
     payload = {
         "model": MODEL,
+        "thinking": {"type": "enabled"},
         "messages": [
             {"role": "system", "content": "你是 MLP 世界设定编辑。将下面的维基页面改写为约300字的角色设定卡，用 Markdown，不要解释。"},
             {"role": "user", "content": text},
         ],
-        "reasoning_effort": effort,
+        "reasoning_effort": "low",
         "max_tokens": max_tok,
         "temperature": 0.4,
     }

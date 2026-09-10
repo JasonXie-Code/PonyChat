@@ -18,6 +18,7 @@ from .reasoning_config import apply_llm_task_payload_config, llm_task_float
 from .reasoning_policy import resolve_software_reasoning_policy
 from .relationship_stages import RELATIONSHIP_STAGE_KEYS, normalize_relationship_stage
 from .utils import save_chat_debug_log
+from .agent_memory.relationship_page_contract import TEXT_LIMITS, ITEM_LIMITS, MAX_ITEMS, MAX_FULL_CHIPS
 
 try:
     from zoneinfo import ZoneInfo
@@ -32,15 +33,15 @@ MAX_MEMORY_ROWS = int(os.getenv("PONYCHAT_RELATIONSHIP_MEMORY_ROWS") or "60")
 MAX_DAILY_PAIRS = int(os.getenv("PONYCHAT_RELATIONSHIP_DAILY_LIMIT") or "50")
 
 PAGE_FIELD_LIMITS = {
-    "overview": 90,
-    "mood": 72,
-    "chip": 4,
-    "portrait": 40,
-    "item": 48,
-    "suggestion": 14,
+    "overview": TEXT_LIMITS['overview'],
+    "mood": TEXT_LIMITS['mood'],
+    "chip": ITEM_LIMITS['chips'],
+    "portrait": TEXT_LIMITS['self_portrait'],
+    "item": ITEM_LIMITS['remembered_items'],
+    "suggestion": ITEM_LIMITS['suggestions'],
 }
-RELATIONSHIP_PAGE_CHIP_LIMIT = 4
-RELATIONSHIP_PAGE_FOUR_CHAR_CHIP_LIMIT = 2
+RELATIONSHIP_PAGE_CHIP_LIMIT = MAX_ITEMS
+RELATIONSHIP_PAGE_FOUR_CHAR_CHIP_LIMIT = MAX_FULL_CHIPS
 
 RELATIONSHIP_STAGE_LABELS: Dict[str, str] = {
     "new_contact": "新朋友",
@@ -292,39 +293,20 @@ async def ensure_relationship_page_storage() -> None:
 
 
 async def load_relationship_state(username: str, character_id: str) -> Optional[Dict[str, Any]]:
-    await ensure_relationship_page_storage()
-    db = get_database()
-    async with aiosqlite.connect(db.db_path) as conn:
-        conn.row_factory = aiosqlite.Row
-        row = await (
-            await conn.execute(
-                """
-                SELECT username, character_id, conversation_id, relationship_stage,
-                       relationship_page_json, relationship_page_updated_at_ms,
-                       relationship_page_source_json, updated_at_ms
-                  FROM relationship_presence_states
-                 WHERE username=? AND character_id=?
-                 LIMIT 1
-                """,
-                (username, character_id),
-            )
-        ).fetchone()
-    if not row:
-        return None
-    stage = normalize_relationship_stage(str(row["relationship_stage"] or ""))
-    return {
-        "username": str(row["username"] or username),
-        "character_id": str(row["character_id"] or character_id),
-        "conversation_id": str(row["conversation_id"] or ""),
-        "relationship_stage": stage,
-        "relationship_page": parse_relationship_page_json(
-            row["relationship_page_json"],
-            stage=stage,
-        ),
-        "relationship_page_updated_at_ms": int(row["relationship_page_updated_at_ms"] or 0),
-        "relationship_page_source": _safe_json_loads(row["relationship_page_source_json"]),
-        "updated_at_ms": int(row["updated_at_ms"] or 0),
-    }
+    from .agent_memory.relationship import project, complete_page
+    from .agent_memory.jobs import request_relationship, status
+    result = await asyncio.to_thread(project, get_database().db_path, username, character_id)
+    generation = 'idle'
+    if not complete_page((result or {}).get('relationship_page')):
+        generation = await asyncio.to_thread(request_relationship, get_database().db_path, username, character_id)
+    task = await asyncio.to_thread(status, get_database().db_path, username, character_id)
+    if task.get('relationship_requested'):
+        generation = 'running' if task.get('running') else ('failed' if task.get('last_error') else 'queued')
+    if result:
+        stage = normalize_relationship_stage(result["relationship_stage"])
+        result["relationship_stage"] = stage
+        result["relationship_page"] = normalize_relationship_page_content(result["relationship_page"], stage=stage)
+    return (result or {'username':username,'character_id':character_id}) | {'generation_status':generation}
 
 
 def _safe_json_loads(raw: Any) -> Dict[str, Any]:
@@ -1058,122 +1040,15 @@ async def refresh_relationship_page(
     character_id: str,
     conversation_id: str = "",
 ) -> Dict[str, Any]:
-    clean_username = str(username or "").strip()
-    clean_character_id = str(character_id or "").strip()
-    clean_conversation_id = str(conversation_id or "").strip()
-    if not clean_username or not clean_character_id:
+    from .agent_memory.jobs import request_relationship
+    if not username or not character_id:
         raise ValueError("username and character_id are required")
-
-    await ensure_relationship_page_storage()
-    current = await load_relationship_state(clean_username, clean_character_id)
-    current_stage = normalize_relationship_stage(
-        (current or {}).get("relationship_stage") if current else ""
-    )
-    source = await _fetch_source_bundle(
-        username=clean_username,
-        character_id=clean_character_id,
-        conversation_id=clean_conversation_id,
-    )
-    profile = source.get("profile") if isinstance(source.get("profile"), Mapping) else {}
-    character_name = str(profile.get("name") or "角色")
-    raw_messages = source.get("raw_messages") if isinstance(source.get("raw_messages"), list) else []
-    memories = source.get("memories") if isinstance(source.get("memories"), list) else []
-    context_memories = (
-        source.get("context_memories")
-        if isinstance(source.get("context_memories"), list)
-        else []
-    )
-    conversation_summaries = (
-        source.get("conversation_summaries")
-        if isinstance(source.get("conversation_summaries"), list)
-        else []
-    )
-    generated = await _call_relationship_llm(
-        username=clean_username,
-        character_id=clean_character_id,
-        character_name=character_name,
-        source_text=_format_source_bundle(source),
-        current_stage=current_stage,
-    )
-
-    if not generated:
-        if current:
-            return current
-        generated = {
-            "relationship_stage": current_stage,
-            "overview": "",
-            "mood": "",
-            "chips": [],
-            "self_portrait": "",
-            "between_portrait": "",
-            "remembered_items": [],
-            "timeline_items": [],
-            "suggestions": [],
-        }
-
-    generated_stage = normalize_relationship_stage(
-        str(generated.get("relationship_stage") or current_stage)
-    )
-    content = normalize_relationship_page_content(generated, stage=generated_stage)
-    if content is None:
-        content = default_relationship_page(generated_stage)
-
-    ts = _now_ms()
-    source_summary = {
-        "version": RELATIONSHIP_PAGE_VERSION,
-        "generated_at_ms": ts,
-        "raw_message_count": len(raw_messages),
-        "memory_count": len(memories),
-        "context_memory_count": len(context_memories),
-        "conversation_summary_count": len(conversation_summaries),
-        "preferred_conversation_id": clean_conversation_id,
-    }
-
-    db = get_database()
-    async with aiosqlite.connect(db.db_path) as conn:
-        await conn.execute(
-            """
-            INSERT INTO relationship_presence_states (
-                id, username, character_id, conversation_id, relationship_stage,
-                relationship_page_json, relationship_page_updated_at_ms,
-                relationship_page_source_json, created_at_ms, updated_at_ms
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(username, character_id) DO UPDATE SET
-                conversation_id=CASE
-                    WHEN excluded.conversation_id <> '' THEN excluded.conversation_id
-                    ELSE relationship_presence_states.conversation_id
-                END,
-                relationship_stage=excluded.relationship_stage,
-                relationship_page_json=excluded.relationship_page_json,
-                relationship_page_updated_at_ms=excluded.relationship_page_updated_at_ms,
-                relationship_page_source_json=excluded.relationship_page_source_json,
-                updated_at_ms=excluded.updated_at_ms
-            """,
-            (
-                f"rps_{uuid.uuid4().hex}",
-                clean_username,
-                clean_character_id,
-                clean_conversation_id,
-                generated_stage,
-                json.dumps(content, ensure_ascii=False),
-                ts,
-                json.dumps(source_summary, ensure_ascii=False),
-                ts,
-                ts,
-            ),
-        )
-        await conn.commit()
-
-    return (await load_relationship_state(clean_username, clean_character_id)) or {
-        "username": clean_username,
-        "character_id": clean_character_id,
-        "conversation_id": clean_conversation_id,
-        "relationship_stage": generated_stage,
-        "relationship_page": content,
-        "relationship_page_updated_at_ms": ts,
-        "relationship_page_source": source_summary,
-        "updated_at_ms": ts,
-    }
+    await asyncio.to_thread(request_relationship, get_database().db_path, username, character_id, retry=True)
+    current = await load_relationship_state(username, character_id)
+    return current or {"username": username, "character_id": character_id,
+        "conversation_id": conversation_id, "relationship_stage": "uncertain",
+        "relationship_page": default_relationship_page(), "relationship_page_updated_at_ms": 0,
+        "relationship_page_source": {"engine": "agent-memory", "status": "queued"}, "updated_at_ms": 0}
 
 
 async def _fetch_daily_pairs(limit: int) -> List[Dict[str, str]]:

@@ -428,6 +428,8 @@ fun SettingsScreen(
             // AI 功能
             SettingsScreenSectionTitle("AI 功能")
             SettingsScreenCard {
+                NormalEngineSetting(prefs)
+                SettingsScreenCardDivider()
                 // 角色长期记忆
                 Row(
                     modifier = Modifier

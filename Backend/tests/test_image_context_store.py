@@ -1,4 +1,4 @@
-"""近期图片识图池与 normal_planner 合并逻辑单测。"""
+"""近期图片识图池单测。"""
 
 from __future__ import annotations
 
@@ -21,7 +21,6 @@ from Backend.chat_modules.image_context_store import (
     get_last_reply_based_on_image,
     set_last_reply_based_on_image,
 )
-from Backend.chat_modules.normal_planner import _coerce_planner, default_planner_result
 from Backend.db import get_database
 
 
@@ -72,43 +71,9 @@ async def test_last_reply_flag_roundtrip():
     assert not await get_last_reply_based_on_image(u, c, conv)
 
 
-def test_coerce_planner_strips_use_prior_without_pool():
-    d = {**default_planner_result(), "use_prior_image_context": True, "image_context_reason": "想引用"}
-    o = _coerce_planner(d, can_use_prior_image_context=False)
-    assert o["use_prior_image_context"] is False
-
-
-def test_coerce_planner_allows_use_prior_with_pool():
-    d = {**default_planner_result(), "use_prior_image_context": True, "image_context_reason": "图里字"}
-    o = _coerce_planner(d, can_use_prior_image_context=True)
-    assert o["use_prior_image_context"] is True
-
-
-def test_coerce_planner_low_speech_activity_disables_output_channels():
-    d = {
-        **default_planner_result(),
-        "speech_activity": 3,
-        "speech_reason": "用户只是在晚安后确认收束",
-        "should_ask_question": True,
-        "asset_plan": {"enabled": True, "count": 1, "send_intensity": 90},
-        "scheduled_followup": {"enabled": True, "target_delay_seconds": 60, "expires_seconds": 1800},
-    }
-    o = _coerce_planner(d, can_use_prior_image_context=True)
-    assert o["speech_activity"] == 3
-    assert o["speech_reason"] == "用户只是在晚安后确认收束"
-    assert o["bubble_count"] == 0
-    assert o["should_ask_question"] is False
-    assert o["asset_plan"]["enabled"] is False
-    assert o["reply_sequence"] == []
-    assert o["scheduled_followup"]["enabled"] is False
-
-
 if __name__ == "__main__":
     asyncio.run(test_queue_append_and_inject_newest_order())
     asyncio.run(test_last_reply_flag_roundtrip())
-    test_coerce_planner_strips_use_prior_without_pool()
-    test_coerce_planner_allows_use_prior_with_pool()
-    test_coerce_planner_low_speech_activity_disables_output_channels()
     from Backend.db import get_database
     asyncio.run(get_database().close())
     print("ok")

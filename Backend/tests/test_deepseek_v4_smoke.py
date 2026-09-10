@@ -27,7 +27,7 @@ def deepseek_model_cfg() -> dict:
 
 def test_deepseek_json_shape(deepseek_model_cfg: dict) -> None:
     m = deepseek_model_cfg
-    assert m.get("model_name") == "deepseek-v4-flash"
+    assert m.get("model_name") == "deepseek-flash"
     assert m.get("uses_v4_thinking_api") is True
     assert "model_name_no_thinking" not in m
     assert "max_tokens_no_thinking" not in m
@@ -43,9 +43,10 @@ def test_helpers() -> None:
     )
 
     assert is_deepseek_v4_model({"uses_v4_thinking_api": True}, "any", "")
-    assert not is_deepseek_v4_model({}, "deepseek-v4-pro", "https://api.deepseek.com")
+    assert is_deepseek_v4_model({}, "deepseek-v4-pro", "https://api.deepseek.com")
     assert is_deepseek_v4_model({}, "deepseek-v4-flash", "https://api.deepseek.com")
-    assert map_ds_v4_api_reasoning_effort("low") == "high"
+    assert is_deepseek_v4_model({}, "deepseek-flash", "https://api.deepseek.com")
+    assert map_ds_v4_api_reasoning_effort("low") == "low"
     assert map_ds_v4_api_reasoning_effort("max") == "max"
     assert _coerce_reasoning("max") == "max"
     pol = resolve_reasoning_policy(
@@ -69,7 +70,7 @@ def test_model_manager_no_thinking_budget(deepseek_model_cfg: dict) -> None:
     assert keys.count("enable_thinking") == 1
     re = next(x for x in schema if x.get("key") == "reasoning_effort")
     vals = {o["value"] for o in re.get("options", [])}
-    assert vals == {"high", "max"}
+    assert vals == {"low"}
 
 
 def test_apply_model_param_policy_keeps_thinking() -> None:

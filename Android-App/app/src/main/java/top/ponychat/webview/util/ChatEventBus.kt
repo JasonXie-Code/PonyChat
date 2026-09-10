@@ -26,6 +26,8 @@ data class ChatCompletedEvent(
     val timestamp: Long,
     val source: ChatCompletionSource,
     val messageCount: Int = 1,
+    val messageId: String? = null,
+    val conversationId: String? = null,
 )
 
 /**
@@ -125,6 +127,8 @@ object ChatEventBus {
         source: ChatCompletionSource,
         correlationId: String? = null,
         messageCount: Int = 1,
+        messageId: String? = null,
+        conversationId: String? = null,
     ) {
         val cid = characterId.trim().ifBlank { return }
         val md = normMode(mode)
@@ -159,7 +163,8 @@ object ChatEventBus {
         lastEmitByKey[key] = LastEmit(now, source, corr)
 
         appScope.launch {
-            _completed.emit(ChatCompletedEvent(cid, md, timestamp, source, unreadIncrement))
+            _completed.emit(ChatCompletedEvent(cid, md, timestamp, source, unreadIncrement,
+                messageId?.takeIf { it.isNotBlank() }, conversationId?.takeIf { it.isNotBlank() }))
         }
 
         val am = activeMode

@@ -18,6 +18,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +66,8 @@ import top.ponychat.webview.ui.chat.ChatViewModel
 import top.ponychat.webview.ui.chat.ConversationHistoryScreen
 import top.ponychat.webview.ui.chat.MemoryScreen
 import top.ponychat.webview.ui.chat.ProactiveTasksScreen
+import top.ponychat.webview.ui.device.DeviceHomeScreen
+import top.ponychat.webview.ui.device.DeviceCharacterPickerScreen
 import top.ponychat.webview.ui.settings.ProfileEditScreen
 import top.ponychat.webview.ui.settings.CompanionSettingsScreen
 import top.ponychat.webview.ui.settings.NetworkSettingsScreen
@@ -92,15 +95,26 @@ object Routes {
     const val COMPANION_SETTINGS = "companion_settings"
     const val PROFILE_EDIT = "profile_edit"
     const val NETWORK_SETTINGS = "network_settings"
+    const val DEVICE_HOME = "device_home"
+    const val DEVICE_CHARACTER_PICKER = "device_character_picker"
 
 }
 
 @Composable
 fun AppNavigation(
     prefs: AppPreferences,
+    isDeviceExperience: Boolean = false,
+    isCompanionRuntimeReady: Boolean = false,
+    companionRuntimeStatus: String = "",
     onThemeChanged: (Boolean) -> Unit = {},
     onFontScaleChanged: (Float) -> Unit = {},
-    startDestination: String = if (prefs.isLoggedIn()) Routes.CHARACTER_LIST else Routes.LOGIN
+    startDestination: String = if (isDeviceExperience) {
+        Routes.DEVICE_HOME
+    } else if (!prefs.isLoggedIn()) {
+        Routes.LOGIN
+    } else {
+        Routes.CHARACTER_LIST
+    }
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -116,6 +130,11 @@ fun AppNavigation(
     }
 
     var selectedCharacter by remember { mutableStateOf<Character?>(null) }
+    var selectedCharacterId by rememberSaveable { mutableStateOf<String?>(null) }
+    fun selectCharacter(character: Character?) {
+        selectedCharacter = character
+        selectedCharacterId = character?.id
+    }
     var profileCharacter by remember { mutableStateOf<Character?>(null) }
     var editingCharacter by remember { mutableStateOf<Character?>(null) }
     var isCreatingCharacter by remember { mutableStateOf(false) }
@@ -127,7 +146,7 @@ fun AppNavigation(
     var forceUpgradeDlState by remember { mutableStateOf<ApkDownloadState>(ApkDownloadState.Idle) }
 
     fun clearAccountScopedUiState() {
-        selectedCharacter = null
+        selectCharacter(null)
         profileCharacter = null
         editingCharacter = null
         isCreatingCharacter = false
@@ -137,7 +156,7 @@ fun AppNavigation(
     // ==================== 版本更新弹窗 ====================
     var showUpdateDialog by remember { mutableStateOf(false) }
     var updateLatestVersion by remember { mutableStateOf("") }
-    var updateDownloadUrl by remember { mutableStateOf("https://ponychat.org/download/apk") }
+    var updateDownloadUrl by remember { mutableStateOf(AppPreferences.DEFAULT_WAN_URL + "/download/apk") }
     var isCheckingUpdate by remember { mutableStateOf(false) }
 
     suspend fun checkForAppUpdate(manual: Boolean) {
@@ -301,7 +320,7 @@ fun AppNavigation(
             }
             val char = characterViewModel.state.value.characters.find { it.id == navTarget.characterId }
             if (char != null) {
-                selectedCharacter = char
+                selectCharacter(char)
                 val vm = getChatVm(char.id ?: "default")
                 // 使用通知携带的 mode，确保游戏/锁分通知能正确进入对应模式
                 vm.initWithCharacter(char, navTarget.mode)
@@ -317,7 +336,19 @@ fun AppNavigation(
 
     BackHandler {
         when (currentRoute) {
-            Routes.LOGIN, Routes.CHARACTER_LIST -> {
+            Routes.DEVICE_HOME -> Unit
+            Routes.CHARACTER_LIST -> {
+                if (isDeviceExperience && navController.popBackStack()) return@BackHandler
+                val now = System.currentTimeMillis()
+                if (now - lastBackPressAt < 2000) {
+                    (context as? Activity)?.finish()
+                } else {
+                    lastBackPressAt = now
+                    scope.launch { snackbarHostState.showSnackbar("再按一次退出") }
+                }
+            }
+            Routes.LOGIN -> {
+                if (isDeviceExperience && navController.popBackStack()) return@BackHandler
                 val now = System.currentTimeMillis()
                 if (now - lastBackPressAt < 2000) {
                     (context as? Activity)?.finish()
@@ -344,8 +375,14 @@ fun AppNavigation(
                 onLoginSuccess = {
                     clearAccountScopedUiState()
                     characterViewModel.loadMyCharacters()
-                    navController.navigate(Routes.CHARACTER_LIST) {
-                        popUpTo(Routes.LOGIN) { inclusive = true }
+                    val destination = if (isDeviceExperience) Routes.DEVICE_HOME else Routes.CHARACTER_LIST
+                    navController.navigate(destination) {
+                        if (isDeviceExperience) {
+                            popUpTo(Routes.DEVICE_HOME) { inclusive = false }
+                        } else {
+                            popUpTo(Routes.LOGIN) { inclusive = true }
+                        }
+                        launchSingleTop = true
                     }
                 },
                 onNavigateToRegister = {
@@ -353,7 +390,13 @@ fun AppNavigation(
                 },
                 onNavigateToNetwork = {
                     navController.navigate(Routes.NETWORK_SETTINGS)
-                }
+                },
+                showDeviceHomeButton = isCompanionRuntimeReady,
+                onNavigateToDeviceHome = {
+                    navController.navigate(Routes.DEVICE_HOME) {
+                        launchSingleTop = true
+                    }
+                },
             )
         }
 
@@ -369,12 +412,71 @@ fun AppNavigation(
             )
         }
 
+        composable(Routes.DEVICE_HOME) {
+            val characterState by characterViewModel.state.collectAsState()
+            val activeCharacter = characterState.characters.firstOrNull {
+                it.id == prefs.lastCharacterId
+            }
+            DeviceHomeScreen(
+                runtimeStatus = companionRuntimeStatus,
+                runtimeReady = isCompanionRuntimeReady,
+                activeCharacter = activeCharacter,
+                avatarApiBase = prefs.activeApiBase,
+                onOpenConversations = {
+                    if (prefs.isLoggedIn()) {
+                        characterViewModel.loadMyCharacters()
+                        if (activeCharacter == null) {
+                            navController.navigate(Routes.DEVICE_CHARACTER_PICKER)
+                        } else {
+                            selectCharacter(activeCharacter)
+                            getChatVm(activeCharacter.id ?: "default")
+                                .initWithCharacter(activeCharacter, prefs.chatMode)
+                            navController.navigate(Routes.CHAT)
+                        }
+                    } else {
+                        navController.navigate(Routes.LOGIN)
+                    }
+                },
+                onSwitchCharacter = {
+                    if (prefs.isLoggedIn()) {
+                        characterViewModel.loadMyCharacters()
+                        navController.navigate(Routes.DEVICE_CHARACTER_PICKER)
+                    } else {
+                        navController.navigate(Routes.LOGIN)
+                    }
+                },
+                onOpenSettings = {
+                    navController.navigate(if (prefs.isLoggedIn()) Routes.SETTINGS else Routes.LOGIN)
+                },
+            )
+        }
+
+        composable(Routes.DEVICE_CHARACTER_PICKER) {
+            val characterState by characterViewModel.state.collectAsState()
+            DeviceCharacterPickerScreen(
+                characters = characterState.characters,
+                activeCharacterId = prefs.lastCharacterId,
+                avatarApiBase = prefs.activeApiBase,
+                isLoading = characterState.isLoading,
+                onBack = { navController.popBackStack() },
+                onCharacterSelected = { character ->
+                    val characterId = character.id?.takeIf(String::isNotBlank)
+                        ?: return@DeviceCharacterPickerScreen
+                    prefs.lastCharacterId = characterId
+                    selectCharacter(character)
+                    if (!navController.popBackStack(Routes.DEVICE_HOME, inclusive = false)) {
+                        navController.navigate(Routes.DEVICE_HOME) { launchSingleTop = true }
+                    }
+                },
+            )
+        }
+
         composable(Routes.CHARACTER_LIST) {
             CharacterListScreen(
                 viewModel = characterViewModel,
                 prefs = prefs,
                 onCharacterSelected = { character, mode ->
-                    selectedCharacter = character
+                    selectCharacter(character)
                     val vm = getChatVm(character.id ?: "default")
                     vm.initWithCharacter(character, mode)
                     navController.navigate(Routes.CHAT)
@@ -389,6 +491,14 @@ fun AppNavigation(
                     isCreatingCharacter = true
                     editingCharacter = null
                     navController.navigate(Routes.CHARACTER_EDIT)
+                },
+                showDeviceHomeAction = isCompanionRuntimeReady,
+                onNavigateToDeviceHome = {
+                    if (!navController.popBackStack(Routes.DEVICE_HOME, inclusive = false)) {
+                        navController.navigate(Routes.DEVICE_HOME) {
+                            launchSingleTop = true
+                        }
+                    }
                 },
                 onNavigateToEdit = { character ->
                     isCreatingCharacter = false
@@ -436,7 +546,7 @@ fun AppNavigation(
                                 (it.sourceId?.isNotBlank() == true && it.sourceId == target.id) ||
                                 (it.contentHash?.isNotBlank() == true && it.contentHash == target.contentHash)
                         } ?: target
-                        selectedCharacter = localTarget
+                        selectCharacter(localTarget)
                         val vm = getChatVm(localTarget.id ?: "default")
                         vm.initWithCharacter(localTarget, mode)
                         navController.navigate(Routes.CHAT)
@@ -470,9 +580,9 @@ fun AppNavigation(
         ) {
             val character = selectedCharacter
             if (character == null) {
-                // 进程被杀后 Nav 恢复 CHAT 但 selectedCharacter 丢失 → 从 prefs 恢复，避免黑屏
+                // 优先恢复当前页面保存的角色 ID，旧偏好仅用于没有页面状态的冷启动。
                 LaunchedEffect(Unit) {
-                    val lastId = prefs.lastCharacterId
+                    val lastId = selectedCharacterId ?: prefs.lastCharacterId
                     val lastMode = prefs.chatMode
                     if (lastId.isBlank()) {
                         navController.navigate(Routes.CHARACTER_LIST) {
@@ -490,7 +600,7 @@ fun AppNavigation(
                     }
                     val char = characterViewModel.state.value.characters.find { it.id == lastId }
                     if (char != null) {
-                        selectedCharacter = char
+                        selectCharacter(char)
                         getChatVm(char.id ?: "default").initWithCharacter(char, lastMode)
                     } else {
                         navController.navigate(Routes.CHARACTER_LIST) {
@@ -513,6 +623,22 @@ fun AppNavigation(
                     onNavigateToCharacterProfile = { target ->
                         profileCharacter = target
                         navController.navigate(Routes.CHARACTER_PROFILE)
+                    },
+                    characterHome = { returnToChat ->
+                        CharacterProfileScreen(
+                            character = character,
+                            viewModel = characterViewModel,
+                            prefs = prefs,
+                            embedded = true,
+                            onNavigateBack = returnToChat,
+                            onStartChat = { _, _ -> returnToChat() },
+                            onEditSettings = { target ->
+                                isCreatingCharacter = false
+                                editingCharacter = target
+                                navController.navigate(Routes.CHARACTER_EDIT)
+                            },
+                            onAddFromHall = { characterViewModel.addCharacterFromHall(it) },
+                        )
                     },
                     onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
                     onNavigateToProactiveTasks = { navController.navigate(Routes.PROACTIVE_TASKS) },
@@ -578,7 +704,7 @@ fun AppNavigation(
                     clearAccountScopedUiState()
                     authViewModel.clearLoginState()
                     navController.navigate(Routes.LOGIN) {
-                        popUpTo(Routes.CHARACTER_LIST) { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                         launchSingleTop = true
                     }
                 }

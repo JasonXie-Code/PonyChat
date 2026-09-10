@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from .. import config
 from ..config import logger
 from ..db import get_membership_dao, get_users_dao
-from ..providers import DoubaoProvider, QwenProvider, XaiProvider
+from ..providers import QwenProvider, XaiProvider
 from ..providers.llm_call import call_llm_payload
 from ..retry_manager import compute_backoff_delay
 from ..assistant_sanitize import sanitize_assistant_strip_markers
@@ -43,10 +43,11 @@ async def handle_nonstream_request(
     use_json_protocol: bool = False,
     chat_request_log_params: dict | None = None,
 ) -> tuple[dict | StreamingResponse | JSONResponse, bool]:
+    if request.mode == "normal":
+        raise ValueError("Normal requests must use the Agent entry point")
+
     if isinstance(provider, XaiProvider) and uses_responses_format:
         logger.info(f"🔍 使用 xAI Responses API 非流式请求: {api_url}")
-    elif isinstance(provider, DoubaoProvider) and uses_responses_format:
-        logger.info(f"🌐 使用豆包 Responses API 非流式请求: {api_url} (mode={request.mode}, web_search={'on' if params.get('web_search', False) else 'off'})")
     elif isinstance(provider, QwenProvider) and uses_responses_format:
         logger.info(f"🌐 使用 Qwen 官方 Responses API 非流式请求: {api_url} (mode={request.mode}, web_search={'on' if params.get('web_search', False) else 'off'})")
 
@@ -60,28 +61,6 @@ async def handle_nonstream_request(
     if httpx_client_ref is None:
         logger.error("❌ [聊天] HTTPX Client 引用为空（非流式）")
         raise HTTPException(status_code=500, detail="Internal Error: HTTP Client reference is None")
-
-    if request.mode == "normal":
-        from .normal_nonstream import handle_normal_nonstream_sse
-        return await handle_normal_nonstream_sse(
-            request=request,
-            model_name=model_name,
-            payload=payload,
-            api_url=api_url,
-            headers=headers,
-            provider=provider,
-            httpx_client=httpx_client_ref,
-            messages=messages,
-            request_tokens=request_tokens,
-            username=username,
-            character_id=character_id,
-            client_id=client_id,
-            effective_username=effective_username,
-            release_lock=release_lock,
-            active_model=active_model,
-            use_json=use_json_protocol,
-            chat_request_log_params=chat_request_log_params,
-        ), True
 
     if request.mode in ("galgame", "galgame_lock"):
         return await handle_galgame_sse(

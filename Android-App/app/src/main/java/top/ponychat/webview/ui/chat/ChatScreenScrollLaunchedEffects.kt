@@ -52,6 +52,21 @@ internal fun ChatScreenScrollLaunchedEffects(
     initialPresentationSettled: Boolean,
     scrollToLastAssistantInGalgame: suspend (Boolean) -> Unit,
 ) {
+    if (state.mode == "normal") {
+        NormalChatAutoFollow(
+            listState = listState,
+            state = state,
+            isNearBottom = isNearBottom,
+            userScrolledUpState = userScrolledUpState,
+            listTouchActiveState = listTouchActiveState,
+            listAutoFollowSuppressedState = listAutoFollowSuppressedState,
+            listEffectiveViewportEndPxState = listEffectiveViewportEndPxState,
+            naturalBottomPaddingPx = naturalBottomPaddingPx,
+            bottomAnchorTolerancePx = bottomAnchorTolerancePx,
+            initialPresentationSettled = initialPresentationSettled,
+        )
+        return
+    }
     // 长生命周期协程（LaunchedEffect(Unit)）中统一读取最新 state，
     // 避免捕获旧快照导致自动滚动分支"看起来消失"。
     val latestState = rememberUpdatedState(state)

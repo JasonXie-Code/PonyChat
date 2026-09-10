@@ -43,6 +43,11 @@ class SettingsDAO:
                        VALUES (?, ?, CURRENT_TIMESTAMP)""",
                     (user_id, settings_json)
                 )
+                if 'memory_enabled' in settings:
+                    table = await conn.execute("SELECT 1 FROM sqlite_master WHERE name='agent_memory_state'")
+                    if await table.fetchone():
+                        await conn.execute('UPDATE agent_memory_state SET enabled=? WHERE username=?',
+                                           (int(settings['memory_enabled'] is not False), username))
                 await conn.commit()
                 
                 logger.debug(f"💾 [DB] 保存设置: {username}")

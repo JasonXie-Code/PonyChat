@@ -1,9 +1,5 @@
 package top.ponychat.webview
 import android.app.Activity
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.pm.ServiceInfo
 import android.content.Intent
@@ -58,7 +54,6 @@ import android.widget.ScrollView
 import android.widget.TextView
 import top.ponychat.webview.data.prefs.AppPreferences
 import top.ponychat.webview.util.ClientContextHelper
-import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -84,6 +79,7 @@ class CompanionService : Service() {
         const val EXTRA_RESULT_DATA = "result_data"
         const val EXTRA_CHARACTER_ID = "character_id"
         const val EXTRA_CHARACTER_NAME = "character_name"
+        const val EXTRA_CHARACTER_PERSONALITY = "character_personality"
         const val EXTRA_AUTH_TOKEN = "auth_token"
         const val EXTRA_API_BASE = "api_base"
         const val EXTRA_USERNAME = "username"
@@ -129,6 +125,7 @@ class CompanionService : Service() {
     internal var autoHideRunnable: Runnable? = null
     // ── 半屏对话卡片 ──────────────────────────────────────────────────────────
     internal var chatDialogView: View? = null
+    internal var identityChooserView: View? = null
     internal var chatMessagesLayout: LinearLayout? = null
     internal var chatScrollView: ScrollView? = null
     internal var chatInputEt: EditText? = null
@@ -172,6 +169,8 @@ class CompanionService : Service() {
     // ── 基础参数 ─────────────────────────────────────────────────────────────
     internal var characterId = ""
     internal var characterName = ""
+    internal var characterPersonality = ""
+    internal var personalityStyle = "canonical"
     internal var authToken = ""
     internal var apiBase = ""
     internal var username = ""
@@ -287,6 +286,7 @@ class CompanionService : Service() {
         _isRunning.value = true
         characterId = intent?.getStringExtra(EXTRA_CHARACTER_ID) ?: ""
         characterName = intent?.getStringExtra(EXTRA_CHARACTER_NAME) ?: ""
+        characterPersonality = intent?.getStringExtra(EXTRA_CHARACTER_PERSONALITY) ?: ""
         authToken = intent?.getStringExtra(EXTRA_AUTH_TOKEN) ?: ""
         apiBase = intent?.getStringExtra(EXTRA_API_BASE) ?: ""
         username = intent?.getStringExtra(EXTRA_USERNAME) ?: ""
@@ -404,6 +404,7 @@ class CompanionService : Service() {
             val durationSec = ((System.currentTimeMillis() - companionStartTime) / 1000).toInt()
             val endBody = JSONObject().apply {
                 put("character_id", characterId)
+                put("personality_style", personalityStyle)
                 put("username", username)
                 put("duration_seconds", durationSec)
             }.toString()
@@ -432,6 +433,7 @@ class CompanionService : Service() {
             try { floatingButtonView?.let { windowManager.removeView(it) } } catch (_: Exception) {}
             try { currentCardView?.let { windowManager.removeView(it) } } catch (_: Exception) {}
             try { chatDialogView?.let { windowManager.removeView(it) } } catch (_: Exception) {}
+            try { identityChooserView?.let { windowManager.removeView(it) } } catch (_: Exception) {}
         }
         virtualDisplay?.release()
         mediaProjection?.stop()
@@ -1010,6 +1012,7 @@ class CompanionService : Service() {
                 val bodyJson = JSONObject().apply {
                     put("image_base64", b64)
                     put("character_id", characterId)
+                    put("personality_style", personalityStyle)
                     put("username", username)
                     put("max_chars", maxChars)
                     put("user_text", text)
@@ -1469,30 +1472,6 @@ class CompanionService : Service() {
     // ── 弹幕卡片 ─────────────────────────────────────────────────────────────
 
     /** 从任意线程安全调用：将卡片显示/更新任务 post 到主线程。 */
-    internal fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID, "聊天陪玩", NotificationManager.IMPORTANCE_LOW
-            ).apply { description = "陪玩截图分析服务" }
-            getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
-        }
-    }
-
-    internal fun buildNotification(): Notification {
-        val stopIntent = Intent(this, CompanionService::class.java).apply { action = ACTION_STOP }
-        val stopPending = PendingIntent.getService(
-            this, 0, stopIntent,
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("$characterName 正在陪玩")
-            .setContentText("单击按钮截图 · 双击对话 · 三击退出 · 长按语音")
-            .setSmallIcon(android.R.drawable.ic_menu_view)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "停止陪玩", stopPending)
-            .build()
-    }
-
     // ── 工具 ─────────────────────────────────────────────────────────────────
 
     internal fun dpToPx(dp: Int): Int =

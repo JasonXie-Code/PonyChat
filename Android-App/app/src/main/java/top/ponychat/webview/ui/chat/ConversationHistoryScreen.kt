@@ -148,7 +148,7 @@ fun ConversationHistoryScreen(
                         )
                         if (resp.isSuccessful) {
                             historyResetVersion++
-                            viewModel.applyNormalResetLocally()
+                            viewModel.applyNormalResetLocally(resp.body()?.conversationId)
                             viewModel.reloadConversation()
                             showResetDialog = false
                             isResetting = false

@@ -231,22 +231,14 @@ fun ChatViewModel.completeUploadingUserMessage(
 fun ChatViewModel.failUploadingUserMessage(messageId: String, reason: String) {
     if (messageId.isBlank()) return
     val label = reason.ifBlank { "图片上传失败，未发送" }
-    val beforeCount = _state.value.messages.size
-    val msgs = _state.value.messages.filterNot { msg ->
-        msg.id == messageId || msg.messageId == messageId
-    }
-    _state.value = _state.value.copy(messages = msgs, error = null, errorDebug = null)
-    val sentIdx = sentMessages.indexOfLast { it.messageId == messageId && it.role == "user" }
-    if (sentIdx >= 0) sentMessages.removeAt(sentIdx)
+    markNormalUserMessageForRetry(messageId)
+    _state.value = _state.value.copy(error = null, errorDebug = null)
     normalGenerationUserIds.remove(messageId)
     normalUploadingUserMessageIds.remove(messageId)
-    unconfirmedNormalUserKeys.remove(messageId)
     DebugLog.w(TAG, "Pending image message failed: $label")
-    if (msgs.size != beforeCount || sentIdx >= 0) {
-        queueSendFailurePrompt()
-    }
     if (normalUploadingUserMessageIds.isEmpty() && hasNormalUserMessagesAfterLastAssistant()) {
-        scheduleNormalReplyAfterUserInterrupt()
+        // 失败图片仍保留在消息中，等待用户点击左下角警示后重传，不能自动发出残缺内容。
+        normalGenerationStarted = false
     }
 }
 
@@ -467,7 +459,28 @@ fun ChatViewModel.retryPendingNormalUserMessage(messageId: String) {
     if (sentMessages.none { chatMessageKey(it) == chatMessageKey(runtimeMessage) }) {
         sentMessages.add(runtimeMessage)
     }
-    startNormalReplyGeneration(requestMessagesOverride = listOf(runtimeMessage))
+    val imageUrls = chatImageUrlsInContent(runtimeMessage.content)
+    val needsImageUpload = imageUrls.any(::chatImageNeedsUpload)
+    if (!needsImageUpload) {
+        startNormalReplyGeneration(requestMessagesOverride = listOf(runtimeMessage))
+        return
+    }
+    viewModelScope.launch {
+        val uploaded = uploadPendingChatImages(
+            context = androidApplication,
+            viewModel = this@retryPendingNormalUserMessage,
+            imageUrls = imageUrls,
+            showErrors = false,
+            showPrompt = {},
+        )
+        if (uploaded == null) {
+            markNormalUserMessageForRetry(targetKey)
+            _state.value = _state.value.copy(isStreaming = false, error = null, errorDebug = null)
+            DebugLog.w(TAG, "Retry pending image message upload failed: $targetKey")
+            return@launch
+        }
+        startNormalReplyGeneration(requestMessagesOverride = listOf(runtimeMessage))
+    }
 }
 
 private fun ChatViewModel.resetDebugPendingUserAcceptMessage(messageKey: String) {
@@ -657,7 +670,7 @@ internal fun ChatViewModel.onNormalReplyRoundFinished() {
 
 internal fun ChatViewModel.recoverNormalSendState(
     reason: String,
-    removeOptimisticMessages: Boolean = false,
+    markOptimisticMessagesForRetry: Boolean = false,
     cancelRecoveryJobs: Boolean = true,
 ) {
     if (_state.value.mode != "normal") return
@@ -671,13 +684,13 @@ internal fun ChatViewModel.recoverNormalSendState(
     )
     streamJob?.cancel()
     streamJob = null
-    if (removeOptimisticMessages) {
-        removePendingNormalUserMessagesOnFailure()
+    if (markOptimisticMessagesForRetry) {
+        markPendingNormalUserMessagesForRetry()
     }
     stopReplyTimer()
     resetNormalSendState(
         cancelRecoveryJobs = cancelRecoveryJobs,
-        clearUnconfirmedUsers = removeOptimisticMessages,
+        clearUnconfirmedUsers = false,
     )
     viewModelScope.launch {
         chatRepo.cancelGeneration(
@@ -691,36 +704,45 @@ internal fun ChatViewModel.recoverNormalSendState(
     }
 }
 
-internal fun ChatViewModel.removePendingNormalUserMessagesOnFailure(): Boolean {
-    var removed = false
+private fun ChatViewModel.markNormalUserMessageForRetry(messageId: String): Boolean {
+    val failedAt = System.currentTimeMillis() - 10_001L
+    var found = false
+    val nextMessages = _state.value.messages.map { message ->
+        if (
+            message.isUser() &&
+            (message.id == messageId || message.messageId == messageId || uiMessageKey(message) == messageId)
+        ) {
+            found = true
+            message.copy(
+                isPendingServerAccept = true,
+                pendingServerAcceptStartedAt = failedAt,
+            )
+        } else {
+            message
+        }
+    }
+    if (sentMessages.any { it.role == "user" && it.messageId == messageId }) found = true
+    if (found) {
+        rememberUnconfirmedNormalUser(messageId)
+        _state.value = _state.value.copy(messages = nextMessages)
+    }
+    return found
+}
+
+internal fun ChatViewModel.markPendingNormalUserMessagesForRetry(): Boolean {
+    var marked = false
     for (id in normalGenerationUserIds.toList()) {
         if (_state.value.messages.any { it.id == id || it.messageId == id } ||
             sentMessages.any { it.messageId == id && it.role == "user" }
         ) {
-            removed = true
+            marked = true
         }
-        removeUnacceptedUserMessage(id)
+        markNormalUserMessageForRetry(id)
         normalUploadingUserMessageIds.remove(id)
     }
     normalGenerationUserIds.clear()
     normalGenerationStarted = false
-    if (removed) queueSendFailurePrompt(trackNormalRound = true)
-    return removed
-}
-
-internal fun ChatViewModel.scheduleNormalAcceptedRecoveryWatchdog(
-    reason: String,
-    startSeq: Int?,
-    startedAt: Long,
-) {
-    normalAcceptedRecoveryJob?.cancel()
-    normalAcceptedRecoveryJob = viewModelScope.launch {
-        delay(20_000L)
-        if (_state.value.mode != "normal") return@launch
-        if (!_state.value.isStreaming) return@launch
-        if (normalAssistantVisible || normalAssistantArrivedAfter(startSeq, startedAt)) return@launch
-        startReplyRecoveryPolling(reason, "normal", startSeq, startedAt)
-    }
+    return marked
 }
 
 internal fun ChatViewModel.startNormalReplyGeneration(
@@ -762,6 +784,7 @@ internal fun ChatViewModel.startNormalReplyGeneration(
         characterId = characterId,
         messages = requestMessages,
         mode = "normal",
+        normalEngine = prefs.normalEngine,
         conversationId = conversationId,
         clientId = clientId,
         memoryEnabled = prefs.memoryEnabled,
@@ -802,12 +825,12 @@ internal fun ChatViewModel.startNormalReplyGeneration(
                     requestMessages
                 )
             } else {
-                val removedOptimisticMessages = removePendingNormalUserMessagesOnFailure()
+                val markedForRetry = markPendingNormalUserMessagesForRetry()
                 val parsed = parseErrorForDisplay(err.message)
                 _state.value = _state.value.copy(
                     isStreaming = false,
-                    error = if (removedOptimisticMessages) null else parsed.first,
-                    errorDebug = if (removedOptimisticMessages) null else parsed.second
+                    error = if (markedForRetry) null else parsed.first,
+                    errorDebug = if (markedForRetry) null else parsed.second
                 )
                 stopReplyTimer()
                 onNormalReplyRoundFinished()
@@ -830,10 +853,7 @@ internal fun ChatViewModel.startNormalReplyGeneration(
                             messageIds = normalGenerationUserIds + listOfNotNull(delta.clientMessageId),
                             acceptAllPendingOnServerSignal = true,
                         )
-                        if (!delta.implicit) {
-                            persistAcceptedUserRound(characterId, "normal")
-                            scheduleNormalAcceptedRecoveryWatchdog("accepted_watchdog", recoveryStartSeq, recoveryStartedAt)
-                        }
+                        if (!delta.implicit) persistAcceptedUserRound(characterId, "normal")
                     }
                     is ChatDelta.ServerAssistantId -> {
                         serverAssistantMessageId = delta.messageId
@@ -843,8 +863,7 @@ internal fun ChatViewModel.startNormalReplyGeneration(
                         serverAssistantMessageId = delta.messageIds.lastOrNull()
                     }
                     is ChatDelta.AssistantParagraph -> {
-                        normalAcceptedRecoveryJob?.cancel()
-                        normalAcceptedRecoveryJob = null
+                        stopNormalRecoveryAfterAssistantArrived()
                         markNormalUsersAcceptedByServer(acceptAllPendingOnServerSignal = true)
                         normalAssistantVisible = true
                         val paraId = delta.id ?: UUID.randomUUID().toString()
@@ -854,8 +873,7 @@ internal fun ChatViewModel.startNormalReplyGeneration(
                         lastNormalParagraphId = paraId
                     }
                     is ChatDelta.AssistantAsset -> {
-                        normalAcceptedRecoveryJob?.cancel()
-                        normalAcceptedRecoveryJob = null
+                        stopNormalRecoveryAfterAssistantArrived()
                         markNormalUsersAcceptedByServer(acceptAllPendingOnServerSignal = true)
                         normalAssistantVisible = true
                         val assetId = delta.messageId ?: UUID.randomUUID().toString()
@@ -955,15 +973,15 @@ internal fun ChatViewModel.startNormalReplyGeneration(
                     }
                     is ChatDelta.Error -> {
                         val parsed = parseErrorForDisplay(delta.message)
-                        val removedOptimisticMessages = if (!acceptedByServer) {
-                            removePendingNormalUserMessagesOnFailure()
+                        val markedForRetry = if (!acceptedByServer) {
+                            markPendingNormalUserMessagesForRetry()
                         } else {
                             false
                         }
                         _state.value = _state.value.copy(
                             isStreaming = false,
-                            error = if (removedOptimisticMessages) null else parsed.first,
-                            errorDebug = if (removedOptimisticMessages) null else parsed.second
+                            error = if (markedForRetry) null else parsed.first,
+                            errorDebug = if (markedForRetry) null else parsed.second
                         )
                         incrementRetryCount()
                         stopReplyTimer()
@@ -972,20 +990,20 @@ internal fun ChatViewModel.startNormalReplyGeneration(
                     is ChatDelta.QuotaExceeded -> {
                         noReplyReceived = true
                         doneReceived = true
-                        val removedOptimisticMessages = if (!acceptedByServer) {
-                            removePendingNormalUserMessagesOnFailure()
+                        val markedForRetry = if (!acceptedByServer) {
+                            markPendingNormalUserMessagesForRetry()
                         } else {
                             false
                         }
                         _state.value = _state.value.copy(
                             isStreaming = false,
                             error = null,
-                            quotaExceeded = !removedOptimisticMessages,
-                            quotaExceededMessage = if (removedOptimisticMessages) "" else delta.message
+                            quotaExceeded = !markedForRetry,
+                            quotaExceededMessage = if (markedForRetry) "" else delta.message
                         )
                         stopReplyTimer()
                         onNormalReplyRoundFinished()
-                        if (!removedOptimisticMessages) {
+                        if (!markedForRetry) {
                             triggerAutoSave(character, saveIntent = "user_edit")
                         }
                     }
@@ -1046,13 +1064,13 @@ internal fun ChatViewModel.scheduleNormalTransportRetry(
 ) {
     if (_state.value.mode != "normal") return
     if (retryAttempt >= 5) {
-        val removedOptimisticMessages = removePendingNormalUserMessagesOnFailure()
+        val markedForRetry = markPendingNormalUserMessagesForRetry()
         val parsed = parseErrorForDisplay("normal_stream_not_accepted")
         _state.value = _state.value.copy(
             isStreaming = false,
             galgameStreamingStep = null,
-            error = if (removedOptimisticMessages) null else parsed.first,
-            errorDebug = if (removedOptimisticMessages) null else parsed.second
+            error = if (markedForRetry) null else parsed.first,
+            errorDebug = if (markedForRetry) null else parsed.second
         )
         stopReplyTimer()
         onNormalReplyRoundFinished()
@@ -1078,13 +1096,19 @@ internal fun ChatViewModel.startReplyRecoveryPolling(
     val character = _state.value.character ?: return
     val characterId = character.id?.takeIf { it.isNotBlank() } ?: return
     val conversationId = _state.value.conversationId?.takeIf { it.isNotBlank() }
+    val pendingGameUser = _state.value.messages.lastOrNull { it.isUser() }
+    val gameUserId = pendingGameUser?.let { it.messageId ?: it.id }
+    val gameUserTimestamp = pendingGameUser?.timestamp ?: startedAt
     replyRecoveryPollJob?.cancel()
     replyRecoveryPollJob = viewModelScope.launch {
         var attempts = 0
-        while (attempts < maxAttempts && _state.value.mode == mode) {
+        while (attempts < maxAttempts && _state.value.mode == mode &&
+            _state.value.character?.id == characterId &&
+            (conversationId == null || _state.value.conversationId == conversationId)) {
             val recovered = when (mode) {
                 "normal" -> normalAssistantArrivedAfter(startSeq, startedAt)
-                "galgame", "galgame_lock" -> galgameAssistantRecovered()
+                "galgame", "galgame_lock" -> hasRecoveredGameReply(
+                    _state.value.messages, gameUserId, gameUserTimestamp)
                 else -> false
             }
             if (recovered) {
@@ -1109,7 +1133,7 @@ internal fun ChatViewModel.startReplyRecoveryPolling(
             }
             if (!_state.value.isBackgroundRefreshing) {
                 if (mode == "normal") {
-                    refreshNewMessagesFromServer(allowWhileStreaming = true)
+                    refreshNewMessagesFromServer(allowWhileStreaming = true, includeRecent = true)
                 } else {
                     refreshConversationFromServer(allowWhileStreaming = true)
                 }
@@ -1125,7 +1149,7 @@ internal fun ChatViewModel.startReplyRecoveryPolling(
             if (mode == "normal") {
                 recoverNormalSendState(
                     reason = "recovery_timeout_$reason",
-                    removeOptimisticMessages = false,
+                    markOptimisticMessagesForRetry = false,
                     cancelRecoveryJobs = false,
                 )
                 _state.value = _state.value.copy(
@@ -1136,6 +1160,13 @@ internal fun ChatViewModel.startReplyRecoveryPolling(
         }
         replyRecoveryPollJob = null
     }
+}
+
+internal fun ChatViewModel.stopNormalRecoveryAfterAssistantArrived() {
+    normalAcceptedRecoveryJob?.cancel()
+    normalAcceptedRecoveryJob = null
+    replyRecoveryPollJob?.cancel()
+    replyRecoveryPollJob = null
 }
 
 internal fun ChatViewModel.normalAssistantArrivedAfter(startSeq: Int?, startedAt: Long): Boolean {
@@ -1150,16 +1181,6 @@ internal fun ChatViewModel.normalAssistantArrivedAfter(startSeq: Int?, startedAt
                 else -> message.timestamp >= lowerBound
             }
     }
-}
-
-internal fun ChatViewModel.galgameAssistantRecovered(): Boolean {
-    val lastAssistant = _state.value.messages.lastOrNull { it.isAssistant() } ?: return false
-    return !lastAssistant.isStreaming &&
-            (
-                lastAssistant.rawContent?.isNotBlank() == true ||
-                    lastAssistant.displayContent?.isNotBlank() == true ||
-                    lastAssistant.content.isNotBlank()
-                )
 }
 
 fun ChatViewModel.sendSticker(sticker: StickerAsset) {

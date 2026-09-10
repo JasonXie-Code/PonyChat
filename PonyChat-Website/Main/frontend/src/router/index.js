@@ -1,26 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAdminStore } from '../stores/adminStore'
-import HomeView from '../views/HomeView.vue'
-import DetailView from '../views/DetailView.vue'
-import ArchiveView from '../views/ArchiveView.vue'
-import CharacterHallView from '../views/CharacterHallView.vue'
-import MbtiChoiceView from '../views/MbtiChoiceView.vue'
-import DataExportView from '../views/DataExportView.vue'
-import DriveView from '../views/DriveView.vue'
-import WebChatView from '../views/WebChatView.vue'
-import AdminLoginView from '../views/admin/AdminLoginView.vue'
-import AdminLayout from '../views/admin/AdminLayout.vue'
-import TerminalView from '../views/admin/TerminalView.vue'
-import OverviewSection from '../views/admin/sections/OverviewSection.vue'
-import UsersSection from '../views/admin/sections/UsersSection.vue'
-import CharactersSection from '../views/admin/sections/CharactersSection.vue'
-import AssetsSection from '../views/admin/sections/AssetsSection.vue'
-import ConversationsSection from '../views/admin/sections/ConversationsSection.vue'
-import RecoverySection from '../views/admin/sections/RecoverySection.vue'
-import InvitesSection from '../views/admin/sections/InvitesSection.vue'
-import ModelsSection from '../views/admin/sections/ModelsSection.vue'
-import SystemSection from '../views/admin/sections/SystemSection.vue'
-import ConversationLogsSection from '../views/admin/sections/ConversationLogsSection.vue'
+
+const HomeView = () => import('../views/HomeView.vue')
+const DetailView = () => import('../views/DetailView.vue')
+const ArchiveView = () => import('../views/ArchiveView.vue')
+const CharacterHallView = () => import('../views/CharacterHallView.vue')
+const MbtiChoiceView = () => import('../views/MbtiChoiceView.vue')
+const DataExportView = () => import('../views/DataExportView.vue')
+const DriveView = () => import('../views/DriveView.vue')
+const WebChatView = () => import('../views/WebChatView.vue')
+const AdminLoginView = () => import('../views/admin/AdminLoginView.vue')
+const AdminLayout = () => import('../views/admin/AdminLayout.vue')
+const TerminalView = () => import('../views/admin/TerminalView.vue')
+const OverviewSection = () => import('../views/admin/sections/OverviewSection.vue')
+const UsersSection = () => import('../views/admin/sections/UsersSection.vue')
+const CharactersSection = () => import('../views/admin/sections/CharactersSection.vue')
+const AssetsSection = () => import('../views/admin/sections/AssetsSection.vue')
+const ConversationsSection = () => import('../views/admin/sections/ConversationsSection.vue')
+const RecoverySection = () => import('../views/admin/sections/RecoverySection.vue')
+const InvitesSection = () => import('../views/admin/sections/InvitesSection.vue')
+const ModelsSection = () => import('../views/admin/sections/ModelsSection.vue')
+const SystemSection = () => import('../views/admin/sections/SystemSection.vue')
+const ConversationLogsSection = () => import('../views/admin/sections/ConversationLogsSection.vue')
 
 const isDriveHost = typeof window !== 'undefined' && window.location.hostname === 'drive.ponychat.org'
 const driveDevRoutes = import.meta.env.DEV
@@ -45,10 +46,10 @@ const router = createRouter({
       name: 'home',
       component: isDriveHost ? DriveView : HomeView,
       meta: {
-        title: isDriveHost ? 'PonyChat Drive' : 'PonyChat — 停更通知',
+        title: isDriveHost ? 'PonyChat Drive' : 'PonyChat — AI companionship',
         description: isDriveHost
           ? 'PonyChat 私人网盘。'
-          : 'PonyChat 暂停产品更新，并对现有角色聊天、长期记忆、主动陪伴等功能进行合规评估与调整。',
+          : 'PonyChat: character conversations, lasting memories and voice companionship.',
       },
     },
     ...driveDevRoutes,
@@ -86,7 +87,7 @@ const router = createRouter({
       name: 'archive',
       component: ArchiveView,
       meta: {
-        title: 'PonyChat — 项目近况（2026-06-03）',
+        title: 'PonyChat — 项目近况（2026-09-06）',
         description: 'PonyChat 近期开发进展：普通聊天、语音消息、角色主页、Voice Lab 与部署近况。',
       },
     },

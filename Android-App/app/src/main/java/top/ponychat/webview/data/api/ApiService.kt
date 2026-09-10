@@ -8,6 +8,13 @@ import top.ponychat.webview.data.model.*
 
 interface ApiService {
 
+    @GET("api/agent/status")
+    suspend fun getAgentStatus(
+        @Query("character_id") characterId: String,
+        @Query("mode") mode: String,
+        @Query("conversation_id") conversationId: String? = null,
+    ): Response<AgentStatusResponse>
+
     // ==================== 认证 ====================
 
     @POST("api/auth/login")
@@ -156,7 +163,7 @@ interface ApiService {
     ): Response<ApiResponse>
 
     @POST("api/character/reset_chat")
-    suspend fun resetCharacterChat(@Body request: ResetCharacterChatRequest): Response<ApiResponse>
+    suspend fun resetCharacterChat(@Body request: ResetCharacterChatRequest): Response<ResetCharacterChatResponse>
 
     // ==================== 用户资料更新 ====================
 
@@ -301,6 +308,11 @@ interface ApiService {
         @Body request: top.ponychat.webview.data.model.RelationshipRefreshRequest
     ): Response<top.ponychat.webview.data.model.RelationshipStateResponse>
 
+    @POST("api/relationship/state")
+    suspend fun updateRelationshipControl(
+        @Body request: top.ponychat.webview.data.model.RelationshipControlRequest
+    ): Response<top.ponychat.webview.data.model.RelationshipStateResponse>
+
     // ==================== 陪玩历史 ====================
 
     @GET("api/companion/sessions")
@@ -359,7 +371,8 @@ interface ApiService {
         @Query("sender") sender: String = "all",
         @Query("date_from") dateFrom: Long? = null,
         @Query("date_to") dateTo: Long? = null,
-        @Query("limit") limit: Int = 50
+        @Query("limit") limit: Int = 50,
+        @Query("message_id") messageId: String? = null,
     ): Response<top.ponychat.webview.data.model.PagedMessagesResponse>
 
     // ==================== 定时任务 ====================

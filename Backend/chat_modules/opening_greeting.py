@@ -22,6 +22,7 @@ from .character import (
     build_character_profile_prompt_block,
     load_character_from_db,
 )
+from .Prompts import OPENING_POLICY_SYSTEM, opening_greeting_system
 from .normal_nonstream import _coerce_normal_stage3_bubbles
 from .request_context import build_user_context
 
@@ -138,20 +139,7 @@ async def analyze_opening_greeting_policy(
     character_profile = build_character_profile_prompt_block(char)
     character_prompt = str(char.get("prompt") or "").strip()
     name = str(char.get("name") or "角色").strip()
-    system_prompt = """你是聊天产品的第 0 步决策器。你的任务是阅读角色资料，判断“用户刚添加这个角色为好友后，角色是否应该主动发第一条消息”。
-
-只输出 JSON 对象，不要输出解释文本。
-
-判断标准：
-1. 只根据角色性格、社交主动性、表达习惯和边界感判断；不要因为产品想活跃就强行让所有角色开口。
-2. 害羞、慢热、内向、谨慎、安静、需要被动回应的角色，通常 should_send=false。
-3. 外向、热情、社交主动、话多、喜欢欢迎新朋友的角色，通常 should_send=true。
-4. bubble_count 表示如果主动开口，应拆成几条聊天气泡：0 表示不发；1 表示克制的一条；2 表示正常社交数量；3 表示非常外向热情；最多 4。
-5. 这是刚添加后的第一次主动开口，不是用户已经发来消息后的回复。
-6. 不要生成具体聊天内容，只做决策。
-
-输出格式：
-{"should_send": false, "bubble_count": 0, "reason": "一句话说明性格依据", "style_hint": "若要发送，给后续写气泡步骤的简短风格提示"}"""
+    system_prompt = OPENING_POLICY_SYSTEM
     user_prompt = "\n\n".join(
         part
         for part in (
@@ -283,24 +271,7 @@ async def generate_opening_greeting_bubbles(
         ensure_ascii=False,
     )
 
-    system_prompt = f"""{NORMAL_MODE_WRITER_ANCHOR_PROMPT}
-
-{ROLEPLAY_ANCHOR_PROMPT}
-
-{NORMAL_MODE_OUTPUT_STYLE_PROMPT}
-
-你正在为“刚添加联系方式后的角色主动第一条消息”写聊天气泡。
-硬性规则：
-1. 只输出 JSON 对象，不要输出解释。
-2. bubbles 数组必须正好 {expected} 条，每条正文写进 parts[0].text；每个 bubble 是一个会直接显示在聊天里的气泡。
-3. 这是角色第一次主动开口，不要写成老熟人；不要说“好久不见”“终于来找我”“又来啦”。
-4. 可以自然照应用户显示名、物种、日常偏好或自我介绍，但不要强调信息来源。
-5. 绝对不要出现“资料、档案、个人设定、系统信息、后台、数据库、我看到/读到/看了你的……”等类似说法。
-6. 不要客服腔，不要介绍功能，不要问“有什么可以帮你”。
-7. 角色名：{name}。风格：{policy.style_hint}
-
-输出格式：
-{schema}"""
+    system_prompt = opening_greeting_system(name, expected, policy.style_hint, schema)
     user_prompt = "\n\n".join(
         part
         for part in (

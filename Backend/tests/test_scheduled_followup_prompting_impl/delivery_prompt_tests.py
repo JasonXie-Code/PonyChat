@@ -692,6 +692,30 @@ def test_scheduled_followup_trigger_does_not_expose_stale_seed_to_generation():
     assert "优先写成逗号、句号、省略号、换行" in trigger
 
 
+def test_second_followup_uses_self_contained_contract_for_fluttershy_squirrel_case():
+    trigger = _build_due_trigger_text(
+        {
+            "seed": "柔柔延续森林边小松鼠和坚果的话题，再次邀请用户哪天一起去看。",
+            "reason": "延续邀请并保持轻松",
+            "pressure_level": "low",
+            "chain_count": 1,
+        }
+    )
+
+    assert "followup_index: 2" in trigger
+    assert "interaction_position: continued_silence" in trigger
+    assert "response_dependency: none" in trigger
+    assert "message_value: self_contained" in trigger
+    assert "continuation_mode: share_or_self_action_or_topic_shift" in trigger
+    assert "closing_shape: open_statement" in trigger
+    assert "expression_motif_policy.blocked_motifs" in trigger
+    assert "重复的具体名词、动作目标和对话功能" in trigger
+    assert "把句尾留给这条消息的新内容" in trigger
+    assert "内部原因：延续邀请并保持轻松" not in trigger
+    assert "低压力" not in trigger
+    assert "不用急" not in trigger
+
+
 def test_passive_task_trigger_keeps_user_as_action_subject():
     trigger = _build_due_trigger_text(
         {
@@ -790,12 +814,15 @@ def test_scheduled_followup_trigger_forbids_answering_assistant_question():
 
     assert "用户尚未回答" in trigger
     assert "禁止替用户回答" in trigger
-    assert "不能编造用户的喜好、同意、回答或新动作" in trigger
+    assert "用户的喜好、同意、回答和新动作仍保持未知" in trigger
     assert "可以没忍住自己揭晓答案" in trigger
     assert "不得声称用户猜对、喜欢、同意或已经回答" in trigger
     assert "来源于角色自己" in trigger
     assert "避开直接回答这些问句" in trigger
-    assert "只能以角色自我补充" in trigger
-    assert "新拍子必须承担明确功能" in trigger
+    assert "本次从角色自身继续" in trigger
+    assert "即使暂时没有回应也能自然成立" in trigger
+    assert "消息自足和开放结尾" in trigger
+    assert "不用急着回答" not in trigger
+    assert "新拍子承担明确功能" in trigger
     assert "耳朵/尾巴/呼吸等同类小动作，不算新拍子" in trigger
     assert "已经戴好、已经看不见" in trigger

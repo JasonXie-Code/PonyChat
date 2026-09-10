@@ -32,6 +32,34 @@ def _format_subject_integrity_context(task: dict[str, Any]) -> str:
     return ""
 
 
+def _followup_interaction_contract(task: dict[str, Any]) -> str:
+    chain_count = max(0, int(task.get("chain_count") or 0))
+    followup_index = chain_count + 1
+    if followup_index <= 1:
+        continuation_mode = "share_or_one_light_opening"
+        closing_shape = "open_statement_or_one_light_question"
+        interaction_position = "initial_followup"
+    else:
+        continuation_mode = "share_or_self_action_or_topic_shift"
+        closing_shape = "open_statement"
+        interaction_position = "continued_silence"
+    return (
+        "【本次跟进交互合同｜系统内部】\n"
+        f"followup_index: {followup_index}\n"
+        f"interaction_position: {interaction_position}\n"
+        "response_dependency: none\n"
+        "message_value: self_contained\n"
+        f"continuation_mode: {continuation_mode}\n"
+        f"closing_shape: {closing_shape}\n"
+        "请先从最近两条 assistant 中识别重复的具体名词、动作目标和对话功能，"
+        "并把已经连续使用的素材写入 expression_motif_policy.blocked_motifs；"
+        "proactive_seed 与 expression_policy 选择不同的语义轴。"
+        "初次跟进可以留一个轻量开口；continued_silence 表示此前的主动消息也尚未得到回应，"
+        "此时用角色自己的新观察、可独立完成的动作、当下决定或自然话题转弯构成完整消息。"
+        "把交流余地落实在消息自足和开放结尾上，把句尾留给这条消息的新内容。"
+    )
+
+
 def _build_due_trigger_text(task: dict[str, Any]) -> str:
     time_context = _format_agreed_task_time_context(task)
     passive_task_context = _format_passive_task_intent_context(task)
@@ -43,19 +71,25 @@ def _build_due_trigger_text(task: dict[str, Any]) -> str:
         "【内部触发事件】",
         "用户未发送新消息；本段为内部触发说明，回复时不得复述或提到。",
         "这是角色自然发出下一条普通聊天消息的机会。",
+        _followup_interaction_contract(task),
         "请像普通对话一样，仅根据最近可见对话、角色设定、记忆和当前事实生成角色消息。",
         "如果上一条角色消息以问题、邀请、确认或等待用户表态结尾，表示用户尚未回答；禁止替用户回答，禁止把角色自己的问题当成已经得到回应。",
         "上一条可见 assistant 的问句、邀请或猜测来源于角色自己；本次主动消息避开直接回答这些问句，也不得说成“你刚才问我/你说想要/你同意了”。",
-        "如果要续接角色自己的问题，只能以角色自我补充、自我缓和、补一句新想法、承认自己刚才有点害羞或让用户不用急着回答的方式继续。",
-        "用户没回可以被角色轻轻理解成默认继续当前氛围，但这不是复述上一条的理由。",
-        "本次主动消息必须比上一条 assistant 多一个新拍子：可新增一个轻问题、换一个低压力话题、补一个角色自己的新想法、推进一个小决定、给出新选择，或把氛围转向下一步；禁止把上一条换句话重复一遍。",
-        "新拍子必须承担明确功能：提出新选择、补充新信息、改变角色自己的下一步动作、设置一个小约定、转入新阶段或给用户新的低压力台阶；只重复已完成事实、等待语气、紧张期待、耳朵/尾巴/呼吸等同类小动作，不算新拍子。",
+        "如果上一条角色留下了问题或邀请，本次从角色自身继续：深化此刻真实感受、自然修正刚才的语气、回应双方关系、分享当下观察，或完成一个不依赖用户表态的小动作。让这条消息即使暂时没有回应也能自然成立，并给用户留下可以随意接入的话头。过去经历、第三方事件和现成资源只在本轮事实依据明确列出时使用。",
+        "用户未回复只表示暂时没有新事实；角色继续的是自己的想法、观察和行动，而不是用户尚未作出的决定。",
+        "本次主动消息比上一条 assistant 多一个新拍子：可加入角色的新观察、自己完成的小动作、新决定、一个轻问题或自然话题转弯，让消息自身提供新的内容。",
+        "新拍子承担明确功能：补充新信息、改变角色自己的下一步动作、设置一个小约定、转入新阶段，或让对话出现新的可接入位置；只重复已完成事实、等待语气、紧张期待、耳朵/尾巴/呼吸等同类小动作，不算新拍子。",
         "上一条已经说过的完成事实（如已经戴好、已经看不见、已经躺下/到达/拿到、已经在等）不得再作为本条开头或主体；必要时只能极短带过，正文重点必须落在新的功能性推进上。",
-        "如果上一条 assistant 让用户在故事/经历/话题之间选择，本次主动消息不得原样重复同一组选择，也不得催问“还没想好听哪个故事吗”。先检查最近可见对话：已经讲过、展开过或反复提出的故事主题只能作为历史背景；若要继续叙事，必须直接进入未展开的新经历、第二次/后来发生的事、角色自己的新细节，或回到当前场景动作/亲密接触。",
+        "如果上一条 assistant 让用户在故事/经历/话题之间选择，本次主动消息不重复同一组选择，也不催问。先检查最近可见对话：有明确证据而尚未展开的经历可以继续；没有对应依据时，就回到角色当前感受、双方关系、当前场景动作、亲密接触或未来共同计划，让新鲜感来自观察和情绪深化，而不是临时补一段旧事。",
         "如果最近一条真实 user 是明确问题或调侃追问，而上一条 assistant 没有回答问题、只沿旧问候/天气/早餐/生活安排/泛亲密动作滑走，本次主动消息不得继续旧话题自转。若确实要发送，优先补答或承认刚才跑偏，再回到用户刚问的点；早安、阳光、早餐只能作为回答后的轻点缀。",
         "若想不到有意义的新拍子，宁可不发送，也不要复述上一条。",
-        "本次主动消息只能轻轻补充、等待、换一个低压力小动作或延续陪伴感；不能编造用户的喜好、同意、回答或新动作。",
-        "若上一条 assistant 只是泛安慰（如'辛苦了/我在/泡茶/陪着你/靠着/画星星'）而未锚定用户前文具体事实，本次主动消息必须补一个锚定用户前文事实的新角度、轻判断或低压力安排；禁止再发一轮泛安慰。"
+        "本次主动消息优先把角色自己的观察、想法、决定或可独立完成的小动作写完整；用户的喜好、同意、回答和新动作仍保持未知。",
+        "最近由用户上传、发送、展示或转发的图片、表情包、文件和文字片段仍是用户提供的内容；除非最近真实对话明确角色此前拥有或保存它，主动消息只能回应用户发来的内容，不能说成角色收藏、角色手机里还有、角色偷偷存下或角色曾把它发给用户。",
+        "主动消息需要的新拍子可以是角色此刻新产生的想法、态度、决定或下一步动作；所谓补充新信息不等于补写来历。附件来源、第三方旧事、群聊传播、醉酒/生病/事故状态、见证过程和具体时间线必须有最近真实对话、已筛选记忆或场景事实支持；没有证据时就留在当前反应和当下推进上。",
+        "给第三方或过去补具体情节之前，先确认能指出它来自哪条已有对话、记忆或角色主页明确事实；角色的一般性格与朋友关系不等于某次旧事发生过。没有来源时，用角色当前看到的细节、即时感受、联想、决定或接下来想做的小事形成新拍子。",
+        "接下来想做的小事若依赖照片、手机内容、收藏、礼物、食物、成品或道具，也要先有它当前存在且由角色掌握的证据；没有证据时写成未来设想、共同讨论或无需现成物品的当下回应。",
+        "由于用户没有发送新事实，本次默认外部事实增量为零：新拍子优先来自角色此刻的主观反应、对现有内容的新理解、关系中的当前感受、未来设想或共同讨论。只有最近可见对话、已筛选记忆或场景事实明确给出时，才补过去事件、第三方具体行为或角色现成资源。",
+        "若上一条 assistant 只是泛安慰（如'辛苦了/我在/泡茶/陪着你/靠着/画星星'）而未锚定用户前文具体事实，本次主动消息补一个锚定用户前文事实的新角度、轻判断或具体安排，让内容自然向前一步。"
         "中文日常聊天很少使用长横线；插入语、突然想起、揭晓惊喜或情绪转弯，优先写成逗号、句号、省略号、换行、重复字或感叹号的聊天节奏。",
         "例外：若上一条角色是在让用户猜一个角色自己掌握的信息（如礼物颜色、藏了什么、准备了什么），角色可以没忍住自己揭晓答案；但仍不得声称用户猜对、喜欢、同意或已经回答。",
     ]
@@ -71,10 +105,11 @@ def _build_due_trigger_text(task: dict[str, Any]) -> str:
             f"{seed_for_generation[:600]}\n"
             "这段草稿只提供角色下一拍方向；它不代表用户回答，也不新增事实；"
             "若它与最近可见对话冲突，必须以最近可见对话为准；"
+            "草稿中的写作属性只决定消息结构；正文落在具体的新信息、新角度、角色动作或决定上；"
             "执行草稿时必须加入新信息、新角度或新问题，不能只复述上一条；"
             "若本次是用户约定/手动创建的被动任务，必须优先遵守上面的被动任务语义主体。"
         )
-    if reason:
+    if reason and passive_task_context:
         parts.append(f"内部原因：{reason[:300]}")
     return "\n".join(parts)
 
@@ -111,6 +146,11 @@ def _normal_proactive_fact_priority_context(trigger_type: str) -> str:
         "用户没有新可见消息；最后一条 user 是内部触发说明，不是用户原话，也不得在正文中复述。\n"
         "事实优先级：最近可见对话、当前会话上下文记忆、近期临时群聊见闻、Step 2 fact_judgement 和 scene_anchor "
         "> 更早的长期记忆、旧摘要、旧计划、旧意图草稿。\n"
+        "Step 1 的 proactive_seed、expression_policy、literal_reply_text 和主动意图草稿都只是写作计划，不属于上述事实来源；其中新增的附件来源、媒体所有权、角色收藏/设备内容、第三方经历、群聊传播、醉酒/生病/事故状态或具体时间线必须由最近可见对话或已筛选证据另行支持，否则应进入 misleading_sources/forbidden_inferences/uncertainty_points，不能进入 available_facts、subject_boundaries 或 writing_guidance。\n"
+        "用户最近发送、上传、展示或转发的图片、表情包、文件和文字片段默认由用户提供；没有独立证据时，不得改写为角色此前收藏、保存在角色手机中或由角色掌握来源。\n"
+        "请逐项核对计划里所有过去式、第三方行为和媒体传播陈述的来源；无法对应到独立证据的原意要进入 misleading_sources/forbidden_inferences，并让 writing_guidance 改用当前观察、感受、联想、决定或下一步动作。最近 assistant 首次说出的无依据旧事只能证明角色这样说过，不能反过来成为该旧事真实发生的证据。\n"
+        "照片、视频、聊天记录、手机内容、收藏、礼物、食物、成品和道具等可立即展示或使用的资源也要逐项找独立证据；没有证据时进入 action_feasibility.unsupported_current_items，writing_guidance 采用未来设想或不依赖现成资源的当下推进。\n"
+        "本轮没有新用户消息，默认外部事实增量为零；如果 Step 1 的 fact_basis=[]，其计划中新增的过去事件、第三方具体行为和角色现成资源必须全部降级，writing_guidance 只能使用已核验可用事实以及当前主观反应、未来设想或共同讨论。fact_basis 非空时仍需逐条对照真实证据，来源标签本身不算证据。\n"
         "如果近期材料显示某个事件已经完成，旧记忆里的“仍在进行/准备明天去做/之后要做”的计划必须降级为历史背景或 forbidden_uses；"
         "不得让时间线倒退到已完成事件之前。"
     )
@@ -335,6 +375,10 @@ async def _append_assistant_message(task: dict[str, Any], content: str) -> list[
         await _configure_noncritical_conn(conn)
         try:
             await conn.execute("BEGIN IMMEDIATE")
+            from .chat_modules.normal_lifecycle import scheduled_character_is_dead_on_connection
+            if await scheduled_character_is_dead_on_connection(conn, task):
+                await conn.rollback()
+                return []
             async with conn.execute(
                 "SELECT status FROM scheduled_followups WHERE id=? LIMIT 1",
                 (task["id"],),

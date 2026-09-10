@@ -44,6 +44,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -99,7 +100,8 @@ fun CharacterProfileScreen(
     onNavigateBack: () -> Unit,
     onStartChat: (Character, String) -> Unit,
     onEditSettings: (Character) -> Unit,
-    onAddFromHall: (Character) -> Unit
+    onAddFromHall: (Character) -> Unit,
+    embedded: Boolean = false,
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -137,6 +139,12 @@ fun CharacterProfileScreen(
         }
     }
     val displayAddedCount = hallStats?.timesAdded ?: profile.timesAdded ?: character.timesAdded ?: 0
+    val displayUpdatedAt = hallStats?.updatedAt?.takeIf { it.isNotBlank() }
+        ?: hallStats?.publishedAt?.takeIf { it.isNotBlank() }
+        ?: profile.updatedAt?.takeIf { it.isNotBlank() }
+        ?: profile.publishedAt?.takeIf { it.isNotBlank() }
+        ?: character.updatedAt?.takeIf { it.isNotBlank() }
+        ?: character.publishedAt.orEmpty()
     var likedToday by remember(hallLikeId, profile.likedToday, character.likedToday) {
         mutableStateOf(profile.likedToday ?: character.likedToday ?: false)
     }
@@ -214,14 +222,15 @@ fun CharacterProfileScreen(
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = if (embedded) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
         topBar = {
-            PonyTopBar(
+            if (!embedded) PonyTopBar(
                 title = "角色主页",
                 onNavigateBack = onNavigateBack
             )
         },
         bottomBar = {
-            Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
+            if (!embedded) Surface(color = MaterialTheme.colorScheme.surface, shadowElevation = 8.dp) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -291,7 +300,7 @@ fun CharacterProfileScreen(
                 addedCount = displayAddedCount,
                 likeCount = localLikes,
                 likedToday = likedToday,
-                updatedAt = profile.updatedAt?.takeIf { it.isNotBlank() } ?: profile.publishedAt.orEmpty(),
+                updatedAt = displayUpdatedAt,
                 onLikeClick = handleLikeClick
             )
             if (albumImages.isNotEmpty()) {
@@ -301,7 +310,7 @@ fun CharacterProfileScreen(
             }
             CharacterArchive(profile, publicBio)
             CharacterIdFooter(profile)
-            Spacer(Modifier.height(88.dp))
+            Spacer(Modifier.height(if (embedded) 16.dp else 88.dp))
         }
         ChatScreenImagePreviewOverlay(
             previewImageUrl = previewImageUrl,

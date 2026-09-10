@@ -17,8 +17,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 
-ROOT = Path(__file__).resolve().parent
-STATIC = ROOT / "static"
+ROOT = Path(os.environ.get("COSYVOICE_DATA_ROOT", str(Path(__file__).resolve().parent))).resolve()
+STATIC = Path(__file__).resolve().parent / "static"
 OUTPUTS = ROOT / "outputs"
 UPLOADS = ROOT / "uploads"
 OUTPUTS.mkdir(parents=True, exist_ok=True)

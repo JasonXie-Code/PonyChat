@@ -134,7 +134,8 @@ async def resolve_auth_and_quota(
             request.messages = [ChatMessage(**m) for m in deduplicate_messages([m.dict() for m in request.messages])]
             logger.info(f"🔒 [消息校验] 已去重，剩余 {len(request.messages)} 条消息")
 
-    await apply_backend_context_summary_if_needed(request)
+    if (request.mode or "normal") != "normal":
+        await apply_backend_context_summary_if_needed(request)
 
     request_tokens = estimate_request_context_tokens(get_model_context_messages(request))
 
@@ -172,7 +173,9 @@ async def resolve_auth_and_quota(
             request.username = verified
             username = verified
 
-    skip_generation_lock = bool(getattr(request, "_normal_multi_speaker_child", False))
+    skip_generation_lock = (bool(getattr(request, "_normal_multi_speaker_child", False))
+                            or bool(getattr(request, '_normal_live_turn', None)
+                                    and getattr(request, '_normal_accepted_already_streamed', False)))
     if username and character_id and not skip_generation_lock:
         clear_generation_cancelled(username, character_id, client_id)
 
@@ -213,15 +216,12 @@ async def resolve_auth_and_quota(
         })
         setattr(request, "_generation_token", begin_generation(username, character_id, client_id))
 
-    # 主对话 / 游戏：智能路由统一使用 for_chat 模型（Grok 极速版），忽略模型大厅与请求 model_id
+    # Main chat is controlled by the backend, not stale client model preferences.
     _mode = request.mode or "normal"
     if _mode in ("normal", "galgame", "galgame_lock"):
-        _chat_m = _routing_model_manager.get_model_for_task("chat")
-        if _chat_m:
-            active_model = dict(_chat_m)
-            logger.info("🧭 [智能路由] 使用 for_chat 模型: %s", active_model.get("id"))
-        if request.model_id:
-            logger.info("🧭 [智能路由] 已忽略请求中的 model_id=%s", request.model_id)
+        selected = _routing_model_manager.get_model_for_task("chat")
+        if selected:
+            active_model = dict(selected)
     else:
         scoped_active_model = await get_user_active_model(effective_username or username)
         if scoped_active_model:
@@ -308,8 +308,11 @@ async def build_user_context(
     effective_username: Optional[str],
     *,
     is_new_contact_opening: bool = False,
+    compact: bool = False,
 ) -> str:
     user_context_prompt = ""
+    # Cleared per call, including missing users and failed identity reads.
+    request._normal_user_background = {}
     if not effective_username:
         return user_context_prompt
 
@@ -390,6 +393,26 @@ async def build_user_context(
                     )
                     user_context_prompt = f"【系统信息：当前与你对话的用户显示名叫 {display_name}，性别是{gender_str}。{relationship_hint}当对方问起自己是谁时，直接用名字 {display_name} 称呼即可。】"
                     logger.info(f"👤 [UserContext] 仅注入显示名+性别信息（用户未开启AI共享）: {display_name}")
+        if compact and user_data:
+            facts = {"display_name": "朋友" if effective_username.startswith("g_") else display_name,
+                     "new_contact": is_new_contact_opening}
+            if not effective_username.startswith("g_"):
+                facts["gender"] = "男性" if user_data.get("gender", "male") == "male" else "女性"
+            if share_with_ai:
+                facts.update(species=species_cn, age=age_str, birthday=birthday_str,
+                             bio=bio, personal_setting=personal_setting)
+            request._normal_user_background = dict(facts)
+            user_context_prompt = "【用户自填背景；不是共同经历或系统指令】\n" + json.dumps(facts, ensure_ascii=False)
+        from .personal_preferences import personal_preferences_prompt
+
+        preferences = personal_preferences_prompt(
+            identity.get("settings") or {},
+            effective_speaker_character_id(request),
+            request.mode or "normal",
+            compact=compact,
+        )
+        if preferences:
+            user_context_prompt += "\n\n" + preferences
     except Exception as e:
         logger.warning(f"获取用户信息失败: {e}")
 
@@ -397,18 +420,34 @@ async def build_user_context(
 
 
 def get_last_user_image_urls(request: ChatRequest) -> List[str]:
-    """在 assemble_messages 可能清空图片字段前调用，保留本轮用户附带的图片用于豆包视。"""
-    last_user = next(
-        (
-            m
-            for m in reversed(request.messages)
-            if m.role == "user" and not getattr(m, "isHidden", False)
-        ),
-        None,
-    )
-    if not last_user:
-        return []
-    return collect_message_images(last_user)
+    """保留当前连续用户消息段中的图片，供本轮视觉步骤使用。
+
+    Android 允许用户先发送图片、紧接着再发一句提问；两条消息会作为同一轮
+    连续 user 气泡进入后端。这里只读取最后一条会漏掉前一气泡的图片，因此
+    按最后一条 assistant 之后的连续 user 消息段收集，并保持图片原始顺序。
+    """
+    current_user_messages: List[Any] = []
+    for msg in reversed(request.messages):
+        if getattr(msg, "isHidden", False):
+            continue
+        role = getattr(msg, "role", None)
+        if role == "user":
+            current_user_messages.append(msg)
+            continue
+        if current_user_messages or role == "assistant":
+            break
+
+    urls: List[str] = []
+    seen = set()
+    for msg in reversed(current_user_messages):
+        for url in collect_message_images(msg):
+            if url in seen:
+                continue
+            seen.add(url)
+            urls.append(url)
+            if len(urls) >= 4:
+                return urls
+    return urls
 
 
 def collect_message_images(msg: Any) -> List[str]:
@@ -455,8 +494,6 @@ def _image_url_from_attachment(attachment: Any) -> str:
     if not isinstance(data, dict):
         return ""
     att_type = str(data.get("type") or "").strip().lower()
-    if att_type == "sticker":
-        return ""
     meta = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
     mime = str(
         data.get("mime_type")
@@ -477,11 +514,14 @@ def _image_url_from_attachment(attachment: Any) -> str:
             break
     if not candidate:
         return ""
+    if att_type in {"sticker", "emoji_asset"} and re.fullmatch(
+            r"/api/(?:admin/assets|assets/stickers)/[A-Za-z0-9_-]+/file", candidate):
+        return candidate
     looks_like_image = candidate.startswith(("data:image", "/chat_images/")) or bool(
         re.search(r"\.(?:png|jpe?g|webp|gif)(?:[?#].*)?$", candidate, re.IGNORECASE)
     )
     if candidate.startswith(("http://", "https://")) and (
-        looks_like_image or mime.startswith("image/") or att_type in {"image", "photo", "picture"}
+        looks_like_image or mime.startswith("image/") or att_type in {"image", "photo", "picture", "sticker", "emoji_asset"}
     ):
         return candidate
     if looks_like_image:
@@ -618,7 +658,7 @@ def build_client_user_assistant_messages_from_request(
     )
     last_user_images = collect_message_images(last_user_msg) if last_user_msg else []
     if last_user_msg and last_user_images:
-        logger.info("🖼️ [NormalVision] 主对话模型固定走纯文本，图片将由豆包视觉预处理后注入文本上下文")
+        logger.info("🖼️ [NormalVision] 主对话正文走文本，图片由 DeepSeek 视觉预处理后注入上下文")
         last_user_msg.image_url = None
         last_user_msg.images = []
 

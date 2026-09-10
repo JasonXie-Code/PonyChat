@@ -113,7 +113,7 @@ def try_omr() -> dict:
         "musicxml": None,
     }
     if not cmd:
-        result["output"] = "Audiveris command was not found under P:\\PonyChat\\misc\\tools\\audiveris."
+        result["output"] = "Audiveris command was not found under P:\\Tools\\managed-dependencies\\tool-runtime\\PonyChat\\misc\\tools\\audiveris."
         return result
 
     candidates = [

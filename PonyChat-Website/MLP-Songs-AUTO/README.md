@@ -1,5 +1,7 @@
 # MLP-Songs-AUTO
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 Automatic score-following demo for `music-auto.ponychat.org`.
 
 Demo song:
@@ -24,7 +26,7 @@ Local URL: `http://127.0.0.1:8777/`
 
 `build_demo.ps1` runs `scripts/build_demo.py`.
 
-1. Run Audiveris from `P:\PonyChat\misc\tools\audiveris`.
+1. Run Audiveris from `P:\Tools\managed-dependencies\tool-runtime\PonyChat\misc\tools\audiveris`.
 2. Export MusicXML/MXL into `generated/omr`.
 3. Parse MusicXML notes, lyrics, measures, harmony, pitch, and note duration.
 4. Extract PDF chord text and tempo with `pypdf`.

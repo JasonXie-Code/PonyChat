@@ -24,6 +24,19 @@ internal fun buildImageMessageContent(text: String, imageUrls: List<String>): St
     }.trim()
 }
 
+private val chatImageMarkdownRegex = Regex("!\\[[^\\]]*\\]\\(([^)]+)\\)")
+
+internal fun chatImageUrlsInContent(content: String): List<String> =
+    chatImageMarkdownRegex.findAll(content)
+        .mapNotNull { it.groupValues.getOrNull(1)?.trim()?.takeIf(String::isNotBlank) }
+        .toList()
+
+internal fun chatImageNeedsUpload(url: String): Boolean =
+    !url.startsWith("/chat_images/") &&
+        !url.startsWith("http://", ignoreCase = true) &&
+        !url.startsWith("https://", ignoreCase = true) &&
+        !url.startsWith("data:image/", ignoreCase = true)
+
 internal suspend fun uploadPendingChatImages(
     context: Context,
     viewModel: ChatViewModel,
@@ -102,7 +115,7 @@ internal fun messagePreviewImages(context: Context, messages: List<Message>): Li
             splitMessageMedia(message.content, context)
         }
         media.imageUrls + message.attachments.mapNotNull(::stickerPreviewUrl)
-    }.distinct()
+    }.map { localUrlForRemoteChatImage(context, it) ?: it }.distinct()
 
 internal fun plainTextForMessage(msg: Message, mode: String): String {
     val fallback = when {

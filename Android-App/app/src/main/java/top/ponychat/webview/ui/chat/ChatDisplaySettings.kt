@@ -186,6 +186,7 @@ fun ChatDisplaySettingsScreen(
     onSave: (AppPreferences) -> Unit,
     // 调试板块回调
     currentMode: String = "normal",
+    currentCharacterId: String = "",
     currentGalgameScore: Int? = null,
     onDebugForceScore: (Int) -> Unit = {},
     onDebugAdjustScore: (Int) -> Unit = {},
@@ -360,6 +361,10 @@ fun ChatDisplaySettingsScreen(
             }
 
             } // end item 显示设置
+
+            item {
+                AgentStatusCard(prefs, currentCharacterId, currentMode, debugConversationId)
+            }
 
             // ==================== 角色破限（仅开发者/管理员可见） ====================
             // ==================== 上下文管理（已隐藏） ====================
@@ -599,28 +604,6 @@ fun ChatDisplaySettingsScreen(
                                         )
                                     }
                                 }
-                            }
-                            HorizontalDivider(modifier = Modifier.padding(start = 48.dp), color = debugOrange.copy(alpha = 0.15f))
-                        }
-
-                        // 5. 普通对话保存调试
-                        if (!isGalgame) {
-                            var debugForceUserEdit by remember { mutableStateOf(prefs.debugForceAlwaysUserEdit) }
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Filled.Save, contentDescription = null, tint = debugOrange, modifier = Modifier.size(settingIconSize))
-                                Spacer(Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text("普通对话保存强制 user_edit", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onBackground)
-                                    Text("仅影响普通对话 saveConversation，绕过防误删检测", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                ScaledSwitch(
-                                    checked = debugForceUserEdit,
-                                    onCheckedChange = { debugForceUserEdit = it; prefs.debugForceAlwaysUserEdit = it; onSave(prefs) },
-                                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = debugOrange)
-                                )
                             }
                             HorizontalDivider(modifier = Modifier.padding(start = 48.dp), color = debugOrange.copy(alpha = 0.15f))
                         }
@@ -1055,7 +1038,7 @@ fun ChatDisplaySettingsScreen(
                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                             ) {
                                 Text(
-                                    if (isGalgame) "强制折叠剧情记忆" else "强制生成上下文摘要",
+                                    if (isGalgame) "强制折叠剧情记忆" else "立即整理记忆",
                                     style = MaterialTheme.typography.labelSmall,
                                     color = Color(0xFF818CF8)
                                 )

@@ -120,7 +120,20 @@ def _js_template_to_json(js_text: str) -> str:
     i = 0
     while i < len(js_text):
         ch = js_text[i]
-        if ch == '`':
+        if ch == '"':
+            # SDK streamed chunks can contain a literal backtick in a normal
+            # JSON string. It must not start a template or consume later fields.
+            j = i + 1
+            while j < len(js_text):
+                if js_text[j] == '\\' and j + 1 < len(js_text):
+                    j += 2
+                    continue
+                if js_text[j] == '"':
+                    break
+                j += 1
+            out.append(js_text[i:j + 1])
+            i = j + 1
+        elif ch == '`':
             # 模板字符串开始，找到匹配的结束反引号
             j = i + 1
             while j < len(js_text):
@@ -231,6 +244,12 @@ def _date_hour_from_path(file_path: str) -> Tuple[str, str]:
 
 def _infer_status(data: Any, error_msg: str = "") -> str:
     """根据日志内容推断调用状态。"""
+    if isinstance(data, dict):
+        explicit = data.get('status')
+        if explicit in ('success', 'error', 'timeout', 'interrupted'):
+            return explicit
+        if data.get('incomplete') is True:
+            return 'error'
     text = json.dumps(data, ensure_ascii=False).lower() if data else ""
     if error_msg:
         text += " " + error_msg.lower()
@@ -251,6 +270,8 @@ def _extract_tokens(data: dict) -> Tuple[int, int, int]:
     prompt = 0
     completion = 0
     if isinstance(data, dict):
+        if data.get('usage_scope') == 'summary':
+            return 0, 0, 0
         usage = data.get("usage") or {}
         if isinstance(usage, dict):
             prompt = usage.get("prompt_tokens") or usage.get("input_tokens") or 0
@@ -394,6 +415,8 @@ class LLMLogIndexer:
         self._scan_task: Optional[asyncio.Task] = None
         self._scan_interval = 30  # 秒
         self._running = False
+        self._scan_lock = asyncio.Lock()
+        self._progress_snapshot = None
 
     async def init_schema(self) -> None:
         """初始化索引表结构。"""
@@ -407,15 +430,17 @@ class LLMLogIndexer:
 
     async def _get_progress(self, file_path: str) -> Tuple[int, float, int]:
         """获取文件的索引进度。"""
+        if self._progress_snapshot is not None:
+            return self._progress_snapshot.get(file_path, (0, 0.0, 0))
         import aiosqlite
         async with aiosqlite.connect(self.db_path) as conn:
             async with conn.execute(
-                "SELECT indexed_offset, file_mtime, indexed_count FROM llm_log_index_progress WHERE file_path = ?",
+                "SELECT indexed_offset, file_mtime, indexed_count, error_count FROM llm_log_index_progress WHERE file_path = ?",
                 (file_path,),
             ) as cur:
                 row = await cur.fetchone()
                 if row:
-                    return row[0], row[1], row[2]
+                    return (row[0] if not row[3] else -1), row[1], row[2]
         return 0, 0.0, 0
 
     async def _save_progress(self, file_path: str, file_size: int, file_mtime: float,
@@ -498,10 +523,9 @@ class LLMLogIndexer:
 
         indexed_offset, prev_mtime, prev_count = await self._get_progress(file_path)
 
-        # 历史文件（非当前小时）且 mtime 未变 → 跳过
-        is_current_hour = self._is_current_hour_file(file_path)
-
-        if not is_current_hour and indexed_offset >= file_size and abs(file_mtime - prev_mtime) < 1.0:
+        # Current-hour files are immutable too unless size or mtime changes.
+        # Exact mtime comparison detects same-size rewrites within one second.
+        if indexed_offset == file_size and file_mtime == prev_mtime:
             return 0, 0  # 已完整索引，跳过
 
         # 如果文件变小了（被截断重建），重新索引
@@ -516,6 +540,9 @@ class LLMLogIndexer:
 
         # 解析文件
         entries = _parse_log_file(file_path)
+        if not entries:
+            logger.warning("[LLMLogIndex] 日志解析未完成，将重试: %s", file_path)
+            return 0, 1
 
         # 去重：避免重复索引同一条日志（按 log_timestamp + model + request_id 组合去重）
         if skip_duplicate_check:
@@ -528,10 +555,13 @@ class LLMLogIndexer:
 
         if new_entries:
             inserted, errs = await self._insert_entries(new_entries)
-            await self._save_progress(file_path, file_size, file_mtime, file_size, prev_count + inserted, errs)
+            # Never mark a failed insert as consumed. Successful rows are
+            # deduplicated on retry, including after a progress-write failure.
+            if not errs:
+                await self._save_progress(file_path, file_size, file_mtime, file_size, len(entries), 0)
             return inserted, errs
         else:
-            await self._save_progress(file_path, file_size, file_mtime, file_size, prev_count, 0)
+            await self._save_progress(file_path, file_size, file_mtime, file_size, len(entries), 0)
             return 0, 0
 
     async def _is_duplicate(self, entry: Dict[str, Any]) -> bool:
@@ -597,6 +627,31 @@ class LLMLogIndexer:
         skip_duplicate_check: bool = False,
     ) -> Dict[str, Any]:
         """全量扫描日志目录，返回统计。"""
+        import aiosqlite
+        # Admin scans and periodic scans share one writer. Load progress once
+        # instead of opening thousands of SQLite connections for unchanged files.
+        async with self._scan_lock:
+            async with aiosqlite.connect(self.db_path) as conn:
+                query = 'SELECT file_path,indexed_offset,file_mtime,indexed_count,error_count FROM llm_log_index_progress'
+                args = ()
+                if recent_days is not None:
+                    cutoff = (datetime.now().date() - timedelta(days=max(0, recent_days-1))).isoformat()
+                    prefix = os.path.join(self.logs_root, '')
+                    query += ' WHERE file_path >= ? AND file_path < ?'
+                    args = (prefix+cutoff, prefix+'\uffff')
+                async with conn.execute(
+                    query, args
+                ) as cur:
+                    self._progress_snapshot = {
+                        row[0]: (row[1] if not row[4] else -1, row[2], row[3])
+                        for row in await cur.fetchall()
+                    }
+            try:
+                return await self._scan_all(recent_days=recent_days, skip_duplicate_check=skip_duplicate_check)
+            finally:
+                self._progress_snapshot = None
+
+    async def _scan_all(self, *, recent_days=2, skip_duplicate_check=False):
         start = time.time()
         total_inserted = 0
         total_errors = 0
@@ -621,7 +676,8 @@ class LLMLogIndexer:
 
         elapsed = time.time() - start
         result = {
-            "success": True,
+            "success": total_errors == 0,
+            "status": "partial" if total_errors else "success",
             "elapsed_sec": round(elapsed, 2),
             "files_scanned": files_scanned,
             "files_skipped": files_skipped,
@@ -629,7 +685,10 @@ class LLMLogIndexer:
             "errors": total_errors,
             "recent_days": recent_days,
         }
-        logger.info(f"✅ [LLMLogIndex] 全量扫描完成: {result}")
+        if total_errors:
+            logger.warning("[LLMLogIndex] 扫描部分失败，将重试: %s", result)
+        else:
+            logger.info(f"✅ [LLMLogIndex] 全量扫描完成: {result}")
         return result
 
     async def start_periodic_scan(self, interval: int = 30) -> None:

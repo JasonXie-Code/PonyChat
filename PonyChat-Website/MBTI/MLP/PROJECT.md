@@ -1,8 +1,10 @@
 # MLP MBTI 同人站
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 ## 服务器密钥：唯一来源与用法
 
-**`misc/deploy_mbti_server_usa.py`** 等向美国机同步静态资源时：**连接信息与密钥路径的唯一权威**为 [`ServerKeys/servers.json`](../../ServerKeys/servers.json)；规范见 [`ServerKeys.md`](../../ServerKeys.md)；Python 优先 [`ServerKeys/ssh_lib.py`](../../ServerKeys/ssh_lib.py)。
+**`misc/deploy_mbti_server_usa.py`** 等向美国机同步静态资源时：**连接信息与密钥路径的唯一权威**为工作区外的 `P:\ServerKeys\servers.json`；规范见仓库根目录 [`ServerKeys.md`](../../../ServerKeys.md)；Python 优先复用 `P:\ServerKeys\ssh_lib.py`。
 
 ## 项目定位
 

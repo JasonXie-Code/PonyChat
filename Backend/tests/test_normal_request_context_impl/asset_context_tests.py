@@ -335,6 +335,47 @@ def test_chat_request_accepts_camel_case_image_lists_and_attachment_urls():
     assert get_last_user_image_urls(request) == [image_url, attachment_url]
 
 
+def test_current_user_burst_keeps_image_when_followed_by_text_question():
+    image_url = "data:image/png;base64,abc123"
+    request = ChatRequest.model_validate(
+        {
+            "username": "tester",
+            "character_id": "char_a",
+            "mode": "normal",
+            "messages": [
+                {"role": "assistant", "content": "上一轮回复"},
+                {
+                    "role": "user",
+                    "content": "",
+                    "message_id": "u_img",
+                    "imageUrl": image_url,
+                },
+                {"role": "user", "content": "你看到了什么", "message_id": "u_text"},
+            ],
+        }
+    )
+
+    assert get_last_user_image_urls(request) == [image_url]
+
+
+def test_current_user_burst_does_not_reuse_image_before_assistant_reply():
+    old_image_url = "data:image/png;base64,old-image"
+    request = ChatRequest.model_validate(
+        {
+            "username": "tester",
+            "character_id": "char_a",
+            "mode": "normal",
+            "messages": [
+                {"role": "user", "content": "", "imageUrl": old_image_url},
+                {"role": "assistant", "content": "我看到了"},
+                {"role": "user", "content": "换个话题吧"},
+            ],
+        }
+    )
+
+    assert get_last_user_image_urls(request) == []
+
+
 def test_android_rebuild_preserves_transient_image_for_existing_user_message(monkeypatch):
     import Backend.chat_modules.service as service
     import Backend.chat_modules.state as state
@@ -507,7 +548,7 @@ def test_normal_guest_speaker_sets_context_and_message_fields(monkeypatch):
     assert "当前主会话角色是「紫悦」" in prompt
     assert "使用「碧琪」自己的角色设定、长期记忆、普通对话上下文、情绪与关系状态" in prompt
     assert "只以「碧琪」身份写一次" in prompt
-    assert "是否真的让对方接话由后端独立 router 判断" in prompt
+    assert "使用 handoff_reply，由对方自己的 Agent 继续" in prompt
     assert "除非用户之后再次 @「碧琪」" not in prompt
 
 
@@ -1179,3 +1220,13 @@ def test_normal_recent_turns_drops_summary_placeholder_before_tail_selection():
 
     assert messages[-1] == {"role": "user", "content": "呜呜呜我发烧了"}
     assert all("以下是本对话之前内容的摘要" not in m.get("content", "") for m in messages)
+
+
+def test_image_only_sticker_is_available_to_agent_vision():
+    for kind, url in [("sticker", "/api/admin/assets/example-1/file"),
+                      ("sticker", "/api/assets/stickers/example-2/file"),
+                      ("emoji_asset", "data:image/png;base64,example")]:
+        request = ChatRequest(username="tester", character_id="char_a", mode="normal", messages=[
+            ChatMessage(role="user", content="", message_id="image-only", attachments=[
+                {"type": kind, "url": url}])])
+        assert get_last_user_image_urls(request) == [url]

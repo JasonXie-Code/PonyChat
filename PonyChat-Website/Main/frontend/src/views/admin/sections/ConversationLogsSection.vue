@@ -452,12 +452,14 @@
             </div>
           </section>
 
+          <AgentLogDetails :key="selectedId" :detail="detail" @trace="focusTrace" />
+
           <section v-if="detail.errorCode || detail.errorMessage" class="detail-block error-block">
             <div class="detail-block-head">
               <h3>错误</h3>
               <span v-if="detail.errorCode" class="admin-mono">{{ detail.errorCode }}</span>
             </div>
-            <pre class="code-pre error-pre">{{ detail.errorMessage || fmtDetailJson(detail.raw?.data?.error) }}</pre>
+            <LogValue :value="detail.errorMessage || detail.raw?.data?.error" />
           </section>
 
           <section class="detail-block">
@@ -467,16 +469,21 @@
             </div>
             <div v-if="requestMessages.length" class="message-stack">
               <article
-                v-for="(m, i) in requestMessages"
+                v-for="(m, i) in visibleRequestMessages"
                 :key="`${roleLabel(m.role)}-${i}`"
                 class="message-card"
                 :class="roleClass(m.role)"
               >
                 <div class="message-role">{{ roleLabel(m.role) }}</div>
-                <pre>{{ messageText(m) }}</pre>
+                <LogValue :value="m.content ?? m" />
               </article>
             </div>
-            <pre v-else class="code-pre">{{ fmtDetailJson(detail.request) }}</pre>
+            <LogValue v-else :value="detail.request" />
+            <div v-if="requestMessages.length > 10">
+              <button class="btn btn-sm" :disabled="messagePage === 0" @click="messagePage--">上一页消息</button>
+              <span>{{ messagePage + 1 }} / {{ Math.ceil(requestMessages.length / 10) }}</span>
+              <button class="btn btn-sm" :disabled="(messagePage + 1) * 10 >= requestMessages.length" @click="messagePage++">下一页消息</button>
+            </div>
           </section>
 
           <section class="detail-block">
@@ -485,19 +492,13 @@
               <button type="button" class="inline-action" @click="copyDetailPart('response')">复制</button>
             </div>
             <div v-if="responseText" class="response-readable">
-              <pre>{{ responseText }}</pre>
+              <LogValue :value="responseText" />
             </div>
-            <pre class="code-pre">{{ fmtDetailJson(detail.response) }}</pre>
+            <LogValue :key="selectedId" :value="detail.response" collapsible label="响应 JSON" />
           </section>
 
           <section class="detail-block">
-            <details class="raw-details">
-              <summary>
-                <span>原始 JSON</span>
-                <ion-icon name="chevron-down-outline" aria-hidden="true" />
-              </summary>
-              <pre class="code-pre raw-pre">{{ fmtDetailJson(detail.raw || detail) }}</pre>
-            </details>
+            <LogValue :key="selectedId" :value="detail.raw || detail" collapsible label="原始 JSON" />
           </section>
         </div>
       </aside>
@@ -509,6 +510,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, shallowRef, watch } from 'vue'
 import { fetchLlmLogDetail, fetchLlmLogs, fetchLlmLogSummary } from '../../../api/admin'
 import { toast } from '../../../composables/useToast'
+import AgentLogDetails from './AgentLogDetails.vue'
+import LogValue from './LogValue.vue'
 
 const HOUR_MS = 60 * 60 * 1000
 const ROW_H = 46
@@ -553,7 +556,7 @@ const items = shallowRef([])
 const cursor = ref(null)
 const hasMore = ref(false)
 const selectedId = ref(null)
-const detail = ref(null)
+const detail = shallowRef(null)
 const detailError = ref('')
 const detailLoading = ref(false)
 const scrollTop = ref(0)
@@ -685,9 +688,18 @@ const requestMessages = computed(() => {
   for (const candidate of candidates) {
     if (Array.isArray(candidate)) return candidate
   }
+  if (req?.prompt != null) {
+    return [
+      ...(req.system_prompt ? [{ role: 'system', content: req.system_prompt }] : []),
+      { role: 'user', content: req.prompt },
+    ]
+  }
   return []
 })
 
+const messagePage = ref(0)
+const visibleRequestMessages = computed(() => requestMessages.value.slice(messagePage.value * 10, (messagePage.value + 1) * 10))
+watch(selectedId, () => { messagePage.value = 0 })
 const responseText = computed(() => extractResponseText(detail.value?.response))
 
 watch(
@@ -997,6 +1009,15 @@ function focusConversation(conversationId) {
   filter.conversationId = conversationId
 }
 
+function focusTrace(traceId) {
+  if (!traceId) return
+  advOpen.value = true
+  Object.assign(filter, {
+    traceId, requestId: '', status: '', model: '', keyword: '', provider: '', userId: '', conversationId: '',
+    date: '', hour: '', from: '1970-01-01T00:00', to: '', minLatency: '', maxLatency: '', minTokens: '', maxTokens: '',
+  })
+}
+
 function onListScroll() {
   const el = listViewportRef.value
   if (!el) return
@@ -1077,16 +1098,6 @@ function formatNumber(value) {
   return Number.isFinite(n) ? n.toLocaleString() : '0'
 }
 
-function fmtDetailJson(obj) {
-  if (obj === undefined || obj === null || obj === '') return '-'
-  if (typeof obj === 'string') return obj
-  try {
-    return JSON.stringify(obj, null, 2)
-  } catch {
-    return String(obj)
-  }
-}
-
 function roleLabel(role) {
   if (role === 'system') return 'system'
   if (role === 'assistant') return 'assistant'
@@ -1099,25 +1110,10 @@ function roleClass(role) {
   return `role-${String(role || 'message').replace(/[^a-z0-9_-]/gi, '').toLowerCase()}`
 }
 
-function messageText(message) {
-  const content = message?.content
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => {
-        if (typeof part === 'string') return part
-        if (part?.text) return part.text
-        return fmtDetailJson(part)
-      })
-      .join('\n')
-  }
-  if (typeof content === 'string') return content
-  if (content == null) return fmtDetailJson(message)
-  return fmtDetailJson(content)
-}
-
 function extractResponseText(resp) {
   if (!resp) return ''
   if (typeof resp === 'string') return resp
+  if (typeof resp.final_response === 'string') return resp.final_response
   if (typeof resp.content === 'string') return resp.content
   if (typeof resp.text === 'string') return resp.text
   const choice = Array.isArray(resp.choices) ? resp.choices[0] : null
@@ -1137,21 +1133,40 @@ async function copyText(text, message = '已复制') {
   }
 }
 
-function copyDetailPart(part) {
-  if (!detail.value) return
-  const payload = part === 'request' ? detail.value.request : part === 'response' ? detail.value.response : detail.value
-  copyText(fmtDetailJson(payload), part === 'request' ? '已复制请求' : '已复制响应')
+function serializeLog(value, download = false) {
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./logExport.worker.js', import.meta.url), { type: 'module' })
+    worker.onmessage = ({ data }) => {
+      worker.terminate()
+      if (data.error) reject(new Error(data.error))
+      else resolve(data.result)
+    }
+    worker.onerror = () => { worker.terminate(); reject(new Error('日志导出失败')) }
+    try { worker.postMessage({ value, download }) }
+    catch (error) { worker.terminate(); reject(error) }
+  })
 }
 
-function downloadDetail() {
+async function copyDetailPart(part) {
   if (!detail.value) return
-  const blob = new Blob([fmtDetailJson(detail.value.raw || detail.value)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `llm-log-${detail.value.id || selectedId.value || 'detail'}.json`
-  a.click()
-  URL.revokeObjectURL(url)
+  const payload = part === 'request' ? detail.value.request : detail.value.response
+  try {
+    await copyText(await serializeLog(payload), part === 'request' ? '已复制请求' : '已复制响应')
+  } catch (error) { toast.error(error.message) }
+}
+
+async function downloadDetail() {
+  if (!detail.value) return
+  const selected = detail.value
+  try {
+    const blob = await serializeLog(selected.raw || selected, true)
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `llm-log-${selected.id || 'detail'}.json`
+    a.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch (error) { toast.error(error.message) }
 }
 
 function dateValue(date) {
@@ -1190,971 +1205,5 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
-.logs-root {
-  flex: 1 1 0;
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 0.75rem;
-  min-height: 0;
-  overflow: hidden;
-}
 
-:global(.admin-shell .content.content-scroll > .section-root.logs-root) {
-  flex: 1 1 0;
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 0.75rem;
-  overflow: hidden;
-}
-
-.logs-toolbar {
-  flex-shrink: 0;
-  margin-bottom: 0;
-  padding: 0.75rem;
-  display: grid;
-  gap: 0.55rem;
-}
-
-.toolbar-main,
-.toolbar-sub {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.toolbar-main {
-  flex-wrap: wrap;
-}
-
-.toolbar-sub {
-  min-height: 2rem;
-}
-
-.toolbar-spacer {
-  flex: 1 1 auto;
-}
-
-.preset-tabs {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.15rem;
-  padding: 0.18rem;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 8px;
-  background: rgba(2, 6, 23, 0.2);
-}
-
-.preset-btn {
-  height: 2rem;
-  padding: 0 0.65rem;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 0.78rem;
-  cursor: pointer;
-}
-
-.preset-btn:hover {
-  color: var(--text);
-  background: rgba(148, 163, 184, 0.08);
-}
-
-.preset-btn.active {
-  color: #f8fafc;
-  background: linear-gradient(135deg, rgba(61, 168, 130, 0.78), rgba(78, 191, 207, 0.42));
-  box-shadow: 0 0 0 1px rgba(139, 196, 207, 0.2);
-}
-
-.control-field {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-  color: var(--text-muted);
-  font-size: 0.76rem;
-}
-
-.control-field span,
-.sort-select span,
-.summary-range span {
-  white-space: nowrap;
-  color: var(--text-dim);
-}
-
-.control-field input,
-.control-field select,
-.sort-select select,
-.summary-range select {
-  height: 2rem;
-  min-width: 0;
-  padding: 0.3rem 0.5rem;
-  font-size: 0.78rem;
-}
-
-.control-hour select {
-  width: 5.7rem;
-}
-
-.control-status select {
-  width: 7.4rem;
-}
-
-.control-model select {
-  width: 10rem;
-}
-
-.compact-number input {
-  width: 6.2rem;
-}
-
-.search-wrap {
-  position: relative;
-  flex: 0 1 360px;
-  min-width: 260px;
-}
-
-.search-icon {
-  position: absolute;
-  left: 0.62rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-dim);
-  pointer-events: none;
-}
-
-.search-input {
-  width: 100%;
-  height: 2.1rem;
-  padding-left: 2rem !important;
-  padding-right: 2rem !important;
-}
-
-.search-clear {
-  position: absolute;
-  right: 0.35rem;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.45rem;
-  height: 1.45rem;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.search-clear:hover {
-  color: var(--text);
-  background: rgba(148, 163, 184, 0.12);
-}
-
-.btn-ghost {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text-muted);
-}
-
-.btn-ghost:hover {
-  background: var(--surface-hover);
-  color: var(--text);
-}
-
-.btn-icon {
-  width: 2rem;
-  justify-content: center;
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.sort-select,
-.summary-range {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.76rem;
-}
-
-.sort-select select {
-  width: 7.8rem;
-}
-
-.active-filter-chips {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  max-width: 13rem;
-  height: 1.65rem;
-  padding: 0 0.45rem;
-  border: 1px solid rgba(139, 196, 207, 0.22);
-  border-radius: 6px;
-  background: rgba(78, 191, 207, 0.08);
-  color: #b8edf3;
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-
-.filter-chip span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.filter-chip:hover {
-  border-color: rgba(139, 196, 207, 0.55);
-  background: rgba(78, 191, 207, 0.14);
-}
-
-.filter-empty {
-  white-space: nowrap;
-}
-
-.summary-text {
-  flex-shrink: 0;
-}
-
-.advanced-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 0.5rem;
-  padding-top: 0.55rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.advanced-grid .control-field {
-  justify-content: stretch;
-}
-
-.advanced-grid .control-field input,
-.advanced-grid .control-field select {
-  width: 100%;
-}
-
-.logs-workbench {
-  height: 100%;
-  min-height: 0;
-  margin-bottom: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: minmax(640px, 1fr) minmax(440px, 35vw);
-  overflow: hidden;
-}
-
-:global(.admin-shell .content.content-scroll .card.card-fill.logs-workbench) {
-  height: 100%;
-  min-height: 0;
-  margin-bottom: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: minmax(640px, 1fr) minmax(440px, 35vw);
-  overflow: hidden;
-}
-
-.browser-pane,
-.detail-pane {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.browser-pane {
-  border-right: 1px solid rgba(148, 163, 184, 0.14);
-}
-
-.pane-head {
-  min-height: 3.25rem;
-  padding: 0.65rem 0.75rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-shrink: 0;
-  background: rgba(15, 23, 42, 0.42);
-}
-
-.pane-head strong {
-  display: block;
-  line-height: 1.2;
-}
-
-.pane-head .muted {
-  display: block;
-  margin-top: 0.12rem;
-  font-size: 0.72rem;
-}
-
-.browser-head-actions,
-.detail-actions,
-.focus-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.browser-body {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  overflow: hidden;
-}
-
-.time-index {
-  min-height: 0;
-  border-right: 1px solid rgba(148, 163, 184, 0.12);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: rgba(2, 6, 23, 0.12);
-}
-
-.index-stat-strip {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.4rem;
-  padding: 0.55rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.index-stat-strip > div {
-  padding: 0.45rem 0.5rem;
-  border-radius: 8px;
-  background: rgba(15, 23, 42, 0.55);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.index-stat-strip strong,
-.index-stat-strip span {
-  display: block;
-}
-
-.index-stat-strip strong {
-  font-size: 0.95rem;
-  line-height: 1.1;
-}
-
-.index-stat-strip span {
-  margin-top: 0.15rem;
-  color: var(--text-dim);
-  font-size: 0.68rem;
-}
-
-.time-index-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.35rem;
-  padding: 0.45rem 0.5rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.time-tree {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0.25rem;
-}
-
-.time-node {
-  width: 100%;
-  min-height: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.45rem;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 0.76rem;
-  text-align: left;
-  cursor: pointer;
-}
-
-.time-node:hover {
-  color: var(--text);
-  background: rgba(148, 163, 184, 0.08);
-}
-
-.time-node.active {
-  color: #eaffff;
-  background: linear-gradient(90deg, rgba(61, 168, 130, 0.18), rgba(78, 191, 207, 0.08));
-  box-shadow: inset 2px 0 0 rgba(78, 191, 207, 0.85);
-}
-
-.time-node-hour {
-  padding-left: 1.45rem;
-}
-
-.node-chevron {
-  font-size: 0.8rem;
-  color: var(--text-dim);
-  flex-shrink: 0;
-}
-
-.hour-rail {
-  width: 0.55rem;
-  height: 1px;
-  background: rgba(148, 163, 184, 0.24);
-  flex-shrink: 0;
-}
-
-.node-label {
-  min-width: 0;
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.node-count {
-  color: var(--text-dim);
-  font-family: Consolas, ui-monospace, monospace;
-  font-size: 0.68rem;
-}
-
-.node-badge {
-  min-width: 1.15rem;
-  padding: 0.06rem 0.28rem;
-  border-radius: 999px;
-  background: rgba(224, 112, 112, 0.18);
-  color: #fca5a5;
-  text-align: center;
-  font-size: 0.64rem;
-  font-weight: 700;
-}
-
-.time-index-state,
-.detail-state,
-.list-empty {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  color: var(--text-muted);
-  text-align: center;
-  font-size: 0.84rem;
-}
-
-.time-index-state ion-icon,
-.detail-state ion-icon,
-.list-empty ion-icon {
-  font-size: 2rem;
-  color: rgba(139, 196, 207, 0.68);
-}
-
-.list-pane {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.log-grid-head,
-.log-row {
-  display: grid;
-  grid-template-columns: 76px minmax(110px, 1.1fr) minmax(90px, 0.8fr) 70px 78px 118px minmax(120px, 1fr);
-  align-items: center;
-  gap: 0.45rem;
-}
-
-.log-grid-head {
-  height: 2.2rem;
-  padding: 0 0.65rem;
-  color: var(--text-dim);
-  font-size: 0.68rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-  flex-shrink: 0;
-}
-
-.log-viewport {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.log-canvas {
-  position: relative;
-  min-width: 0;
-}
-
-.log-row {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 46px;
-  width: 100%;
-  padding: 0 0.65rem;
-  border: 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.08);
-  background: transparent;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 0.76rem;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-
-.log-row:hover {
-  color: var(--text);
-  background: rgba(148, 163, 184, 0.06);
-}
-
-.log-row.selected {
-  color: #effcff;
-  background: rgba(78, 191, 207, 0.12);
-  box-shadow: inset 3px 0 0 rgba(78, 191, 207, 0.92);
-}
-
-.log-row.tone-err {
-  background-image: linear-gradient(90deg, rgba(224, 112, 112, 0.1), transparent 40%);
-}
-
-.log-row.tone-warn {
-  background-image: linear-gradient(90deg, rgba(212, 184, 92, 0.1), transparent 40%);
-}
-
-.log-row > span,
-.log-grid-head > span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.col-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.col-latency,
-.col-tokens {
-  text-align: right;
-}
-
-.status-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  flex: 0 0 auto;
-  background: rgba(148, 163, 184, 0.8);
-}
-
-.st-ok {
-  background: #3da882;
-  box-shadow: 0 0 10px rgba(61, 168, 130, 0.6);
-}
-
-.st-err {
-  background: #ef7777;
-  box-shadow: 0 0 10px rgba(239, 119, 119, 0.55);
-}
-
-.st-warn {
-  background: #d4b85c;
-  box-shadow: 0 0 10px rgba(212, 184, 92, 0.48);
-}
-
-.st-int {
-  background: #8bc4cf;
-  box-shadow: 0 0 10px rgba(139, 196, 207, 0.5);
-}
-
-.hot,
-.danger-text {
-  color: #fca5a5;
-}
-
-.list-footer {
-  min-height: 2.55rem;
-  padding: 0.45rem 0.65rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
-
-.footer-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.list-skeleton {
-  padding: 0.4rem 0.65rem;
-}
-
-.skeleton-row {
-  height: 42px;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.06);
-}
-
-.skel-dot,
-.skel-line {
-  display: block;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.12);
-  animation: pulse 1.35s ease-in-out infinite;
-}
-
-.skel-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-}
-
-.skel-line {
-  width: 5.5rem;
-  height: 0.65rem;
-}
-
-.skel-line.wide {
-  width: 9rem;
-}
-
-.skel-line.short {
-  width: 3.5rem;
-}
-
-.detail-pane {
-  background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.5), rgba(2, 6, 23, 0.12)),
-    rgba(15, 23, 42, 0.18);
-}
-
-.detail-head {
-  align-items: center;
-}
-
-.detail-title-wrap {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-}
-
-.detail-dot {
-  width: 0.62rem;
-  height: 0.62rem;
-}
-
-.detail-subtitle {
-  max-width: 24rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.detail-actions .btn {
-  padding-left: 0.48rem;
-  padding-right: 0.48rem;
-}
-
-.detail-scroll {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  overscroll-behavior: contain;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.detail-state {
-  min-height: 100%;
-}
-
-.detail-state strong {
-  color: var(--text);
-}
-
-.detail-state-error {
-  color: #fca5a5;
-}
-
-.detail-block {
-  flex: 0 0 auto;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-radius: 8px;
-  background: rgba(2, 6, 23, 0.24);
-  overflow: hidden;
-}
-
-.detail-block-head {
-  min-height: 2.4rem;
-  padding: 0.55rem 0.65rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.detail-block-head h3 {
-  margin: 0;
-  font-size: 0.84rem;
-  font-weight: 700;
-}
-
-.overview-block {
-  background: rgba(15, 23, 42, 0.34);
-}
-
-.meta-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.5rem;
-  padding: 0.65rem;
-}
-
-.meta-item {
-  min-width: 0;
-  padding: 0.5rem 0.55rem;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: 7px;
-  background: rgba(15, 23, 42, 0.44);
-}
-
-.meta-item span,
-.meta-item strong {
-  display: block;
-  min-width: 0;
-}
-
-.meta-item span {
-  color: var(--text-dim);
-  font-size: 0.68rem;
-  margin-bottom: 0.18rem;
-}
-
-.meta-item strong {
-  color: var(--text);
-  font-size: 0.8rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.meta-wide {
-  grid-column: 1 / -1;
-}
-
-.break-all {
-  white-space: normal !important;
-  word-break: break-all;
-}
-
-.focus-actions {
-  padding: 0 0.65rem 0.65rem;
-  justify-content: flex-start;
-}
-
-.error-block {
-  border-color: rgba(239, 119, 119, 0.32);
-  background: rgba(127, 29, 29, 0.12);
-}
-
-.inline-action {
-  border: 0;
-  background: transparent;
-  color: #8bc4cf;
-  font: inherit;
-  font-size: 0.74rem;
-  cursor: pointer;
-}
-
-.inline-action:hover {
-  color: #eaffff;
-}
-
-.message-stack {
-  display: grid;
-  gap: 0.55rem;
-  padding: 0.65rem;
-}
-
-.message-card {
-  display: grid;
-  gap: 0.35rem;
-  border: 1px solid rgba(148, 163, 184, 0.13);
-  border-radius: 8px;
-  padding: 0.55rem 0.65rem;
-  background: rgba(15, 23, 42, 0.42);
-}
-
-.message-card.role-user {
-  border-color: rgba(61, 168, 130, 0.28);
-  background: rgba(61, 168, 130, 0.12);
-}
-
-.message-card.role-assistant {
-  border-color: rgba(78, 191, 207, 0.24);
-  background: rgba(78, 191, 207, 0.09);
-}
-
-.message-card.role-system {
-  border-color: rgba(212, 184, 92, 0.24);
-  background: rgba(212, 184, 92, 0.08);
-}
-
-.message-role {
-  width: fit-content;
-  padding: 0.08rem 0.42rem;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.14);
-  color: #dbeafe;
-  font-size: 0.68rem;
-  font-family: Consolas, ui-monospace, monospace;
-}
-
-.message-card pre,
-.response-readable pre,
-.code-pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-  font-family: Consolas, ui-monospace, monospace;
-  font-size: 0.75rem;
-  line-height: 1.55;
-}
-
-.response-readable {
-  margin: 0.65rem;
-  padding: 0.65rem;
-  border-radius: 8px;
-  border: 1px solid rgba(78, 191, 207, 0.2);
-  background: rgba(78, 191, 207, 0.08);
-  color: #eaffff;
-}
-
-.code-pre {
-  max-height: none;
-  overflow: visible;
-  padding: 0.65rem;
-  color: #cbd5e1;
-  background: rgba(2, 6, 23, 0.32);
-}
-
-.error-pre {
-  color: #fecaca;
-  background: rgba(127, 29, 29, 0.18);
-}
-
-.raw-details summary {
-  min-height: 2.4rem;
-  padding: 0.55rem 0.65rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 0.84rem;
-  list-style: none;
-}
-
-.raw-details summary::-webkit-details-marker {
-  display: none;
-}
-
-.raw-details[open] summary ion-icon {
-  transform: rotate(180deg);
-}
-
-.raw-pre {
-  max-height: none;
-}
-
-.spin {
-  width: 16px;
-  height: 16px;
-  border-radius: 999px;
-  border: 2px solid rgba(148, 163, 184, 0.22);
-  border-top-color: #8bc4cf;
-  animation: spin 0.8s linear infinite;
-}
-
-.spin-sm {
-  width: 12px;
-  height: 12px;
-  border-width: 2px;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 0.9;
-  }
-}
-
-@media (max-width: 1420px) {
-  .advanced-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .logs-workbench {
-    grid-template-columns: minmax(620px, 1fr) 440px;
-  }
-
-  :global(.admin-shell .content.content-scroll .card.card-fill.logs-workbench) {
-    grid-template-columns: minmax(620px, 1fr) 440px;
-  }
-
-  .browser-body {
-    grid-template-columns: 190px minmax(0, 1fr);
-  }
-
-  .log-grid-head,
-  .log-row {
-    grid-template-columns: 70px minmax(96px, 1fr) minmax(80px, 0.7fr) 64px 72px 112px minmax(96px, 0.8fr);
-  }
-}
-</style>
+<style scoped src="./styles/ConversationLogsSection.css"></style>

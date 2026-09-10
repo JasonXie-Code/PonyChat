@@ -287,6 +287,7 @@ fun ChatInputBar(
     isAgentCompanionActive: Boolean = false,
     isAgentAutoLooping: Boolean = false,
     showCompanionButton: Boolean = false,
+    onPersonalPreferencesClick: () -> Unit = {},
     onProactiveTasksClick: () -> Unit = {},
     onShowPrompt: (String) -> Unit = {},
     onChineseChessClick: () -> Unit = {},
@@ -376,6 +377,7 @@ fun ChatInputBar(
         }
     }
     LaunchedEffect(mode) {
+        moreFunctionPage = MoreFunctionPage.Main
         if (mode == "galgame" || mode == "galgame_lock") {
             setPanels(
                 emoji = showEmojiPicker,
@@ -785,20 +787,13 @@ fun ChatInputBar(
                     PonyToolIcon(
                         icon = Icons.Filled.AddCircleOutline,
                         tint = when {
-                            isGalgameMode -> MaterialTheme.colorScheme.onSurfaceVariant.copy(0.25f)
                             showMorePanel -> Primary
                             else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f)
                         },
-                        onClick = if (isGalgameMode) {
-                            { hideKeyboardForPanelSwitch(); onShowPrompt("当前模式不支持该功能") }
-                        } else {
-                            {
-                                switchPanelsFromToolbar(
-                                    emoji = false,
-                                    quick = false,
-                                    more = !showMorePanel
-                                )
-                            }
+                        onClick = {
+                            switchPanelsFromToolbar(
+                                emoji = false, quick = false, more = !showMorePanel
+                            )
                         }
                     )
                 }
@@ -853,6 +848,11 @@ fun ChatInputBar(
                         }
                         showMorePanel -> {
                             MoreFunctionPanel(
+                                normalMode = mode == "normal",
+                                onPersonalPreferencesClick = {
+                                    setPanels(emoji = false, quick = false, more = false)
+                                    onPersonalPreferencesClick()
+                                },
                                 isCompanionActive = isCompanionActive,
                                 showCompanionButton = showCompanionButton,
                                 isAgentCompanionActive = isAgentCompanionActive,

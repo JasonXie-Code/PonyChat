@@ -1,0 +1,29 @@
+{
+  "models": [
+    {
+      "id": "qwen3.5-4b-local",
+      "name": "Qwen3.5-4B 本地 · 128K · 视觉",
+      "key_name": "Qwen3.5-4B Local",
+      "type": "openai",
+      "harness_provider": "local-openai",
+      "endpoint": "http://127.0.0.1:8068/v1",
+      "api_key": "",
+      "model_name": "qwen3.5-4b-local",
+      "description": "本地 Q4_K_M 量化版本，已加载视觉投影；单槽 131072 tokens",
+      "enabled": true,
+      "hidden": false,
+      "is_default": false,
+      "for_chat": true,
+      "supports_vision": true,
+      "supports_tools": true,
+      "supports_reasoning": false,
+      "enable_thinking": false,
+      "supports_web_search": false,
+      "context_length": 131072,
+      "options": {
+        "max_tokens": 8192,
+        "temperature": 0.7
+      }
+    }
+  ]
+}

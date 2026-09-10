@@ -32,7 +32,7 @@ def get_uvicorn_config() -> dict:
         "workers": workers,  # 🔧 [性能优化] 多进程模式
         "log_level": "info",
         "access_log": False,  # 🔧 [性能优化] 关闭访问日志，减少I/O
-        "loop": "uvloop",  # 🔧 [性能优化] 使用更快的event loop（需要安装uvloop）
+        "loop": "asyncio" if os.name == "nt" else "uvloop",
         "limit_concurrency": 1000,  # 🔧 [性能优化] 限制并发连接数
         "timeout_keep_alive": 30,  # 🔧 [性能优化] 保持连接超时
     }

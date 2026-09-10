@@ -18,7 +18,7 @@ from ..config import logger
 from ..db import get_database, get_users_dao
 from ..db.memory_dao import format_layered_memories_for_prompt, recall_memories_layered
 from ..db.settings_dao import SettingsDAO
-from ..providers import DoubaoProvider, QwenProvider, XaiProvider, get_provider
+from ..providers import QwenProvider, XaiProvider, get_provider
 from ..providers.llm_call import (
     DEFAULT_LLM_OUTPUT_MAX_TOKENS,
     force_default_output_token_limit,
@@ -232,7 +232,7 @@ def _collapse_unreplied_user_tail_for_model_context(request: ChatRequest) -> Non
         logger.warning("[NormalPending] 合并未回复用户消息失败，保留原上下文继续: %s", exc)
 
 
-_ANDROID_DELTA_CLIENT_IDS = {"single", "android"}
+_ANDROID_DELTA_CLIENT_IDS = {"single", "android", "companion_external"}
 _RETRACTED_USER_MESSAGE_TEXTS = {"（撤回了消息）", "(撤回了消息)"}
 
 
@@ -553,10 +553,12 @@ async def _persist_android_normal_user_delta(request: ChatRequest, *, client_id:
         )
         if not save_ok:
             logger.warning("📲 [AndroidDelta] 预保存用户消息失败: %s", save_msg)
+            raise HTTPException(status_code=503, detail="消息保存失败，请重试")
     except HTTPException:
         raise
     except Exception as exc:
-        logger.warning("📲 [AndroidDelta] 预保存用户消息异常，继续走请求体上下文: %s", exc)
+        logger.warning("📲 [AndroidDelta] 预保存用户消息异常: %s", exc)
+        raise HTTPException(status_code=503, detail="消息保存失败，请重试") from exc
 
 
 async def _load_recent_deleted_tail_context(

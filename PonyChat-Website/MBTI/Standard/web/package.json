@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "dev": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\\.bin;%PATH%\" && vite",
+    "build": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\\.bin;%PATH%\" && vite build",
+    "preview": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\\.bin;%PATH%\" && vite preview",
+    "typecheck": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\MBTI\\Standard\\web\\node_modules\\.bin;%PATH%\" && tsc --noEmit"
   },
   "dependencies": {
     "react": "^18.3.1",

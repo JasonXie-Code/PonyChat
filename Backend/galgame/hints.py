@@ -373,7 +373,7 @@ def _build_mood_desc_lines(cm: dict, char_gender: str = "", cv: dict | None = No
 
 def _build_lock_vitals_hints(cv: dict, cm: dict, of: dict, char_name: str = "", char_gender: str = "") -> tuple[str, str, str]:
     """
-    基于当前体征数据构建分步生成叙事提示字符串。
+    基于当前体征数据构建游戏 Agent 叙事提示字符串。
     体征类字段多为多档渐进描述；char_mood 叙事与行为指引与 _build_mood_desc_lines 一致，
     按每 10 分一档（偏高 60/70/80/90，偏低 40/30/20/10）从微妙过渡到主宰。
     char_name: 角色名，用于在提示行前标注"XX现在是 ..."增强模型感知。

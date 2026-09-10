@@ -1,5 +1,7 @@
 # 远程后端测试注意事项
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 这份说明给 Codex 和维护者使用，避免远程测试时因为环境不一致得到错误结论。
 
 ## 使用和 systemd 相同的 Python 环境
@@ -17,6 +19,7 @@ cd /opt/ponychat
 cd /opt/ponychat
 /opt/ponychat/.venv/bin/python - <<'PY'
 # test code here
+
 PY
 ```
 

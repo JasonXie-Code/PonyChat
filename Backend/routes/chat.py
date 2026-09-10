@@ -202,6 +202,9 @@ async def release_generation_lock(payload: dict, x_client_id: Optional[str] = He
     if not username or not character_id:
         raise HTTPException(status_code=400, detail="Missing username or character_id")
 
+    from ..chat_modules.live_turn import active_turn
+    if active_turn(username, character_id) is not None:
+        return {"status": "success", "success": True, "released": False, "reason": "agent_task_continues"}
     released = await generation_locker.release(username, character_id, client_id)
     await manager.broadcast_to_user(username, {
         "type": "GENERATION_LOCK",
@@ -232,6 +235,12 @@ async def cancel_generation(payload: dict, x_client_id: Optional[str] = Header(N
 
     if not username or not character_id:
         raise HTTPException(status_code=400, detail="Missing username or character_id")
+
+    # Older clients use this endpoint during reconnect/recovery. It must not
+    # cancel the server-owned normal Agent or invalidate its generation token.
+    from ..chat_modules.live_turn import active_turn
+    if active_turn(username, character_id) is not None:
+        return {"status": "success", "released": False, "reason": "agent_task_continues"}
 
     logger.info(
         f"🛑 [取消生成] 收到取消请求: user={username} char={character_id[:8]}..."
@@ -317,8 +326,14 @@ async def chat(
         raise HTTPException(status_code=500, detail="No active model")
     accept = http_request.headers.get("accept") or ""
     use_json = _use_json_chat_protocol(accept)
+    body._supports_web_image_receipts = http_request.headers.get("x-ponychat-web-images") == "receipt-v1"
     await _enrich_request_sticker_attachments(body)
     await _resolve_request_character_id(body)
+    from ..chat_modules.live_turn import normal_live_response
+    response = await normal_live_response(body, x_client_id, x_chat_auth, active_model,
+                                          use_json=use_json, handler=handle_chat_request)
+    if response is not None:
+        return response
     return await handle_chat_request(
         body, x_client_id, x_chat_auth, active_model, use_json_protocol=use_json
     )

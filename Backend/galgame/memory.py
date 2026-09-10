@@ -10,8 +10,13 @@ from typing import Any
 
 from ..config import logger
 from ..reasoning_config import llm_task_float
-from .seq_prompts import _SEQ_CHAR_MEMORY_UPDATE
 from .utils import try_fix_json
+
+CHAR_MEMORY_AGENT_SYSTEM = """你是游戏 Agent 的后台记忆整理器。把刚完成的一轮改写为客观、简洁的第三人称事实，并识别下一轮应避免的重复表达。只记录实际发生内容，不补写未来计划，不复制口癖或情绪渲染。
+先区分原文归属：user原文中“我”是玩家、“你”是角色；assistant角色正文中“我”是角色、“你”是玩家。玩家发来的整句话不等于全是玩家动作。“你拿起水杯喝水”应记为角色饮水，不能记为玩家饮水。结构化character_action是角色动作，player_action才是玩家动作；两者须和原文核对。仅指示角色动作时，玩家行为写“玩家让角色……”而不是把该动作移给玩家。近期记忆是压缩资料，若与本轮原文冲突，以本轮原文和已完成场景为准。
+只输出一个 JSON 对象：
+{"memory_entry":{"turn":整数,"player_action":"玩家本轮行为","event":"按时间顺序记录完整事实"},"repetition_profile":{"avoid_next_turn":[],"overused_surface_patterns":[],"semantic_loops":[]}}
+avoid_next_turn 最多5项。overused_surface_patterns 最多8项，每项包含 pattern/type/meaning/cooldown_turns。semantic_loops 最多5项，每项包含 pattern/meaning/suggested_alternatives。禁止 Markdown 和 JSON 外文字。"""
 
 # 分层记忆：达到 KEEP_VERBATIM_MAX+1 条时触发摘要并裁剪为 KEEP_VERBATIM_AFTER_TRIM 条
 KEEP_VERBATIM_MAX = 15
@@ -142,7 +147,7 @@ def _clean_profile_string(value: object, *, max_len: int = 160) -> str:
 
 
 def normalize_repetition_profile(raw: Any) -> dict:
-    """将第 10 步去重档案归一化为适合注入提示词的小型结构。"""
+    """将记忆 Agent 的去重档案归一化为适合注入提示词的小型结构。"""
     if not isinstance(raw, dict):
         return {}
 
@@ -213,7 +218,7 @@ def normalize_repetition_profile(raw: Any) -> dict:
 
 
 def format_repetition_profile_for_prompt(state: dict | None) -> str:
-    """将第 10 步语义去重档案格式化为下一轮提示词块。"""
+    """将记忆 Agent 的语义去重档案格式化为下一轮提示词块。"""
     if not isinstance(state, dict):
         return ""
     profile = normalize_repetition_profile(state.get("repetition_profile"))
@@ -221,7 +226,7 @@ def format_repetition_profile_for_prompt(state: dict | None) -> str:
         return ""
 
     lines = [
-        "【上一轮第10步去重档案｜下一轮表达冷却】",
+        "【上一轮记忆 Agent 去重档案｜下一轮表达冷却】",
         "以下内容由上轮记忆分析生成，用于保持状态连续但避免表层表达循环；优先级低于玩家本轮明确动作，高于普通叙事惯性。",
     ]
     avoid = profile.get("avoid_next_turn") or []
@@ -320,13 +325,15 @@ async def _call_summarize_llm(
     username: str = "",
     character_id: str = "",
     game_type: str = "galgame",
-    stage: str = "SEQ_STEP_10_MEMORY",
+    stage: str = "GAME_MEMORY_AGENT",
 ) -> str | None:
     from .. import config as app_config
     from ..config import model_manager
     from ..utils import save_chat_debug_log
 
-    from .seq_llm import call_llm_galgame_sequential
+    from ..chat_modules.harness_runtime import run_harness_turn
+    from ..chat_modules.agent_logging import log_scope
+    from ..providers.llm_call import _apply_usage_metering
 
     active_model = model_manager.get_model_for_task("summarize")
     if not active_model:
@@ -335,59 +342,42 @@ async def _call_summarize_llm(
     if not app_config.httpx_client:
         return None
     model_name = active_model.get("model_name") or active_model.get("id", "")
-    _seq_mode = game_type if game_type in ("galgame", "galgame_lock") else "galgame"
-    body: dict[str, Any] = {
-        "model": model_name,
-        "messages": [{"role": "user", "content": prompt}],
-        "stream": False,
-    }
-    timeout_sec = llm_task_float("galgame_seq_step_10_memory", "timeout_seconds", 120.0) or 120.0
+    timeout_sec = llm_task_float("game_memory_agent", "timeout_seconds", 120.0) or 120.0
 
+    result = {}
     try:
-        result = await asyncio.wait_for(
-            call_llm_galgame_sequential(
-                body,
+        async with log_scope(username, character_id, game_type, params={'phase': 'background_memory'}):
+            result = await run_harness_turn(
+                prompt,
                 active_model,
-                mode=_seq_mode,
-                model_name=str(model_name),
-                httpx_client=app_config.httpx_client,
-                timeout=timeout_sec,
-                chat_debug_request={
-                    "username": username or None,
-                    "character_id": character_id or None,
-                    "mode": game_type,
-                    "model_name": model_name,
-                    "stage": f"{stage}_REQUEST",
-                },
-                record_usage="main",
-                usage_meter_username=username or None,
-            ),
-            timeout=timeout_sec,
-        )
-    except Exception as e:
-        logger.warning("[CharMemory] LLM 请求异常: %s", e)
+                {},
+                system_prompt=("你是游戏 Agent 的后台记忆整理器。按请求整理客观事实，只输出摘要正文，不输出 JSON、标题或说明。"
+                               if "_TIERED_" in stage else CHAR_MEMORY_AGENT_SYSTEM),
+                timeout_seconds=timeout_sec,
+                max_tokens=4096,
+                max_tool_calls=0,
+            )
+    except BaseException as exc:
+        result = getattr(exc, 'harness_usage', {})
+        if not isinstance(exc, Exception):
+            raise
+        logger.warning("[CharMemory] LLM 请求异常: %s", exc)
         await save_chat_debug_log(
             username or None, character_id or None, game_type, model_name,
-            str(e), stage=f"{stage}_ERROR",
+            str(exc), stage=f"{stage}_ERROR",
         )
         return None
-    if isinstance(result.raw_response.get("error"), dict):
-        logger.warning("[CharMemory] LLM 错误对象")
-        await save_chat_debug_log(
-            username or None, character_id or None, game_type, model_name,
-            str(result.raw_response.get("error")), stage=f"{stage}_ERROR",
-        )
+    finally:
+        await asyncio.shield(_apply_usage_metering(record_usage="main", username=username or None,
+            resp_json=result, llm_api_calls=result.get("llm_api_calls", 0),
+            tool_call_count=result.get("tool_call_count", 0)))
+    if result.get("finish_reason") != "completed":
+        logger.warning("[CharMemory] Agent 未完成: %s", result.get("finish_reason"))
         return None
-    raw_content = (result.text or "").strip() or None
-    if not raw_content and (result.reasoning or "").strip():
-        _cand = (result.reasoning or "").strip()
-        if "{" in _cand and "}" in _cand:
-            raw_content = _cand
-            logger.info("[CharMemory] 正文为空，回退使用 reasoning 中的 JSON 片段")
+    raw_content = str(result.get("final_response") or "").strip() or None
     if not raw_content:
         logger.warning(
-            "[CharMemory] 模型返回空正文且无可回退内容 reasoning_len=%s",
-            len((result.reasoning or "").strip()),
+            "[CharMemory] Agent 返回空正文",
         )
 
     # 记忆摘要不应含任何括号注释，全部移除（含全角/半角括号及其内容）
@@ -411,8 +401,8 @@ def _parse_memory_json(raw: str) -> dict | None:
         return None
 
 
-def _split_step10_memory_payload(raw_obj: dict) -> tuple[dict | None, dict]:
-    """同时兼容旧版扁平 Step 10 JSON 与新版结构化输出。"""
+def _split_memory_agent_payload(raw_obj: dict) -> tuple[dict | None, dict]:
+    """Split the memory Agent's validated object, accepting old saved rows."""
     if not isinstance(raw_obj, dict):
         return None, {}
     entry = raw_obj.get("memory_entry")
@@ -440,7 +430,7 @@ def _fallback_memory_entry_from_turn(
     relationship: str = "",
     mood: str = "",
 ) -> dict | None:
-    """第 10 步 LLM 输出为空或无效时，构建最小本地记忆条目。
+    """记忆 Agent 输出为空或无效时，构建最小本地记忆条目。
 
     刻意保守：仅使用本轮已生成 payload 中的既有事实，不推断去重档案。
     """
@@ -518,7 +508,7 @@ async def _llm_merge_long_term(
         username=username,
         character_id=character_id,
         game_type=game_type,
-        stage="SEQ_STEP_10_TIERED_LONG",
+        stage="GAME_MEMORY_AGENT_TIERED_LONG",
     )
 
 
@@ -546,7 +536,7 @@ async def _llm_extend_short_term(
         username=username,
         character_id=character_id,
         game_type=game_type,
-        stage="SEQ_STEP_10_TIERED_SHORT_EXTEND",
+        stage="GAME_MEMORY_AGENT_TIERED_SHORT_EXTEND",
     )
 
 
@@ -572,7 +562,7 @@ async def _llm_new_short_term_from_entries(
         username=username,
         character_id=character_id,
         game_type=game_type,
-        stage="SEQ_STEP_10_TIERED_SHORT_NEW",
+        stage="GAME_MEMORY_AGENT_TIERED_SHORT_NEW",
     )
 
 
@@ -791,6 +781,8 @@ async def _run_char_memory_update_locked(username: str, character_id: str, game_
                     third_t = str(sc.get("third_party_dialogue") or "")[:200]
                     rsp_t = str(sc.get("response") or "")[:300]
                     payload_hint = (
+                        f"character_action（角色动作）:{str(gd.get('character_action') or '')[:400]}\n"
+                        f"player_action（玩家动作）:{str(gd.get('player_action') or '')[:400]}\n"
                         f"env提要:{env_t}\n"
                         f"body_state提要:{body_t}\n"
                         f"thoughts提要:{th_t}\n"
@@ -807,18 +799,17 @@ async def _run_char_memory_update_locked(username: str, character_id: str, game_
                 payload_hint = raw[:500]
 
         char_name_line = f"角色名（贯穿整段记忆，禁止替换为其他名字）：{char_name}\n" if char_name else ""
-        player_line = "玩家本轮：（游戏开场，角色主动发起场景）\n" if is_opening else f"玩家本轮：{user_text[:500]}\n"
+        player_line = "本轮user原文：（游戏开场，角色主动发起场景）\n" if is_opening else f"本轮user原文（我=玩家，你=角色）：{user_text[:500]}\n"
         recent_entries = [e for e in prev_entries[-8:] if isinstance(e, dict)]
         recent_block = _format_entries_block(recent_entries) if recent_entries else ""
         prev_repetition_profile = format_repetition_profile_for_prompt(state)
         prompt = (
-            f"{_SEQ_CHAR_MEMORY_UPDATE}\n\n"
             f"{char_name_line}"
             f"回合序号 turn={turn_idx}\n"
-            f"{player_line}"
             f"上一轮去重档案：\n{prev_repetition_profile or '无'}\n"
             f"近期中性记忆：\n{recent_block or '无'}\n"
-            f"场景/文本提要：{payload_hint or raw[:600]}\n"
+            f"本轮assistant角色视角（我=角色，你=玩家）的场景/文本提要：{payload_hint or raw[:600]}\n"
+            f"{player_line}"
         )
         raw_out = await _call_summarize_llm(
             prompt,
@@ -827,7 +818,7 @@ async def _run_char_memory_update_locked(username: str, character_id: str, game_
             game_type=game_type,
         )
         raw_obj = _parse_memory_json(raw_out or "")
-        new_obj, repetition_profile = _split_step10_memory_payload(raw_obj or {})
+        new_obj, repetition_profile = _split_memory_agent_payload(raw_obj or {})
         if not new_obj:
             new_obj = _fallback_memory_entry_from_turn(
                 raw=raw,

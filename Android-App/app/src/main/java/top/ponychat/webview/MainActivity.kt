@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -16,6 +17,8 @@ import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,14 +28,21 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
@@ -46,6 +56,13 @@ import androidx.compose.ui.zIndex
 import androidx.compose.ui.unit.dp
 import top.ponychat.webview.BuildConfig
 import top.ponychat.webview.data.prefs.AppPreferences
+import top.ponychat.webview.device.CompanionRuntimeClient
+import top.ponychat.webview.device.CompanionRuntimeState
+import top.ponychat.webview.device.LocalCompanionRuntimeState
+import top.ponychat.webview.device.LocalCompanionRuntimeReady
+import top.ponychat.webview.device.LocalDeviceExperience
+import top.ponychat.webview.device.shouldUseDeviceExperience
+import top.ponychat.webview.device.statusText
 import top.ponychat.webview.util.NotificationTrace
 import top.ponychat.webview.ui.common.PonyPromptBubble
 import top.ponychat.webview.ui.common.SystemNavigationBarColorEffect
@@ -53,9 +70,10 @@ import top.ponychat.webview.ui.theme.PonyChatTheme
 
 val CustomToast = compositionLocalOf<SnackbarHostState> { error("No SnackbarHostState provided") }
 
-class MainActivity : ComponentActivity() {
+open class MainActivity : ComponentActivity() {
 
     private lateinit var prefs: AppPreferences
+    private val companionRuntimeClient by lazy { CompanionRuntimeClient(applicationContext) }
 
     companion object {
         // 120Hz 帧预算 = 1_000_000_000 / 120 = 8_333_333 ns
@@ -165,10 +183,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         prefs = AppPreferences(this)
-        // 通知点击跳转：从 Intent extra 读取目标角色 ID 与模式
-        intent?.getStringExtra("open_character_id")?.takeIf { it.isNotBlank() }?.let {
-            ProactiveNavTarget.set(it, intent.getStringExtra("open_mode"))
-        }
+        // A notification is a one-shot navigation event, not recreation state.
+        consumeChatNavigationIntent(intent, allowNavigation = savedInstanceState == null)
         if (!prefs.initialStartupPermissionsDone) {
             NotificationTrace.log("perm", "onCreate launch initial_permission_bundle")
             initialPermissionsLauncher.launch(buildInitialRuntimePermissions())
@@ -195,6 +211,28 @@ class MainActivity : ComponentActivity() {
             var darkTheme by remember { mutableStateOf(prefs.isDarkTheme) }
             var fontScale by remember { mutableFloatStateOf(prefs.fontScale) }
             val snackbarHostState = remember { SnackbarHostState() }
+            val runtimeState by companionRuntimeClient.state.collectAsState()
+            val enteredFromDeviceHome = this@MainActivity is DeviceHomeActivity
+            val deviceExperience = shouldUseDeviceExperience(
+                enteredFromDeviceHome,
+                resources.getBoolean(R.bool.device_home_enabled),
+            )
+            LaunchedEffect(deviceExperience) {
+                requestedOrientation = if (deviceExperience) {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                } else {
+                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                }
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    if (deviceExperience) {
+                        systemBarsBehavior =
+                            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                        hide(WindowInsetsCompat.Type.systemBars())
+                    } else {
+                        show(WindowInsetsCompat.Type.systemBars())
+                    }
+                }
+            }
 
             // 与应用主题一致：浅色主题用深色状态栏图标，深色主题用浅色图标（勿跟系统 uiMode 写死）
             SideEffect {
@@ -210,23 +248,37 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background,
                     restoreOnDispose = false
                 )
-                CompositionLocalProvider(CustomToast provides snackbarHostState) {
+                CompositionLocalProvider(
+                    CustomToast provides snackbarHostState,
+                    LocalDeviceExperience provides deviceExperience,
+                    LocalCompanionRuntimeReady provides (runtimeState is CompanionRuntimeState.Ready),
+                    LocalCompanionRuntimeState provides runtimeState,
+                ) {
                     Box(modifier = Modifier.fillMaxSize()) {
                         Surface(
                             modifier = Modifier.fillMaxSize(),
                             color = MaterialTheme.colorScheme.background
                         ) {
-                            AppNavigation(
-                                prefs = prefs,
-                                onThemeChanged = { isDark ->
-                                    darkTheme = isDark
-                                    prefs.isDarkTheme = isDark
-                                },
-                                onFontScaleChanged = { scale ->
-                                    fontScale = scale
-                                    prefs.fontScale = scale
+                            if (!enteredFromDeviceHome && runtimeState is CompanionRuntimeState.Detecting) {
+                                RuntimeDetectionScreen()
+                            } else {
+                                key(deviceExperience) {
+                                    AppNavigation(
+                                        prefs = prefs,
+                                        isDeviceExperience = deviceExperience,
+                                        isCompanionRuntimeReady = runtimeState is CompanionRuntimeState.Ready,
+                                        companionRuntimeStatus = runtimeState.statusText(),
+                                        onThemeChanged = { isDark ->
+                                            darkTheme = isDark
+                                            prefs.isDarkTheme = isDark
+                                        },
+                                        onFontScaleChanged = { scale ->
+                                            fontScale = scale
+                                            prefs.fontScale = scale
+                                        },
+                                    )
                                 }
-                            )
+                            }
                         }
                         SnackbarHost(
                             hostState = snackbarHostState,
@@ -333,16 +385,28 @@ class MainActivity : ComponentActivity() {
     /** App 已在前台时用户点击通知（FLAG_ACTIVITY_SINGLE_TOP），通过此回调更新目标 */
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.getStringExtra("open_character_id")?.takeIf { it.isNotBlank() }?.let {
-            ProactiveNavTarget.set(it, intent.getStringExtra("open_mode"))
+        setIntent(intent)
+        consumeChatNavigationIntent(intent)
+    }
+
+    private fun consumeChatNavigationIntent(intent: Intent?, allowNavigation: Boolean = true) {
+        val characterId = intent?.getStringExtra("open_character_id")?.takeIf { it.isNotBlank() }
+        val mode = intent?.getStringExtra("open_mode")
+        intent?.removeExtra("open_character_id")
+        intent?.removeExtra("open_mode")
+        if (allowNavigation && characterId != null) {
+            ProactiveNavTarget.set(characterId, mode)
         }
     }
 
     override fun onStart() {
         super.onStart()
+        companionRuntimeClient.setOverlayVisible(false)
+        companionRuntimeClient.connect()
     }
 
     override fun onStop() {
+        companionRuntimeClient.setOverlayVisible(true)
         // 须在 super.onStop() 之前注销：部分系统/OEM 在 super 后 Window 已卸下监听器，
         // 再 remove 会抛 IllegalArgumentException（listener was never added / 已不在集合中）。
         if (BuildConfig.DEBUG && Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && frameMetricsAdded) {
@@ -357,5 +421,26 @@ class MainActivity : ComponentActivity() {
             frameMetricsThread.quitSafely()
         }
         super.onStop()
+    }
+
+    override fun onDestroy() {
+        companionRuntimeClient.disconnect()
+        super.onDestroy()
+    }
+}
+
+@androidx.compose.runtime.Composable
+private fun RuntimeDetectionScreen() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        CircularProgressIndicator()
+        Text(
+            text = "正在准备 PonyChat…",
+            modifier = Modifier.padding(top = 16.dp),
+            color = MaterialTheme.colorScheme.onBackground,
+        )
     }
 }

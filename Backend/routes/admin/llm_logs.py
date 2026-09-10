@@ -338,7 +338,10 @@ async def get_log_detail(log_id: int):
         response: Any = {}
         if isinstance(data, dict):
             kind = data.get("kind", "")
-            if kind == "llm_call_response":
+            if kind in ('agent_request', 'agent_run'):
+                request = data.get('request') or {}
+                response = data if kind == 'agent_run' else {}
+            elif kind == "llm_call_response":
                 # 非流式：有完整 request / response
                 request = data if "messages" in data else params
                 response = data.get("choices") or data.get("content") or data
@@ -410,6 +413,9 @@ async def export_logs(
     date: Optional[str] = Query(default=None),
     hour: Optional[str] = Query(default=None),
     user_id: Optional[str] = Query(default=None, alias="userId"),
+    conversation_id: Optional[str] = Query(default=None, alias="conversationId"),
+    request_id: Optional[str] = Query(default=None, alias="requestId"),
+    trace_id: Optional[str] = Query(default=None, alias="traceId"),
     model: Optional[str] = Query(default=None),
     status: Optional[str] = Query(default=None),
     keyword: Optional[str] = Query(default=None),
@@ -424,6 +430,11 @@ async def export_logs(
 
     conditions = []
     params: List[Any] = []
+
+    for column, value in (('conversation_id', conversation_id), ('request_id', request_id), ('trace_id', trace_id)):
+        if value:
+            conditions.append(f'{column} = ?')
+            params.append(value)
 
     if date:
         conditions.append("date = ?")
@@ -477,7 +488,9 @@ async def export_logs(
                             yield json.dumps(_mask_sensitive(log_data), ensure_ascii=False, default=str)
                             count += 1
         except Exception as e:
-            yield f'\n{{"error": "{str(e)}"}}\n'
+            if not first:
+                yield ',\n'
+            yield json.dumps({'error': _mask_string_value(str(e))}, ensure_ascii=False)
         yield '\n]\n'
 
     return StreamingResponse(
@@ -553,6 +566,11 @@ def _json_text(value: Any) -> str:
 
 def _infer_status_from_log(log_data: dict) -> str:
     data = log_data.get("data") if isinstance(log_data, dict) else None
+    if isinstance(data, dict):
+        if data.get('status') in ('success', 'error', 'timeout', 'interrupted'):
+            return data['status']
+        if data.get('incomplete') is True:
+            return 'error'
     text = _json_text(data)
     for kw in ["timeout", "timed out"]:
         if kw in text:

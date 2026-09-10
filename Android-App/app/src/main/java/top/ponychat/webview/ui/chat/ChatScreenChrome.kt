@@ -125,8 +125,8 @@ internal fun ChatScreenTopBar(
                     )
                 }
             }
-        } else if (!state.isStreaming || !state.mode.startsWith("galgame")) {
-            if (state.mode.startsWith("galgame")) {
+        } else {
+            if (state.mode.startsWith("galgame") && !state.isStreaming) {
                 GalgameResetTopBarAction(onResetGalgameProgress)
             }
             if (!state.mode.startsWith("galgame")) {

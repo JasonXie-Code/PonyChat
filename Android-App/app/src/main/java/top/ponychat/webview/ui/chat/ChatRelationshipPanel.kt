@@ -84,7 +84,7 @@ internal fun ChatRelationshipPanel(
     } else {
         null
     }
-    val overviewText = pageContent.relationshipTextOr(RELATIONSHIP_EMPTY_TEXT, maxChars = 120) { it.overview }
+    val overviewText = pageContent.relationshipTextOr(state.relationshipSnapshotError ?: RELATIONSHIP_EMPTY_TEXT, maxChars = 120) { it.overview }
     val moodText = pageContent.relationshipTextOr(RELATIONSHIP_EMPTY_TEXT, maxChars = 72) { it.mood }
     val moodChips = pageContent.relationshipChipsOr(RELATIONSHIP_EMPTY_CHIPS) { it.chips }
     val selfPortraitText = pageContent.relationshipTextOr(RELATIONSHIP_EMPTY_TEXT, maxChars = 36) { it.selfPortrait }
@@ -105,10 +105,8 @@ internal fun ChatRelationshipPanel(
         maxItemChars = 14
     ) { it.suggestions }
     val isPullRefreshing = state.isLoadingRelationshipSnapshot
-    val isInitialRelationshipLoading =
-        state.relationshipStageOverride == null &&
-            !state.hasLoadedRelationshipSnapshot &&
-            state.relationshipSnapshot == null
+    val showLoadingPanel = state.relationshipStageOverride == null &&
+        (isPullRefreshing || pageContent == null || state.relationshipSnapshotError != null)
     val refreshAction by rememberUpdatedState(onRefresh)
     val scrollState = rememberScrollState()
     val density = LocalDensity.current
@@ -345,22 +343,16 @@ internal fun ChatRelationshipPanel(
                 modifier = Modifier.zIndex(0f)
             )
 
-            if (isInitialRelationshipLoading) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .zIndex(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator(color = Primary)
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        "加载关系中…",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
+            if (showLoadingPanel) {
+                RelationshipLoadingPanel(
+                    character = character,
+                    prefs = prefs,
+                    displayName = displayName,
+                    userDisplayName = userDisplayName,
+                    stage = stageUi,
+                    loading = isPullRefreshing || !state.hasLoadedRelationshipSnapshot,
+                    message = state.relationshipSnapshotError,
+                )
             } else {
                 Column(
                     modifier = Modifier

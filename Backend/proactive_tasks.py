@@ -262,8 +262,9 @@ async def _process_one_task(row: dict[str, Any]) -> bool:
     db = get_database()
     async with aiosqlite.connect(db.db_path) as conn:
         cur = await conn.execute(
-            "UPDATE proactive_tasks SET status='processing', updated_at_ms=? WHERE id=? AND status='active'",
-            (now_ms(), task_id),
+            "UPDATE proactive_tasks SET status='processing', updated_at_ms=? WHERE id=? AND status='active' "
+            "AND updated_at_ms=? AND due_at_ms=? AND due_at_ms<=?",
+            (now_ms(), task_id, row['updated_at_ms'], row['due_at_ms'], now_ms()),
         )
         await conn.commit()
         if int(cur.rowcount or 0) <= 0:
@@ -431,7 +432,7 @@ async def _defer_proactive_task(row: dict[str, Any], reason: str) -> None:
             """
             UPDATE proactive_tasks
                SET status='active', due_at_ms=?, metadata_json=?, updated_at_ms=?
-             WHERE id=?
+             WHERE id=? AND status='processing'
             """,
             (ts + 60 * 60 * 1000, json.dumps(metadata, ensure_ascii=False), ts, row.get("id")),
         )
@@ -446,21 +447,22 @@ async def _build_scheduled_compatible_task(row: dict[str, Any]) -> Optional[dict
     db = get_database()
     async with aiosqlite.connect(db.db_path) as conn:
         if not conversation_id:
-            async with conn.execute(
-                """
-                SELECT c.id
-                  FROM conversations c
-                  JOIN users u ON u.id=c.user_id
-                 WHERE u.username=? AND c.character_id=? AND COALESCE(c.is_hidden,0)=0
-                 ORDER BY c.timestamp DESC
-                 LIMIT 1
-                """,
-                (username, character_id),
-            ) as cur:
-                conv = await cur.fetchone()
-            if not conv:
+            await conn.execute('BEGIN IMMEDIATE')
+            current = await (await conn.execute(
+                "SELECT status FROM proactive_tasks WHERE id=? AND username=? AND character_id=?",
+                (row['id'], username, character_id))).fetchone()
+            if not current or current[0] != 'processing':
                 return None
-            conversation_id = conv[0]
+            from .proactive_task_conversation import resolve_task_conversation
+            try:
+                conversation_id = await resolve_task_conversation(
+                    conn, db, username, character_id, allow_create=row.get('source') == 'user')
+            except ValueError:
+                await conn.rollback()
+                return None
+            await conn.execute("UPDATE proactive_tasks SET conversation_id=? WHERE id=? AND status='processing'",
+                               (conversation_id, row['id']))
+            await conn.commit()
         if not source_message_id:
             async with conn.execute(
                 """
@@ -474,15 +476,17 @@ async def _build_scheduled_compatible_task(row: dict[str, Any]) -> Optional[dict
                 (conversation_id,),
             ) as cur:
                 msg = await cur.fetchone()
-            if not msg:
+            if not msg and row.get('source') != 'user':
                 return None
-            source_message_id = msg[0]
+            source_message_id = msg[0] if msg else ''
 
     task_type = normalize_task_type(str(row.get("task_type") or "custom"))
     prompt = str(row.get("prompt") or "").strip()
     title = str(row.get("title") or "").strip()
     seed = prompt or title or "角色按用户设定的定时任务主动发来一条自然消息。"
     return {
+        "_proactive_task_row": True,
+        "_user_created_task": row.get('source') == 'user',
         "id": str(row.get("id") or ""),
         "username": username,
         "character_id": character_id,
@@ -496,6 +500,8 @@ async def _build_scheduled_compatible_task(row: dict[str, Any]) -> Optional[dict
         "chain_id": str(row.get("id") or ""),
         "chain_count": int(row.get("run_count") or 0),
         "metadata_json": row.get("metadata_json") or "{}",
+        "due_at_ms": int(row.get("due_at_ms") or 0),
+        "created_at_ms": int(row.get("created_at_ms") or 0),
     }
 
 
@@ -523,7 +529,7 @@ async def _finish_proactive_task(row: dict[str, Any], result: str, reason: str =
             UPDATE proactive_tasks
                SET status=?, due_at_ms=?, last_run_at_ms=?,
                    run_count=run_count+?, metadata_json=?, updated_at_ms=?
-             WHERE id=?
+             WHERE id=? AND status='processing'
             """,
             (
                 next_status,

@@ -201,6 +201,28 @@ async def get_normal_character_state(username: str, character_id: str, conversat
     return str(row[0] or "alive") if row else "alive"
 
 
+def assert_normal_reply_allowed_on_connection(conn, request) -> None:
+    """Enforce persisted death inside the reply transaction, including races."""
+    from .normal_speaker import effective_speaker_character_id, explicit_user_at_reply_requested
+
+    speaker = effective_speaker_character_id(request) or request.character_id
+    row = conn.execute(
+        "SELECT state FROM normal_character_lifecycle WHERE username=? AND character_id=? AND conversation_id=?",
+        (request.username, speaker, request.conversation_id or ""),
+    ).fetchone()
+    if row and str(row[0] or "alive") == "dead" and not explicit_user_at_reply_requested(request, speaker):
+        raise RuntimeError("Character is dead; only an explicit user @ may request a spirit reply")
+
+
+async def scheduled_character_is_dead_on_connection(conn, task) -> bool:
+    """Read on an existing transaction without DDL or a second connection."""
+    row = await (await conn.execute(
+        "SELECT state FROM normal_character_lifecycle WHERE username=? AND character_id=? AND conversation_id=?",
+        (task["username"], task["character_id"], task["conversation_id"]),
+    )).fetchone()
+    return bool(row and str(row[0] or "alive") == "dead")
+
+
 async def mark_normal_character_dead(
     username: str,
     character_id: str,

@@ -29,7 +29,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -145,6 +144,7 @@ internal fun ChatScreenScaffoldMain(
     onNavigateBack: () -> Unit,
     onNavigateToEditCharacter: () -> Unit,
     onNavigateToCharacterProfile: (Character) -> Unit,
+    characterHome: @Composable (() -> Unit) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToProactiveTasks: () -> Unit,
     onNavigateToHistory: () -> Unit,
@@ -385,14 +385,17 @@ internal fun ChatScreenScaffoldMain(
     // 游戏/锁分开始界面（messages 为空）时永不显示输入栏
     val showInputBar = !isGalgameBroken &&
         (!state.mode.startsWith("galgame") || state.messages.isNotEmpty())
-    val relationshipPagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
     val relationshipPagerEnabled = state.mode == "normal" && !state.isExportMode
+    val relationshipPagerState = rememberChatSidePager(relationshipPagerEnabled) {
+        dismissKeyboard()
+        dismissInputPanelsSignal.intValue += 1
+    }
     val relationshipPageProgress by remember(relationshipPagerState, relationshipPagerEnabled) {
         derivedStateOf {
             if (!relationshipPagerEnabled) {
                 0f
             } else {
-                (1f - abs((relationshipPagerState.currentPage - 1) + relationshipPagerState.currentPageOffsetFraction))
+                abs((relationshipPagerState.currentPage - CHAT_PAGE) + relationshipPagerState.currentPageOffsetFraction)
                     .coerceIn(0f, 1f)
             }
         }
@@ -462,11 +465,6 @@ internal fun ChatScreenScaffoldMain(
         relationshipPagerEnabled &&
             !mentionPickerVisible &&
             !showDisplaySettingsState.value
-    LaunchedEffect(relationshipPagerEnabled) {
-        if (!relationshipPagerEnabled && relationshipPagerState.currentPage != 0) {
-            relationshipPagerState.scrollToPage(0)
-        }
-    }
     LaunchedEffect(
         relationshipPagerEnabled,
         state.conversationId,
@@ -475,25 +473,6 @@ internal fun ChatScreenScaffoldMain(
         if (relationshipPagerEnabled) {
             viewModel.loadRelationshipSnapshot()
         }
-    }
-    LaunchedEffect(
-        relationshipPagerEnabled,
-        relationshipPagerState.currentPage
-    ) {
-        if (relationshipPagerEnabled && relationshipPagerState.currentPage == 1) {
-            dismissKeyboard()
-            dismissInputPanelsSignal.intValue += 1
-        }
-    }
-    val relationshipBackEnabled by remember(relationshipPagerState, relationshipPagerEnabled) {
-        derivedStateOf {
-            relationshipPagerEnabled &&
-                (relationshipPagerState.currentPage != 0 ||
-                    abs(relationshipPagerState.currentPageOffsetFraction) > 0.01f)
-        }
-    }
-    BackHandler(enabled = relationshipBackEnabled) {
-        coroutineScope.launch { relationshipPagerState.animateScrollToPage(0) }
     }
     // 实际生成图片并分享
     val doExportAsImage: () -> Unit = {
@@ -586,6 +565,7 @@ internal fun ChatScreenScaffoldMain(
             )
         )
     }
+    var preferencesExit by remember { mutableStateOf<(() -> Unit)?>(null) }
     Scaffold(
     modifier = Modifier
         .fillMaxSize(),
@@ -596,7 +576,8 @@ internal fun ChatScreenScaffoldMain(
             character = character,
             prefs = prefs,
             isExporting = isExporting,
-            onBack = {
+            onBack = back@{
+                    preferencesExit?.let { it(); return@back }
                     voiceBridge?.stop()
                     onNavigateBack()
             },
@@ -619,6 +600,8 @@ internal fun ChatScreenScaffoldMain(
         }
     }
 ) { paddingValues ->
+    PersonalPreferencesHost(prefs, character.id.orEmpty(), character.displayName(), state.mode,
+        paddingValues.calculateTopPadding(), { preferencesExit = it }, viewModel::relationshipControlChanged) { openPreferences ->
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -661,7 +644,7 @@ internal fun ChatScreenScaffoldMain(
                 .weight(1f)
                 .fillMaxWidth()
         ) { relationshipPage ->
-        if (relationshipPage == 0) {
+        if (relationshipPage == CHAT_PAGE) {
         val visibleInputHeightPx = inputBarHeightPx.floatValue.roundToInt()
         Box(
             modifier = Modifier
@@ -1327,15 +1310,9 @@ internal fun ChatScreenScaffoldMain(
                 )
             }
         }
-        androidx.compose.animation.AnimatedVisibility(
+        MentionCharacterPickerPanel(
             visible = mentionPickerVisible,
-            modifier = Modifier
-                .matchParentSize()
-                .zIndex(4f),
-            enter = EnterTransition.None,
-            exit = fadeOut(tween(120))
-        ) {
-            MentionCharacterPickerOverlay(
+            modifier = Modifier.matchParentSize().zIndex(4f),
                 candidates = mentionCandidates,
                 apiBase = msgApiBase,
                 bottomInset = mentionPickerBottomInsetDp,
@@ -1351,8 +1328,7 @@ internal fun ChatScreenScaffoldMain(
                     viewModel.updateInput(replaceLastMentionTrigger(state.inputText, picked.displayName()))
                     focusInputSignal += 1
                 }
-            )
-        }
+        )
         // 游戏/锁分模式开始界面：独立的 verticalScroll+imePadding 容器，
         // 避免在 LazyColumn item 内因 imePadding 动画导致每帧跟随滚动的问题
         if (state.messages.isEmpty() && !state.isLoadingHistory && state.mode.startsWith("galgame")) {
@@ -1441,6 +1417,10 @@ internal fun ChatScreenScaffoldMain(
                 }
             }
         } // end chat page Box
+        } else if (relationshipPage == CHARACTER_HOME_PAGE) {
+            characterHome {
+                coroutineScope.launch { relationshipPagerState.animateScrollToPage(CHAT_PAGE) }
+            }
         } else {
             ChatRelationshipPanel(
                 character = character,
@@ -1453,6 +1433,7 @@ internal fun ChatScreenScaffoldMain(
         } // end HorizontalPager
         } // end CompositionLocalProvider (fontScale)
         ChatScreenInputHost(
+            onPersonalPreferencesClick = openPreferences,
             showInputBar = showInputBar,
             density = density,
             effectiveFontScale = effectiveFontScale,
@@ -1495,6 +1476,7 @@ internal fun ChatScreenScaffoldMain(
             onOpenImagePreview = onOpenImagePreview,
             showPrompt = showPrompt,
         )
+    }
     }
 }
 }

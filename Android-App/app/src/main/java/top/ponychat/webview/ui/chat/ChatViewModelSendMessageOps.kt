@@ -216,9 +216,7 @@ fun ChatViewModel.sendMessage(
                         }
                         if (!delta.implicit) {
                             persistAcceptedUserRound(characterId, currentMode)
-                            if (currentMode == "normal") {
-                                scheduleNormalAcceptedRecoveryWatchdog("accepted_watchdog", null, recoveryStartedAt)
-                            } else {
+                            if (currentMode != "normal") {
                                 startReplyRecoveryPolling("accepted", currentMode, null, recoveryStartedAt)
                             }
                         }
@@ -273,8 +271,7 @@ fun ChatViewModel.sendMessage(
                     }
                     is ChatDelta.AssistantParagraph -> {
                         // normal SSE 路径：逐段插入，每次仅 +1 条消息，触发自动滚动
-                        normalAcceptedRecoveryJob?.cancel()
-                        normalAcceptedRecoveryJob = null
+                        stopNormalRecoveryAfterAssistantArrived()
                         if (currentMode == "normal") {
                             markNormalUsersAcceptedByServer(acceptAllPendingOnServerSignal = true)
                         }
@@ -285,8 +282,7 @@ fun ChatViewModel.sendMessage(
                         lastNormalParagraphId = paraId
                     }
                     is ChatDelta.AssistantAsset -> {
-                        normalAcceptedRecoveryJob?.cancel()
-                        normalAcceptedRecoveryJob = null
+                        stopNormalRecoveryAfterAssistantArrived()
                         if (currentMode == "normal") {
                             markNormalUsersAcceptedByServer(acceptAllPendingOnServerSignal = true)
                         }
@@ -615,9 +611,7 @@ fun ChatViewModel.resendLastUserMessage() {
                         }
                         if (!delta.implicit) {
                             persistAcceptedUserRound(characterId, currentMode)
-                            if (currentMode == "normal") {
-                                scheduleNormalAcceptedRecoveryWatchdog("resend_accepted_watchdog", recoveryStartSeq, recoveryStartedAt)
-                            } else {
+                            if (currentMode != "normal") {
                                 startReplyRecoveryPolling("resend_accepted", currentMode, recoveryStartSeq, recoveryStartedAt)
                             }
                         }
@@ -678,8 +672,7 @@ fun ChatViewModel.resendLastUserMessage() {
                         }
                     }
                     is ChatDelta.AssistantParagraph -> {
-                        normalAcceptedRecoveryJob?.cancel()
-                        normalAcceptedRecoveryJob = null
+                        stopNormalRecoveryAfterAssistantArrived()
                         if (currentMode == "normal") {
                             markNormalUsersAcceptedByServer(acceptAllPendingOnServerSignal = true)
                         }
@@ -690,8 +683,7 @@ fun ChatViewModel.resendLastUserMessage() {
                         lastNormalParagraphId = paraId
                     }
                     is ChatDelta.AssistantAsset -> {
-                        normalAcceptedRecoveryJob?.cancel()
-                        normalAcceptedRecoveryJob = null
+                        stopNormalRecoveryAfterAssistantArrived()
                         if (currentMode == "normal") {
                             markNormalUsersAcceptedByServer(acceptAllPendingOnServerSignal = true)
                         }

@@ -557,7 +557,8 @@ data class ChatRequest(
     // 客户端环境上下文（时间/设备/位置/天气）
     @SerializedName("client_context") val clientContext: ClientContext? = null,
     @SerializedName("reply_character_id") val replyCharacterId: String? = null,
-    @SerializedName("reply_character_ids") val replyCharacterIds: List<String>? = null
+    @SerializedName("reply_character_ids") val replyCharacterIds: List<String>? = null,
+    @SerializedName("normal_engine") val normalEngine: String = "harness"
 )
 
 // ==================== 版本更新 ====================
@@ -872,10 +873,13 @@ data class MemoryListResponse(
 
 data class RelationshipStateResponse(
     val status: String = "ok",
+    @SerializedName("generation_status") val generationStatus: String = "idle",
     @SerializedName("username") val username: String = "",
     @SerializedName("character_id") val characterId: String = "",
     @SerializedName("conversation_id") val conversationId: String = "",
     @SerializedName("relationship_stage") val relationshipStage: String = "uncertain",
+    @SerializedName("relationship_mode") val relationshipMode: String = "auto",
+    @SerializedName("manual_relationship_stage") val manualRelationshipStage: String? = null,
     @SerializedName("relationship_page") val relationshipPage: RelationshipPageContent? = null,
     @SerializedName("relationship_page_updated_at_ms") val relationshipPageUpdatedAtMs: Long = 0L,
     @SerializedName("updated_at_ms") val updatedAtMs: Long = 0L

@@ -28,6 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import top.ponychat.webview.data.model.Character
 import top.ponychat.webview.data.prefs.AppPreferences
+import top.ponychat.webview.device.LocalCompanionRuntimeReady
 import top.ponychat.webview.ui.chinesechess.ChineseChessActivity
 import top.ponychat.webview.ui.doudizhu.DoudizhuActivity
 import top.ponychat.webview.ui.tictactoe.TicTacToeActivity
@@ -74,6 +75,7 @@ internal fun ChatScreenInputHost(
     isAgentCompanionActive: Boolean,
     isAgentAutoLooping: Boolean,
     onNavigateToProactiveTasks: () -> Unit,
+    onPersonalPreferencesClick: () -> Unit,
     onOpenImagePreview: (List<String>, Int, String) -> Unit,
     showPrompt: (String) -> Unit,
 ) {
@@ -88,6 +90,7 @@ internal fun ChatScreenInputHost(
                 .background(androidx.compose.material3.MaterialTheme.colorScheme.surfaceVariant)
         ) {
             ChatInputBar(
+                onPersonalPreferencesClick = onPersonalPreferencesClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .pointerInput(activeSelectionKey) {
@@ -235,7 +238,7 @@ internal fun ChatScreenInputHost(
                 isCompanionActive = isCompanionActive,
                 isAgentCompanionActive = isAgentCompanionActive,
                 isAgentAutoLooping = isAgentAutoLooping,
-                showCompanionButton = state.mode == "normal",
+                showCompanionButton = LocalCompanionRuntimeReady.current && state.mode == "normal",
                 onProactiveTasksClick = onNavigateToProactiveTasks,
                 onChineseChessClick = {
                     val activeCharacter = state.character ?: character

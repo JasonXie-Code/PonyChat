@@ -15,6 +15,15 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+
+# 模型配置在导入 model_manager 时就会展开 ${ENV_NAME}。因此必须先加载
+# 项目 .env，否则本机启动会把已保存的供应商密钥解析成空字符串。
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from .model_manager import model_manager
 from .runtime_paths import resolve_backup_dir, resolve_database_path
 from .shutdown_state import request_shutdown
@@ -24,13 +33,6 @@ mimetypes.init()
 mimetypes.add_type('application/javascript', '.js')
 mimetypes.add_type('text/css', '.css')
 mimetypes.add_type('image/svg+xml', '.svg')
-
-# 加载环境变量
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
 
 # 项目根目录（基于 backend 包位置，与启动 CWD 无关，从任意目录启动均可正确解析 html/、assets/ 等）
 _backend_dir = os.path.dirname(os.path.abspath(__file__))
@@ -145,7 +147,7 @@ PROXY_URL = os.getenv("PROXY_URL", "http://127.0.0.1:7890")
 # 🔧 [优化] CORS 允许的来源可通过环境变量配置（逗号分隔），默认允许所有
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
 
-# 🎮 [陪玩] 精简 Prompt（长设定由豆包 mini 压成 ≤2000 字）：默认关闭「启动预热」与「按需/保存后触发生成」；设 COMPANION_SLIM_PROMPT=1/true 可重新开启
+# 🎮 [陪玩] 精简 Prompt（长设定由 DeepSeek 压成 ≤2000 字）：默认关闭「启动预热」与「按需/保存后触发生成」；设 COMPANION_SLIM_PROMPT=1/true 可重新开启
 _COMPANION_SLIM_RAW = (os.getenv("COMPANION_SLIM_PROMPT") or "").strip().lower()
 COMPANION_SLIM_PROMPT_ENABLED = _COMPANION_SLIM_RAW in ("1", "true", "yes", "on")
 
@@ -153,7 +155,6 @@ COMPANION_SLIM_PROMPT_ENABLED = _COMPANION_SLIM_RAW in ("1", "true", "yes", "on"
 NO_PROXY_DOMAINS = [
     "localhost",
     "127.0.0.1",
-    "ark.cn-beijing.volces.com",
     "*.volces.com",
     "*.volcengine.com",
     "api.deepseek.com",
@@ -274,25 +275,29 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"⚠️ [PromptCacheSim] 缓存清理任务启动失败（非致命）: {e}")
 
-    # 🎤 [阿里云 NLS] 启动时预热 Token，避免首次录音等待 8s
-    # 失败后自动重试（最多 3 次，间隔 30s / 60s / 120s），避免因网络超时导致首次录音仍有延迟
-    async def _warmup_aliyun_token():
-        from .routes.system import _get_aliyun_nls_token
-        delays = [2, 4]
-        for attempt in range(1 + len(delays)):
-            try:
-                await _get_aliyun_nls_token()
-                logger.info(f"🎤 [AliyunNLS] Token 预热完成（第{attempt + 1}次尝试），首次录音延迟已消除")
-                return
-            except Exception as e:
-                if attempt < len(delays):
-                    wait = delays[attempt]
-                    logger.warning(f"⚠️ [AliyunNLS] Token 预热失败（第{attempt + 1}次），{wait}s 后重试: {type(e).__name__}: {e}")
-                    await asyncio.sleep(wait)
-                else:
-                    logger.warning(f"⚠️ [AliyunNLS] Token 预热全部失败，首次录音时将实时获取: {type(e).__name__}: {e}")
-    asyncio.create_task(_warmup_aliyun_token())
-    logger.info("🎤 [AliyunNLS] Token 预热任务已提交（后台获取中...）")
+    # 🎤 [阿里云 NLS] Token 预热默认关闭；配置好 NLS 密钥后可显式开启。
+    aliyun_nls_warmup_enabled = (
+        os.getenv("PONYCHAT_ALIYUN_NLS_WARMUP_ENABLED", "0").strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    if aliyun_nls_warmup_enabled:
+        async def _warmup_aliyun_token():
+            from .routes.system import _get_aliyun_nls_token
+            delays = [2, 4]
+            for attempt in range(1 + len(delays)):
+                try:
+                    await _get_aliyun_nls_token()
+                    logger.info(f"🎤 [AliyunNLS] Token 预热完成（第{attempt + 1}次尝试），首次录音延迟已消除")
+                    return
+                except Exception as e:
+                    if attempt < len(delays):
+                        wait = delays[attempt]
+                        logger.warning(f"⚠️ [AliyunNLS] Token 预热失败（第{attempt + 1}次），{wait}s 后重试: {type(e).__name__}: {e}")
+                        await asyncio.sleep(wait)
+                    else:
+                        logger.warning(f"⚠️ [AliyunNLS] Token 预热全部失败，首次录音时将实时获取: {type(e).__name__}: {e}")
+        asyncio.create_task(_warmup_aliyun_token())
+        logger.info("🎤 [AliyunNLS] Token 预热任务已提交（后台获取中...）")
 
     # 🎮 [陪玩精简 Prompt] 启动时扫描并批量生成（仅当 COMPANION_SLIM_PROMPT 已启用）
     if COMPANION_SLIM_PROMPT_ENABLED:
@@ -305,41 +310,15 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("🎮 [Companion] 精简 Prompt 预热已关闭（未设置 COMPANION_SLIM_PROMPT 或已禁用）")
 
-    # 📝 [自动总结] 后台对话上下文自动摘要（每 10 分钟扫描，token 超 92% 时静默生成摘要）
+    # Ordinary-chat memory is owned exclusively by the two Agent roles.
     auto_summarizer_task = None
-    try:
-        from .memory.auto_summarizer import auto_summarizer_loop
-        auto_summarizer_task = asyncio.create_task(auto_summarizer_loop())
-        logger.info("📝 [AutoSummarizer] 后台摘要调度器已启动（每 10 分钟扫描）")
-    except Exception as e:
-        logger.warning(f"⚠️ [AutoSummarizer] 调度器启动失败（非致命）: {e}")
-
-    # 🧠 [记忆固化] 用户停止聊天 10 分钟后后台自动提炼 session 长期记忆（C层）
     memory_consolidator_task = None
-    try:
-        from .memory.consolidator import consolidation_loop
-        memory_consolidator_task = asyncio.create_task(consolidation_loop())
-        logger.info("🧠 [MemConsolidator] 空闲记忆固化调度器已注册（空闲10分钟触发）")
-    except Exception as e:
-        logger.warning(f"⚠️ [MemConsolidator] 调度器启动失败（非致命）: {e}")
+    from .agent_memory.jobs import initialize as initialize_agent_memory, worker_loop
+    initialize_agent_memory(DB_PATH)
+    memory_layer_task = asyncio.create_task(worker_loop())
+    logger.info("[AgentMemory] Unified store and durable review worker started")
 
-    # 🧠 [分层记忆] 每日生成 D/W/M/A 层摘要（日/周/月/年意识）
-    memory_layer_task = None
-    try:
-        from .memory.scheduler import daily_loop as memory_layer_daily_loop
-        memory_layer_task = asyncio.create_task(memory_layer_daily_loop())
-        logger.info("🧠 [LayerScheduler] 分层记忆调度器已注册（每24小时运行一次）")
-    except Exception as e:
-        logger.warning(f"⚠️ [LayerScheduler] 调度器启动失败（非致命）: {e}")
-
-    relationship_page_task = None
-    try:
-        from .relationship_insights import daily_relationship_page_loop
-
-        relationship_page_task = asyncio.create_task(daily_relationship_page_loop())
-        logger.info("[RelationshipPage] 关系页面每日 00:00 自动刷新已注册")
-    except Exception as e:
-        logger.warning(f"⚠️ [RelationshipPage] 调度器启动失败（非致命）: {e}")
+    relationship_page_task = None  # Review Agent owns relationship understanding too.
 
     scheduled_followup_task = None
     try:
@@ -556,8 +535,8 @@ logger.propagate = True
 # Android 客户端最低版本（仅当请求头 X-PonyChat-Client: android 时校验；Web 不受影响）
 # ① 语义版本（优先）：X-App-Version-Name 头，格式 "主.次.修"，如 "3.8.0"
 # ② 整数 versionCode（降级兜底）：X-App-Version 头
-MIN_APP_VERSION_NAME = os.getenv("PONYCHAT_MIN_APP_VERSION_NAME", "5.3.0")
-MIN_APP_VERSION = int(os.getenv("PONYCHAT_MIN_APP_VERSION", "5"))
+MIN_APP_VERSION_NAME = os.getenv("PONYCHAT_MIN_APP_VERSION_NAME", "5.6.19")
+MIN_APP_VERSION = int(os.getenv("PONYCHAT_MIN_APP_VERSION", "359"))
 
 
 def _parse_version_name(v: str) -> tuple:

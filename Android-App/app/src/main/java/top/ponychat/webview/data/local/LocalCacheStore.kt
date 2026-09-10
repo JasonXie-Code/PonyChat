@@ -29,6 +29,7 @@ data class CachedConversation(
 )
 
 class LocalCacheStore(context: Context) {
+    private val historyImages = LocalHistoryImageStore(context)
 
     private val appContext = context.applicationContext
     private val prefs = appContext.getSharedPreferences("ponychat_local_cache", Context.MODE_PRIVATE)
@@ -278,6 +279,10 @@ class LocalCacheStore(context: Context) {
         )
         val locallyHidden = loadLocallyHiddenMessageIds(username, characterId, mode, conversationId)
         val visibleInput = mergedMessages.filter { isVisibleMessage(it, locallyHidden) }
+        if (mode == "normal" && !conversationId.isNullOrBlank()) {
+            historyImages.record(username, characterId, conversationId,
+                existingForKey?.messages.orEmpty() + existingForLatest?.messages.orEmpty() + visibleInput)
+        }
         val latestMsgTs = visibleInput
             .mapNotNull { it.timestamp }
             .filter { it > 0L }
@@ -430,6 +435,7 @@ class LocalCacheStore(context: Context) {
     }
 
     fun removeConversation(username: String, characterId: String, mode: String, conversationId: String) {
+        if (mode == "normal") historyImages.remove(username, characterId, conversationId)
         val key = rootKey(username, characterId, mode)
         val map = readMap(key)
         map.remove(conversationId)
@@ -517,6 +523,7 @@ class LocalCacheStore(context: Context) {
 
     /** 清除指定角色+模式下的所有本地对话缓存（含 __latest 指针）。 */
     fun clearForCharacterMode(username: String, characterId: String, mode: String) {
+        if (mode == "normal") historyImages.remove(username, characterId)
         val key = rootKey(username, characterId, mode)
         prefs.edit {
             remove(key)

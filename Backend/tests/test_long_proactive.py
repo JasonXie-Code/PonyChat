@@ -138,6 +138,10 @@ def test_quiet_hour_bypass_is_limited_to_codex_test_attempts(tmp_path, monkeypat
         await ensure_long_proactive_tables()
         ts = now_ms()
         async with aiosqlite.connect(db.db_path) as conn:
+            from Backend.chat_modules.normal_lifecycle import ensure_normal_lifecycle_table_on_connection
+            await ensure_normal_lifecycle_table_on_connection(conn)
+            await conn.execute("CREATE TABLE message_voice_states (conversation_id TEXT, message_id TEXT, "
+                               "voice_status TEXT, voice_id TEXT, voice_cache_key TEXT)")
             await conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)")
             await conn.execute("CREATE TABLE characters (id TEXT PRIMARY KEY, user_id INTEGER, name TEXT)")
             await conn.execute(

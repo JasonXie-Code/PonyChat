@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 import uuid
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any
 
@@ -22,6 +23,25 @@ from .voice_lab_client import (
 
 _PONYVOICE_PREFIX = "ponyvoice:"
 _QWEN_PREFIX = "qwen3tts:"
+
+
+@asynccontextmanager
+async def _profile_connection(db, connection=None):
+    """Borrow the caller's transaction without committing or closing it."""
+    if connection is not None:
+        yield connection
+    else:
+        async with aiosqlite.connect(db.db_path) as conn:
+            yield conn
+            await conn.commit()
+
+
+async def _profile_user_id(db, username, connection=None):
+    if connection is not None:
+        async with connection.execute('SELECT id FROM users WHERE username = ?', (username,)) as cur:
+            row = await cur.fetchone()
+        return row[0] if row else 0
+    return await db.get_user_id(username)
 
 
 def is_ponychat_voice_profile_id(value: str | None) -> bool:
@@ -131,11 +151,12 @@ async def upsert_character_voice_profile(
     cosy_recipe_hash: str = "",
     clone_status: str = "ready",
     clone_error: str = "",
+    connection: aiosqlite.Connection | None = None,
 ) -> dict[str, Any]:
     profile_id = make_voice_profile_id(voice_profile_id or character_id)
     user_id = 0
     try:
-        user_id = await db.get_user_id(username)
+        user_id = await _profile_user_id(db, username, connection)
     except Exception:
         user_id = 0
     normalized_mode = _normalize_source_mode(source_mode)
@@ -147,7 +168,7 @@ async def upsert_character_voice_profile(
         extra_instruct=extra_instruct,
         audio_bytes=clean_audio,
     )
-    async with aiosqlite.connect(db.db_path) as conn:
+    async with _profile_connection(db, connection) as conn:
         await conn.execute(
             """INSERT INTO character_voice_profiles
                (voice_profile_id, user_id, character_id, source_mode, display_name,
@@ -204,7 +225,6 @@ async def upsert_character_voice_profile(
                 str(cosy_voice_id or "").strip(),
             ),
         )
-        await conn.commit()
     return {
         "voice_profile_id": profile_id,
         "source_mode": normalized_mode,
@@ -220,12 +240,11 @@ async def upsert_character_voice_profile(
     }
 
 
-async def load_character_voice_profile(db, voice_profile_id: str) -> dict[str, Any] | None:
+async def load_character_voice_profile(db, voice_profile_id: str, *, connection=None) -> dict[str, Any] | None:
     profile_id = str(voice_profile_id or "").strip()
     if not profile_id:
         return None
-    async with aiosqlite.connect(db.db_path) as conn:
-        conn.row_factory = aiosqlite.Row
+    async with _profile_connection(db, connection) as conn:
         async with conn.execute(
             """SELECT voice_profile_id, user_id, character_id, source_mode, display_name,
                       description, transcript, extra_instruct, audio_data, mime_type,
@@ -238,9 +257,10 @@ async def load_character_voice_profile(db, voice_profile_id: str) -> dict[str, A
             (profile_id,),
         ) as cursor:
             row = await cursor.fetchone()
+            columns = [col[0] for col in cursor.description]
     if not row:
         return None
-    return dict(row)
+    return dict(zip(columns, row))
 
 
 async def update_character_voice_cosy_registration(
@@ -294,6 +314,7 @@ async def upsert_character_design_voice_profile(
     voice_profile_id: str = "",
     instruct: str,
     force_replace: bool = False,
+    connection: aiosqlite.Connection | None = None,
 ) -> dict[str, Any]:
     """Persist a design-voice profile and cache a reusable qwen3tts voice id.
 
@@ -310,7 +331,7 @@ async def upsert_character_design_voice_profile(
 
     if not force_replace:
         try:
-            existing = await load_character_voice_profile(db, profile_id)
+            existing = await load_character_voice_profile(db, profile_id, connection=connection)
             if (
                 existing
                 and str(existing.get("recipe_hash") or "").strip() == recipe
@@ -358,6 +379,7 @@ async def upsert_character_design_voice_profile(
         qwen_cached_voice_id=cached_qwen_voice,
         clone_status=clone_status,
         clone_error=clone_error,
+        connection=connection,
     )
 
 
@@ -457,6 +479,7 @@ async def ensure_character_voice_registered(
     *,
     username: str,
     char: dict[str, Any],
+    connection: aiosqlite.Connection | None = None,
 ) -> dict[str, Any]:
     """Ensure the character has a PonyChat-owned voice recipe profile.
 
@@ -478,6 +501,7 @@ async def ensure_character_voice_registered(
             voice_profile_id = str(_json_voice_get(updated, "voiceProfileId", "voice_profile_id") or "").strip()
             result = await upsert_character_design_voice_profile(
                 db,
+                connection=connection,
                 username=username,
                 character_id=str(updated.get("id") or ""),
                 character_name=str(updated.get("name") or ""),
@@ -529,6 +553,7 @@ async def ensure_character_voice_registered(
             normalized_audio = normalize_voice_reference_audio(imported.audio_bytes)
             result = await upsert_character_voice_profile(
                 db,
+                connection=connection,
                 username=username,
                 character_id=str(updated.get("id") or ""),
                 voice_profile_id=str(_json_voice_get(updated, "voiceProfileId", "voice_profile_id") or "").strip() or raw_voice_id,
@@ -547,6 +572,7 @@ async def ensure_character_voice_registered(
             try:
                 result = await upsert_character_voice_profile(
                     db,
+                    connection=connection,
                     username=username,
                     character_id=str(updated.get("id") or ""),
                     voice_profile_id=str(_json_voice_get(updated, "voiceProfileId", "voice_profile_id") or "").strip() or raw_voice_id,
@@ -580,7 +606,7 @@ async def ensure_character_voice_registered(
     updated = dict(char)
     user_id = 0
     try:
-        user_id = await db.get_user_id(username)
+        user_id = await _profile_user_id(db, username, connection)
     except Exception:
         user_id = 0
     if not user_id:
@@ -596,7 +622,7 @@ async def ensure_character_voice_registered(
         voice_profile_id = f"{_PONYVOICE_PREFIX}{str(updated.get('id') or '').strip() or hashlib.sha1(reference_url.encode()).hexdigest()[:16]}"
 
     try:
-        async with aiosqlite.connect(db.db_path) as conn:
+        async with _profile_connection(db, connection) as conn:
             asset = await _load_voice_asset(conn, user_id=user_id, asset_url=reference_url)
             if not asset:
                 updated["voiceCloneStatus"] = "clone_failed"
@@ -606,6 +632,7 @@ async def ensure_character_voice_registered(
             filename, audio_bytes, mime_type, stored_transcript = asset
             result = await upsert_character_voice_profile(
                 db,
+                connection=conn,
                 username=username,
                 character_id=str(updated.get("id") or ""),
                 voice_profile_id=voice_profile_id,
@@ -623,7 +650,6 @@ async def ensure_character_voice_registered(
                 filename=filename,
                 voice_profile_id=voice_profile_id,
             )
-            await conn.commit()
     except Exception as exc:
         err = f"{type(exc).__name__}:{exc}"[:500]
         logger.warning("[CharVoice] clone profile save exception char=%s: %s", updated.get("id"), err)
@@ -642,4 +668,5 @@ async def ensure_character_voice_registered(
     updated["voiceCloneStatus"] = "recipe_ready"
     updated["voice_clone_status"] = "recipe_ready"
     updated["voiceCloneError"] = ""
+    updated["voice_clone_error"] = ""
     return updated

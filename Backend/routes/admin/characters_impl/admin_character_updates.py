@@ -327,7 +327,7 @@ async def edit_character(body: dict):
                 direct_updates["hidden_at"] = None if is_user_visible else "CURRENT_TIMESTAMP"
                 direct_updates["hidden_reason"] = None if is_user_visible else "admin_hide_from_user_list"
 
-            extra = await ensure_character_voice_registered(db, username=_SYSTEM_OWNER, char=extra)
+            extra = await ensure_character_voice_registered(db, username=_SYSTEM_OWNER, char=extra, connection=conn)
 
             # 合并写回 data 列
             direct_updates["data"] = json.dumps(_strip_character_data_prompt(extra), ensure_ascii=False)

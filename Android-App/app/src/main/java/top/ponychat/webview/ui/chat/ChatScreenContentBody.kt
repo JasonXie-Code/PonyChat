@@ -209,6 +209,7 @@ internal fun ChatScreenContentBody(
     onNavigateBack: () -> Unit,
     onNavigateToEditCharacter: () -> Unit = {},
     onNavigateToCharacterProfile: (Character) -> Unit = {},
+    characterHome: @Composable (() -> Unit) -> Unit,
     onNavigateToSettings: () -> Unit = {},
     onNavigateToProactiveTasks: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
@@ -527,10 +528,7 @@ internal fun ChatScreenContentBody(
                 event.source != ChatCompletionSource.FOREGROUND
             ) {
                 val shouldFollowIncoming = if (activeMode == "normal") {
-                    listState.canSeeLastItem(
-                        listEffectiveViewportEndPxState.intValue
-                            .takeIf { it in 1 until Int.MAX_VALUE }
-                    ) &&
+                    isNearBottomState.value &&
                         !listTouchActiveState.value &&
                         !listAutoFollowSuppressedState.value
                 } else {
@@ -541,7 +539,11 @@ internal fun ChatScreenContentBody(
                     listAutoFollowSuppressedState.value = false
                     userScrolledUpState.value = false
                 }
-                viewModel.refreshConversationFromServer()
+                if (activeMode == "normal") {
+                    viewModel.refreshNormalMessageDelivery(event)
+                } else {
+                    viewModel.refreshConversationFromServer()
+                }
             }
         }
     }
@@ -756,6 +758,7 @@ internal fun ChatScreenContentBody(
                 putExtra(CompanionService.EXTRA_RESULT_DATA, result.data)
                 putExtra(CompanionService.EXTRA_CHARACTER_ID, character.id)
                 putExtra(CompanionService.EXTRA_CHARACTER_NAME, character.name)
+                putExtra(CompanionService.EXTRA_CHARACTER_PERSONALITY, character.profilePersonality.orEmpty())
                 putExtra(CompanionService.EXTRA_AUTH_TOKEN, prefs.authToken)
                 putExtra(CompanionService.EXTRA_API_BASE, prefs.effectiveApiBase())
                 putExtra(CompanionService.EXTRA_USERNAME, prefs.username)
@@ -827,6 +830,7 @@ internal fun ChatScreenContentBody(
                 putExtra(CompanionService.EXTRA_RESULT_DATA, result.data)
                 putExtra(CompanionService.EXTRA_CHARACTER_ID, character.id)
                 putExtra(CompanionService.EXTRA_CHARACTER_NAME, character.name)
+                putExtra(CompanionService.EXTRA_CHARACTER_PERSONALITY, character.profilePersonality.orEmpty())
                 putExtra(CompanionService.EXTRA_AUTH_TOKEN, prefs.authToken)
                 putExtra(CompanionService.EXTRA_API_BASE, prefs.effectiveApiBase())
                 putExtra(CompanionService.EXTRA_USERNAME, prefs.username)
@@ -1121,6 +1125,7 @@ internal fun ChatScreenContentBody(
         onNavigateBack = onNavigateBack,
         onNavigateToEditCharacter = onNavigateToEditCharacter,
         onNavigateToCharacterProfile = onNavigateToCharacterProfile,
+        characterHome = characterHome,
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToProactiveTasks = onNavigateToProactiveTasks,
         onNavigateToHistory = onNavigateToHistory,

@@ -7,7 +7,7 @@ import json
 from typing import List, Dict, Optional
 from .database import Database, get_database
 from ..config import logger
-from ..utils import compute_character_hash
+from ..utils import character_setting_changed, compute_character_hash
 from .character_content_permissions import (
     apply_character_content_creator_permissions,
     load_character_content_creator_map,
@@ -362,7 +362,7 @@ class CharactersDAO:
         placeholders = ",".join("?" for _ in source_ids)
         async with conn.execute(
             f"""SELECT h.id, h.source_character_id, h.publisher_username,
-                       c.data, c.prompt, c.name, c.avatar
+                       c.data, c.prompt, c.name, c.avatar, h.data, h.name
                 FROM hall_characters h
                 JOIN characters c ON c.id = h.source_character_id
                 WHERE h.source_character_id IN ({placeholders})""",
@@ -370,7 +370,8 @@ class CharactersDAO:
         ) as cur:
             hall_rows = await cur.fetchall()
 
-        for hall_id, source_id, publisher_username, source_json, source_prompt, source_name, source_avatar in hall_rows:
+        for (hall_id, source_id, publisher_username, source_json, source_prompt,
+             source_name, source_avatar, hall_json, hall_name) in hall_rows:
             try:
                 source_data = json.loads(source_json) if source_json else {}
                 if not isinstance(source_data, dict):
@@ -385,15 +386,25 @@ class CharactersDAO:
 
             source_hash = compute_character_hash(source_data)
             hall_snapshot = _hall_snapshot_from_source(source_data, str(source_id))
+            try:
+                previous_hall_data = json.loads(hall_json) if hall_json else {}
+            except Exception:
+                previous_hall_data = {}
+            if not isinstance(previous_hall_data, dict):
+                previous_hall_data = {}
+            previous_hall_data.setdefault("name", hall_name or "")
+            setting_changed = character_setting_changed(previous_hall_data, hall_snapshot)
             await conn.execute(
                 """UPDATE hall_characters
-                   SET name = ?, avatar = ?, content_hash = ?, data = ?, updated_at = CURRENT_TIMESTAMP
+                   SET name = ?, avatar = ?, content_hash = ?, data = ?,
+                       updated_at = CASE WHEN ? THEN CURRENT_TIMESTAMP ELSE updated_at END
                    WHERE id = ?""",
                 (
                     source_data.get("name") or source_name or "未命名角色",
                     source_data.get("avatar") or source_avatar,
                     source_hash,
                     json.dumps(hall_snapshot, ensure_ascii=False),
+                    int(setting_changed),
                     hall_id,
                 ),
             )

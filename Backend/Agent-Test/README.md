@@ -1,5 +1,9 @@
 # PonyChat Agent Test
 
+真实 DeepSeek Harness 并行实验版见 [HARNESS.md](HARNESS.md)。下述 Goose 原型仍是历史 mock，不代表 Harness 的真实模型测试结果。
+
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 这个目录是普通对话 agent 化的本地测试版。目标不是替换线上 `/api/chat`，而是验证“把角色设定、对话上下文、最新用户输入、记忆碎片和摘要交给一个 agent，由 agent 自己安排流程”的形态。
 
 当前机器没有检测到 `goose` 命令，所以这里先提供两层：

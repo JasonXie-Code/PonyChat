@@ -27,30 +27,40 @@ _NORMAL_MULTI_SPEAKER_RESET_ATTRS = (
     "_normal_terminal_death_action",
     "_normal_terminal_death_message_id",
     "_normal_terminal_death_reason",
+    "_normal_committed_death_message_id",
+    "_normal_live_turn",
+    "_normal_dead_spirit_reply",
+    "_normal_auto_handoff",
+    "_normal_guest_direct_memory_written",
 )
 
 
-def _clone_normal_request_for_multi_speaker(request: ChatRequest, reply_character_id: str) -> ChatRequest:
+def _clone_normal_request_for_multi_speaker(
+    request: ChatRequest, reply_character_id: str, *, is_auto_handoff: bool = False,
+) -> ChatRequest:
     reply_character_id = str(reply_character_id or "").strip()
     original_reply_ids = normal_forced_reply_character_ids(request) or requested_reply_character_ids(request)
-    try:
-        child = request.model_copy(deep=True)
-    except Exception:
-        child = copy.deepcopy(request)
+    from .normal_speaker import _explicit_reply_character_ids
+    selected_ids = getattr(request, "_normal_user_selected_reply_character_ids", None)
+    if selected_ids is None:
+        selected_ids = _explicit_reply_character_ids(request)
+    # Runtime state contains locks, transactions and Agent sessions. Remove it
+    # from a shallow model copy before deep-copying the child-owned payload.
+    child = request.model_copy(deep=False)
+    reset_attrs = (*_NORMAL_MULTI_SPEAKER_RESET_ATTRS, *[k for k in vars(child) if k.startswith("_autonomous_")])
+    for attr in reset_attrs:
+        if hasattr(child, attr):
+            delattr(child, attr)
+    child = child.model_copy(deep=True)
     child.reply_character_id = reply_character_id
     child.reply_character_ids = None
     setattr(child, "_normal_multi_speaker_child", True)
     setattr(child, "_normal_multi_original_reply_character_ids", list(original_reply_ids or []))
+    setattr(child, "_normal_user_selected_reply_character_ids", list(selected_ids))
+    setattr(child, "_normal_auto_handoff", is_auto_handoff)
     setattr(child, "_normal_suppress_generation_lock_release", True)
     setattr(child, "_normal_enable_stage3_handoff_events", True)
-    for attr in _NORMAL_MULTI_SPEAKER_RESET_ATTRS:
-        if not hasattr(child, attr):
-            continue
-        try:
-            delattr(child, attr)
-        except Exception:
-            setattr(child, attr, None)
-    mark_normal_forced_reply_characters(child, [reply_character_id] if reply_character_id else [])
+    mark_normal_forced_reply_characters(child, [reply_character_id] if reply_character_id and not is_auto_handoff else [])
     return child
 
 
@@ -122,6 +132,9 @@ async def _normal_handoff_target_allowed(
 
 
 def _normal_user_active_for_role_handoff(request: ChatRequest) -> bool:
+    turn = getattr(request, "_normal_live_turn", None)
+    if turn is not None and turn.routing_waiting:
+        return False
     username = str(getattr(request, "username", "") or "").strip()
     character_id = str(getattr(request, "character_id", "") or "").strip()
     mode = str(getattr(request, "mode", "") or "normal").strip() or "normal"
@@ -278,16 +291,47 @@ async def _handle_normal_multi_speaker_request(
     use_json_protocol: bool,
     release_lock,
 ):
+    from Backend.chat_modules.normal_delivery import DeliveryCancelled, NormalDeliverySession
+    delivery_session = NormalDeliverySession()
+    planned_json_delivery = use_json_protocol and not bool(getattr(request, '_normal_internal_proactive_trigger', False))
     released = False
+    live_turn = getattr(request, "_normal_live_turn", None)
+    keep_main_inbox = bool(getattr(request, "_normal_continue_guest_scene", False)
+                           and reply_character_ids == [request.character_id])
+    if live_turn is not None:
+        # Each guest has independent tools, identity and private state. The
+        # parent remains the reconnectable transport owner, not a shared inbox.
+        with live_turn.guard:
+            if not keep_main_inbox:
+                live_turn.accepting = False
+            live_turn.delivery_owner_only = True
+        if not keep_main_inbox:
+            live_turn.input_ready.set()
 
     async def release_once() -> None:
         nonlocal released
         if released:
             return
         released = True
+        if not planned_json_delivery:
+            await delivery_session.finish()
         await release_lock()
 
+    if live_turn is not None:
+        try:
+            await _persist_android_normal_user_delta(request, client_id=x_client_id or "")
+        except BaseException:
+            await release_once()
+            raise
+
     async def run_child_events():
+        if live_turn is not None:
+            latest_user = next((m for m in reversed(request.messages or [])
+                                if m.role == "user" and not getattr(m, "isHidden", False)), None)
+            yield {"type": "accepted", "job_id": live_turn.job_id,
+                   "conversation_id": request.conversation_id,
+                   "client_message_id": getattr(latest_user, "message_id", None),
+                   "accepted_at_ms": int(time.time() * 1000)}
         stop = False
         queue: list[tuple[str, bool]] = [
             (str(rid or "").strip(), False) for rid in reply_character_ids if str(rid or "").strip()
@@ -311,6 +355,7 @@ async def _handle_normal_multi_speaker_request(
                     "display_delay_ms",
                     "display_at_server_ms",
                     "server_now_ms",
+                    "delivery_paced",
                 ):
                     event.pop(key, None)
                 delay_seconds = _normal_message_event_delay_seconds(event)
@@ -325,14 +370,29 @@ async def _handle_normal_multi_speaker_request(
                     display_at_server_ms=next_display_at_server_ms,
                     delay_seconds=delay_seconds,
                 )
+                if not planned_json_delivery:
+                    await delivery_session.release(event, request, delay_seconds=delay_seconds)
                 yield event
 
-        async def collect_child_events(reply_id: str, child_index: int, total_hint: int) -> dict[str, Any]:
+        async def collect_child_events(reply_id: str, child_index: int, total_hint: int,
+                                       *, is_auto_handoff: bool = False) -> dict[str, Any]:
             child_events: list[dict[str, Any]] = []
             handoff: dict[str, str] = {}
             child_stop = False
             try:
-                child_request = _clone_normal_request_for_multi_speaker(request, reply_id)
+                child_request = _clone_normal_request_for_multi_speaker(
+                    request, reply_id, is_auto_handoff=is_auto_handoff)
+                child_request._normal_delivery_session = delivery_session
+                child_request._normal_delivery_managed_by_parent = True
+                initial_main = keep_main_inbox and child_index == 0 and not is_auto_handoff
+                if initial_main:
+                    if not normal_forced_reply_character_ids(request):
+                        child_request.reply_character_id = None
+                        mark_normal_forced_reply_characters(child_request, [])
+                    if live_turn is not None:
+                        # Only this first main Agent receives ordinary user
+                        # supplements. Guest handoffs never share its inbox.
+                        child_request._normal_live_turn = live_turn
                 child_response = await handle_chat_request(
                     child_request,
                     x_client_id,
@@ -387,6 +447,10 @@ async def _handle_normal_multi_speaker_request(
                         if event.get("error") or event.get("type") == "cancelled":
                             child_stop = True
                 child_events.append(event)
+            if initial_main and live_turn is not None:
+                with live_turn.guard:
+                    live_turn.accepting = False
+                live_turn.input_ready.set()
             return {"events": child_events, "handoff": handoff, "stop": child_stop}
 
         async def maybe_queue_handoff(current_reply_id: str, handoff: dict[str, str], next_index: int) -> None:
@@ -481,7 +545,8 @@ async def _handle_normal_multi_speaker_request(
                     reply_id[:12],
                 )
                 break
-            result = await collect_child_events(reply_id, index, index + 1 + len(queue))
+            result = await collect_child_events(reply_id, index, index + 1 + len(queue),
+                                                is_auto_handoff=is_auto_handoff)
             async for event in emit_child_events(result.get("events") or []):
                 yield event
             if result.get("stop"):
@@ -502,10 +567,17 @@ async def _handle_normal_multi_speaker_request(
             async for event in run_child_events():
                 if isinstance(event, dict):
                     events.append(event)
+        except DeliveryCancelled as exc:
+            events.append({'type': 'cancelled', 'reason': str(exc)})
+        except BaseException:
+            await delivery_session.finish()
+            raise
         finally:
             await release_once()
         if not events or events[-1].get("type") != "done":
             events.append({"type": "done"})
+        if planned_json_delivery:
+            delivery_session.dispatch_json(events, request)
         return JSONResponse(
             {
                 "protocol": "ponychat_chat_v1",
@@ -518,6 +590,9 @@ async def _handle_normal_multi_speaker_request(
         try:
             async for event in run_child_events():
                 yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+            yield "data: [DONE]\n\n"
+        except DeliveryCancelled as exc:
+            yield f"data: {json.dumps({'type': 'cancelled', 'reason': str(exc)})}\n\n"
             yield "data: [DONE]\n\n"
         finally:
             await release_once()

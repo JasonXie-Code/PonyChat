@@ -391,6 +391,7 @@ async def get_conversation_messages_paged(
     conversation_id: Optional[str] = None,
     before_seq: Optional[int] = None,
     after_seq: Optional[int] = None,
+    message_id: Optional[str] = None,
     sender: str = "all",
     date_from: Optional[int] = None,
     date_to: Optional[int] = None,
@@ -411,8 +412,12 @@ async def get_conversation_messages_paged(
     auth_user = await auth_token_verify((x_chat_auth or "").strip())
     if not auth_user:
         return JSONResponse(status_code=401, content={"status": "error", "message": "unauthorized"})
+    if message_id is not None and auth_user != username:
+        return JSONResponse(status_code=403, content={"status": "error", "message": "forbidden"})
 
     limit = max(1, min(limit, 100))
+    if message_id is not None and (before_seq is not None or after_seq is not None):
+        return JSONResponse(status_code=400, content={"status": "error", "message": "message_id cannot be combined with sequence bounds"})
     if before_seq is not None and after_seq is not None:
         return JSONResponse(
             status_code=400,
@@ -424,6 +429,8 @@ async def get_conversation_messages_paged(
 
     try:
         async with aiosqlite.connect(db.db_path) as conn:
+            # Pin the DB snapshot before sampling the in-process pending gate.
+            await conn.execute('BEGIN IMMEDIATE')
             # 查用户 ID
             async with conn.execute(
                 "SELECT id FROM users WHERE username = ?", (username,)
@@ -462,6 +469,14 @@ async def get_conversation_messages_paged(
                 "conversation_id = ? AND COALESCE(is_hidden, 0) = 0 AND deleted_at IS NULL"
             )
             params_base: list = [conversation_id]
+            from ..chat_modules.normal_delivery import pending_message_ids
+            pending = sorted(pending_message_ids(username, character_id, conversation_id))
+            if pending:
+                base_where += f" AND (message_id IS NULL OR message_id NOT IN ({','.join('?' for _ in pending)}))"
+                params_base.extend(pending)
+            if message_id is not None:
+                base_where += " AND message_id = ?"
+                params_base.append(message_id)
 
             if sender == "user":
                 base_where += " AND role = ?"
@@ -580,6 +595,8 @@ async def count_visible_messages(
 
     try:
         async with aiosqlite.connect(db.db_path) as conn:
+            # Pin the DB snapshot before sampling the in-process pending gate.
+            await conn.execute('BEGIN IMMEDIATE')
             async with conn.execute(
                 "SELECT id FROM users WHERE username = ?", (username,)
             ) as cur:
@@ -588,8 +605,11 @@ async def count_visible_messages(
                 return JSONResponse(status_code=404, content={"status": "error", "message": "user_not_found"})
             user_id = row[0]
 
+            from ..chat_modules.normal_delivery import pending_message_ids
+            pending = sorted(pending_message_ids(username, character_id))
+            pending_sql = f" AND (m.message_id IS NULL OR m.message_id NOT IN ({','.join('?' for _ in pending)}))" if pending else ''
             async with conn.execute(
-                """
+                f"""
                 SELECT COUNT(*)
                   FROM messages m
                   JOIN conversations c ON m.conversation_id = c.id
@@ -599,8 +619,9 @@ async def count_visible_messages(
                    AND COALESCE(m.is_hidden, 0) = 0
                    AND m.deleted_at IS NULL
                    AND m.role IN ('user', 'assistant')
+                   {pending_sql}
                 """,
-                (user_id, character_id),
+                [user_id, character_id, *pending],
             ) as cur:
                 count_row = await cur.fetchone()
             total = int(count_row[0] if count_row else 0)
@@ -655,6 +676,8 @@ async def search_messages(
 
     try:
         async with aiosqlite.connect(db.db_path) as conn:
+            # Pin the DB snapshot before sampling the in-process pending gate.
+            await conn.execute('BEGIN IMMEDIATE')
             # 查用户 ID
             async with conn.execute(
                 "SELECT id FROM users WHERE username = ?", (username,)
@@ -712,6 +735,11 @@ async def search_messages(
                     ))""",
             ]
             params: list = [user_id, character_id, q, *([q] * 12), q, q, q]
+            from ..chat_modules.normal_delivery import pending_message_ids
+            pending = sorted(pending_message_ids(username, character_id))
+            if pending:
+                filters.append(f"(m.message_id IS NULL OR m.message_id NOT IN ({','.join('?' for _ in pending)}))")
+                params.extend(pending)
 
             if role_filter:
                 filters.append("m.role = ?")

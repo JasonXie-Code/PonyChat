@@ -241,6 +241,9 @@ def test_run_tts_job_regenerates_audio_when_silence_ratio_exceeds_threshold(monk
         async def __aexit__(self, exc_type, exc, tb):
             return False
 
+        async def request(self, method, url, **kwargs):
+            return await getattr(self, method.lower())(url, **kwargs)
+
         async def post(self, url, json=None, data=None, files=None):
             type(self).post_count += 1
             return FakeResponse({"job_id": f"job-{type(self).post_count}", "status": "completed"})
@@ -1243,6 +1246,10 @@ def test_voice_lab_circuit_health_probe_closes_early(monkeypatch):
 
         def __exit__(self, exc_type, exc, tb):
             return False
+
+        def request(self, method, url, **kwargs):
+            assert method == "GET"
+            return self.get(url)
 
         def get(self, url):
             return FakeResponse()

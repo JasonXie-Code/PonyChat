@@ -410,3 +410,21 @@ internal fun MentionCharacterPickerOverlay(
     }
 }
 
+
+@Composable
+internal fun MentionCharacterPickerPanel(
+    visible: Boolean,
+    modifier: Modifier,
+    candidates: List<Character>,
+    apiBase: String,
+    bottomInset: Dp,
+    onDismiss: () -> Unit,
+    onSelect: (Character) -> Unit,
+) {
+    AnimatedVisibility(
+        visible = visible, modifier = modifier,
+        enter = EnterTransition.None, exit = fadeOut(tween(120)),
+    ) {
+        MentionCharacterPickerOverlay(candidates, apiBase, bottomInset, onDismiss, onSelect)
+    }
+}

@@ -9,6 +9,7 @@ from typing import Optional
 from datetime import datetime
 from ..config import logger, AUTH_SECRET
 from ..db import get_users_dao, get_database, InviteCodesDAO, SettingsDAO, AvatarsDAO
+from ..login_control import LOGIN_CONTROL_MESSAGE, is_app_login_allowed
 from ..user_identity import clean_display_name, normalize_known_user_names_in_memories, parse_birth_info
 from ..utils import pil_image_to_rgb_on_white
 from ..websocket import manager
@@ -55,6 +56,9 @@ async def auth_token_verify(token: str) -> Optional[str]:
             return None
         username = data.get("username")
         if not username:
+            return None
+        # 登录管控期间，立即让非白名单账号的既有 token 失效。
+        if not is_app_login_allowed(username):
             return None
         # 单登录：校验 token_version，新登录会使旧 token 失效
         token_v = data.get("v", 0)
@@ -207,6 +211,10 @@ async def login_user(auth: AuthRequest):
     """用户登录"""
     username = auth.username.strip()
     password = auth.password
+
+    if not is_app_login_allowed(username):
+        logger.warning(f"🚫 [登录管控] 拒绝非白名单账号登录: {username}")
+        raise HTTPException(status_code=403, detail=LOGIN_CONTROL_MESSAGE)
     
     users_dao = get_users_dao()
     
@@ -586,6 +594,9 @@ async def guest_login(req: GuestLoginRequest):
 
     h = hashlib.sha256(raw_id.encode("utf-8")).hexdigest()[:12]
     username = f"g_{h}"
+    if not is_app_login_allowed(username):
+        logger.warning(f"🚫 [登录管控] 拒绝访客登录: {username}")
+        raise HTTPException(status_code=403, detail=LOGIN_CONTROL_MESSAGE)
 
     users_dao = get_users_dao()
     if not await users_dao.user_exists(username):

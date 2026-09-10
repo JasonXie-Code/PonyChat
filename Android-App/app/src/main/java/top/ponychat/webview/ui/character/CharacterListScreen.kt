@@ -146,6 +146,8 @@ fun CharacterListScreen(
     onNavigateToHall: () -> Unit = {},
     onNavigateToCreate: () -> Unit = {},
     onNavigateToEdit: (Character) -> Unit = {},
+    showDeviceHomeAction: Boolean = false,
+    onNavigateToDeviceHome: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -338,6 +340,22 @@ fun CharacterListScreen(
                             border = actionMenuBorder(),
                             tonalElevation = 2.dp
                         ) {
+                            if (showDeviceHomeAction) {
+                                DropdownMenuItem(
+                                    text = { Text("返回大屏", color = actionMenuContentColor()) },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Filled.Tv,
+                                            contentDescription = null,
+                                            tint = actionMenuContentColor(),
+                                        )
+                                    },
+                                    onClick = {
+                                        showTopMenu = false
+                                        onNavigateToDeviceHome()
+                                    },
+                                )
+                            }
                             DropdownMenuItem(
                                 text = { Text("创建角色", color = actionMenuContentColor()) },
                                 leadingIcon = { Icon(Icons.Filled.PersonAdd, contentDescription = null, tint = actionMenuContentColor()) },

@@ -98,18 +98,22 @@ internal suspend fun chatScrollToBottomAndRepair(
     expectedItemCount: Int? = null,
     shouldSkipRepair: () -> Boolean = { false },
 ) {
+    if (shouldSkipRepair()) return
     if (expectedItemCount != null) {
         var waitedMs = 0L
         while (listState.layoutInfo.totalItemsCount < expectedItemCount && waitedMs < 500L) {
+            if (shouldSkipRepair()) return
             delay(16L)
             waitedMs += 16L
         }
     }
     if (settleDelayMs > 0L) delay(settleDelayMs)
+    if (shouldSkipRepair()) return
     if (animated) {
         listState.animateScrollBy(100_000f)
         if (settleDelayMs > 0L) delay(settleDelayMs)
     }
+    if (shouldSkipRepair()) return
     val consumedPx = listState.scrollBy(100_000f)
     val layoutInfo = listState.layoutInfo
     val visibleRange = layoutInfo.visibleItemsInfo.let { items ->

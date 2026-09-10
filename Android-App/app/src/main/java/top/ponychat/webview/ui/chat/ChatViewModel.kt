@@ -11,6 +11,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.coroutineContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import top.ponychat.webview.data.local.CachedVoiceAudio
@@ -56,6 +58,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     internal var streamJob: Job? = null
     internal var autoSaveJob: Job? = null
     internal var historyLoadJob: Job? = null
+    internal var relationshipSnapshotJob: Job? = null
+    internal val pendingNormalDeliveries = mutableSetOf<NormalDeliveryNotice>()
     internal var conversationListJob: Job? = null
     internal var switchConversationJob: Job? = null
     internal var timerJob: Job? = null
@@ -185,6 +189,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     internal val clientId = "single"
     internal var lastForegroundRefreshAt: Long = 0L
     internal var lastNetworkAvailableRefreshAt: Long = 0L
+    internal var normalCacheResetJob: Job? = null
     internal var startTime: Long = 0L
     internal var currentRetryCount: Int = 0
     // 所有已发送给服务端的消息（用于构建 context）
@@ -227,6 +232,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 "galgame", "galgame_lock" -> p
                 else -> "normal"
             }
+        }
+        // Re-entering a cached ViewModel is still a foreground selection.
+        // Persist before either fast return so recreation cannot restore another character.
+        if (incomingCharacterId != null) {
+            prefs.lastCharacterId = incomingCharacterId
+            prefs.chatMode = modeToApply
         }
         // 同角色且正在生成：保留当前会话现场（用户消息 + AI 占位打字动画），
         // 避免「先清空再拉历史」把进行中的 UI 状态瞬间抹掉。
@@ -284,7 +295,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             )
             return
         }
-        prefs.lastCharacterId = characterId
         // 完整进入聊天页本身已经启动历史加载。NavBackStackEntry 入场时可能随即派发 ON_RESUME，
         // 将这次初始化记入前台刷新节流，避免锁分/游戏模式刚进页又重复 reloadConversation。
         lastForegroundRefreshAt = System.currentTimeMillis()
@@ -323,7 +333,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     /** 应用回到前台后的轻量恢复：游戏模式优先重拉，保存失败时自动再试一次同步。 */
     fun onForegroundResume() {
         if (_state.value.isStreaming) {
-            startReplyRecoveryPolling("foreground_streaming", _state.value.mode, null, System.currentTimeMillis() - 1200L)
+            resumeReplyRecovery("foreground_streaming")
             viewModelScope.launch {
                 delay(1800L)
                 flushPendingSendFailurePrompt()
@@ -347,11 +357,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             }
             SyncWebSocketManager.pullUndeliveredOnce(prefs, "chat_foreground_resume")
             // 优先增量补拉（有 conversationId 和 sequenceNumber 时），否则回退全量刷新
-            refreshNewMessagesFromServer()
+            refreshNewMessagesFromServer(includeRecent = true)
             // 延迟二次补拉：覆盖"列表摘要先到、messages 表稍后落库"的时序窗口
             viewModelScope.launch {
                 delay(800L)
-                refreshNewMessagesFromServer(allowWhileStreaming = _state.value.mode == "normal")
+                refreshNewMessagesFromServer(allowWhileStreaming = _state.value.mode == "normal", includeRecent = true)
                 delay(1000L)
                 flushPendingSendFailurePrompt()
             }
@@ -373,130 +383,13 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         lastNetworkAvailableRefreshAt = now
         SyncWebSocketManager.pullUndeliveredOnce(prefs, "chat_net_available")
         if (_state.value.isStreaming) {
-            startReplyRecoveryPolling("network_streaming", _state.value.mode, null, System.currentTimeMillis() - 1200L)
+            resumeReplyRecovery("network_streaming")
             return
         }
         if (_state.value.mode == "normal") {
-            refreshNewMessagesFromServer()
+            refreshNewMessagesFromServer(includeRecent = true)
         } else {
             refreshConversationFromServer()
-        }
-    }
-    /** normal 模式按 sequence_number 增量补拉；缺少序号或接口失败时回退全量刷新。 */
-    internal fun refreshNewMessagesFromServer(allowWhileStreaming: Boolean = false) {
-        val character = _state.value.character ?: return
-        val characterId = character.id?.takeIf { it.isNotBlank() } ?: return
-        val username = prefs.username
-        val conversationId = _state.value.conversationId?.takeIf { it.isNotBlank() }
-        val startSeq = _state.value.messages.mapNotNull { it.sequenceNumber }.maxOrNull()
-        if (conversationId == null) {
-            refreshConversationFromServer(allowWhileStreaming = allowWhileStreaming)
-            return
-        }
-        val initialSeq = startSeq ?: run {
-            refreshConversationFromServer(allowWhileStreaming = allowWhileStreaming)
-            return
-        }
-        _state.value = _state.value.copy(isBackgroundRefreshing = true, error = null, errorDebug = null)
-        historyLoadJob?.cancel()
-        historyLoadJob = viewModelScope.launch {
-            val collected = mutableListOf<ChatMessage>()
-            var afterSeq = initialSeq
-            var ok = true
-            var pages = 0
-            while (pages < 5) {
-                pages++
-                val page = chatRepo.loadMessagesAfter(
-                    username = username,
-                    characterId = characterId,
-                    conversationId = conversationId,
-                    afterSeq = afterSeq,
-                    limit = 100
-                )
-                if (page == null) {
-                    ok = false
-                    break
-                }
-                val batch = page.messages
-                if (batch.isEmpty()) break
-                collected.addAll(batch)
-                afterSeq = page.maxSeq ?: batch.mapNotNull { it.sequenceNumber }.maxOrNull() ?: afterSeq
-                if (!page.hasMore) break
-            }
-            if (!ok) {
-                _state.value = _state.value.copy(isBackgroundRefreshing = false)
-                refreshConversationFromServer(allowWhileStreaming = allowWhileStreaming)
-                return@launch
-            }
-            if (collected.isEmpty()) {
-                _state.value = _state.value.copy(isBackgroundRefreshing = false)
-                return@launch
-            }
-            val deliverable = if (allowWhileStreaming && _state.value.mode == "normal" && _state.value.isStreaming) {
-                collected.filterNot { msg ->
-                    msg.role == "assistant" &&
-                        effectiveVoiceState(msg)?.status?.equals("pending", ignoreCase = true) == true
-                }
-            } else {
-                collected
-            }
-            if (deliverable.isEmpty()) {
-                _state.value = _state.value.copy(isBackgroundRefreshing = false)
-                return@launch
-            }
-            val uiSpeakerFallback = _state.value.messages
-            val runtimeSpeakerFallback = sentMessages.toList()
-            val collectedWithSpeakers = preserveChatMessageSpeakers(deliverable, runtimeSpeakerFallback)
-            val serverUiMessages = visibleMessagesForUi(
-                collectedWithSpeakers,
-                username,
-                characterId,
-                "normal",
-                conversationId,
-                uiSpeakerFallback
-            )
-            val serverUiByKey = serverUiMessages.associateBy { uiMessageKey(it) }
-            val existingUiKeys = _state.value.messages.map { uiMessageKey(it) }.toSet()
-            val mergedUiMessages = orderedUiMessages(_state.value.messages.map { msg ->
-                val authoritative = serverUiByKey[uiMessageKey(msg)]
-                if (msg.isRetracted && authoritative?.isRetracted != true) msg else authoritative ?: msg
-            } + serverUiMessages.filter { uiMessageKey(it) !in existingUiKeys })
-            val serverRuntimeMessages = runtimeMessagesForClientWithLocalImages(collectedWithSpeakers, runtimeSpeakerFallback)
-            val serverSentByKey = serverRuntimeMessages.associateBy { chatMessageKey(it) }
-            val existingSentKeys = sentMessages.map { chatMessageKey(it) }.toSet()
-            for (i in sentMessages.indices) {
-                serverSentByKey[chatMessageKey(sentMessages[i])]?.let { authoritative ->
-                    sentMessages[i] = authoritative
-                }
-            }
-            val newSent = serverRuntimeMessages.filter { chatMessageKey(it) !in existingSentKeys }
-            sentMessages.addAll(newSent)
-            val orderedSent = orderedChatMessages(sentMessages.toList())
-            sentMessages.clear()
-            sentMessages.addAll(orderedSent)
-            val currentState = _state.value
-            val nextUiMessages = if (currentState.messages.isSameVisibleMessageListAs(mergedUiMessages)) {
-                currentState.messages
-            } else {
-                mergedUiMessages
-            }
-            _state.value = currentState.copy(
-                messages = nextUiMessages,
-                isBackgroundRefreshing = false,
-                error = null,
-                errorDebug = null
-            )
-            if (serverUiMessages.any { it.isAssistant() && !it.isStreaming && !it.isError }) {
-                markNormalUsersAcceptedByServer(acceptAllPendingOnServerSignal = true)
-            }
-            localCache.saveConversation(
-                username = username,
-                characterId = characterId,
-                mode = "normal",
-                conversationId = conversationId,
-                messages = sentMessages.toList()
-            )
-            markNormalReplySucceeded("server_incremental_refresh")
         }
     }
     /** 将服务端/缓存 ChatMessage 转为 UI Message；游戏/锁分模式保留 displayContent、rawContent、galgameOptions */
@@ -654,6 +547,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         isFirstPara: Boolean,
         characterId: String?,
     ) {
+        DebugLog.d(
+            TAG,
+            "Assistant paragraph visible id=${paraId.take(12)} index=${delta.index}/${delta.total} " +
+                "chars=${delta.content.length} overdue=${delta.displayOverdue} clientAtMs=${System.currentTimeMillis()}"
+        )
         var voiceState = delta.voiceState
         if (voiceState != null) {
             val cached = saveVoiceAudioTransferAndAck(
@@ -893,6 +791,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     internal suspend fun loadNormalConversationHistoryPage(character: Character, conversationIdForRequest: String?) {
+        normalCacheResetJob?.join()
         val username = prefs.username
         val characterId = character.id?.takeIf { it.isNotBlank() } ?: return
         val result = chatRepo.loadMessagesBefore(
@@ -902,6 +801,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             beforeSeq = null,
             limit = NORMAL_HISTORY_INITIAL_LIMIT
         )
+        coroutineContext.ensureActive()
         if (result == null) {
             if (_state.value.messages.isNotEmpty()) {
                 _state.value = _state.value.copy(isBackgroundRefreshing = false)
@@ -910,7 +810,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             val cached = localCache.loadLatestConversation(username, characterId, "normal")
             if (cached != null && cached.messages.isNotEmpty()) {
                 val cachedMessages = latestCacheWindowForMode(cached.messages, "normal")
-                val cachedCid = cached.conversationId ?: newConversationId()
+                val cachedCid = cached.conversationId
                 val uiMessages = visibleMessagesForUi(
                     cachedMessages,
                     username,
@@ -957,9 +857,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
         val runtimeSpeakerFallback = sentMessages.toList()
         val serverMessages = preserveChatMessageSpeakers(result.messages, runtimeSpeakerFallback)
-        val stableCid = result.conversationId?.takeIf { it.isNotBlank() }
-            ?: conversationIdForRequest?.takeIf { it.isNotBlank() }
-            ?: newConversationId()
+        val stableCid = normalHistoryConversationId(result.conversationId, conversationIdForRequest)
         val serverUiMessages = visibleMessagesForUi(
             serverMessages,
             username,
@@ -1251,6 +1149,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         historyLoadJob?.cancel()
         historyLoadJob = viewModelScope.launch {
             // ① 先从本地缓存瞬时展示，让用户无需等待网络即可看到上次的对话
+            if (_state.value.mode == "normal") normalCacheResetJob?.join()
             val cached = withContext(Dispatchers.IO) {
                 localCache.loadLatestConversation(username, characterId, _state.value.mode)
             }
@@ -1283,7 +1182,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 sentMessages.clear()
                 sentMessages.addAll(nextRuntimeMessagesForMode)
-                val cachedCid = cached.conversationId ?: if (mode == "normal") newConversationId() else null
+                val cachedCid = cached.conversationId
                 val cachedScore = if (mode == "galgame" || mode == "galgame_lock") parseScoreFromLastMessage(cachedMessages) else null
                 val lastAsstMsg = cachedMessages.lastOrNull { it.role == "assistant" }
                 Log.d("GalDebug", "[historyCache] mode=$mode cachedScore=$cachedScore" +
@@ -1428,65 +1327,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun addQuickMessage(title: String, content: String) {
-        val username = prefs.username.takeIf { it.isNotBlank() } ?: return
-        val body = content.trim()
-        if (body.isBlank()) return
-        viewModelScope.launch {
-            chatRepo.addQuickMessage(username, title.trim(), body)
-                .onSuccess { added ->
-                    val next = (_state.value.quickMessages + added).sortedWith(
-                        compareBy<QuickMessage> { it.sortOrder }.thenBy { it.id }
-                    )
-                    localCache.saveQuickMessages(username, next)
-                    _state.value = _state.value.copy(
-                        quickMessages = next
-                    )
-                }
-                .onFailure { e ->
-                    DebugLog.w(TAG, "addQuickMessage failed: ${e.message}", e)
-                    _state.value = _state.value.copy(error = e.message ?: "添加快捷消息失败")
-                }
-        }
+        addQuickMessageImpl(title, content)
     }
 
     fun updateQuickMessage(message: QuickMessage) {
-        val username = prefs.username.takeIf { it.isNotBlank() } ?: return
-        if (message.content.isBlank() || message.id <= 0) return
-        viewModelScope.launch {
-            chatRepo.updateQuickMessage(message, username)
-                .onSuccess {
-                    val next = _state.value.quickMessages.map {
-                        if (it.id == message.id) message else it
-                    }.sortedWith(compareBy<QuickMessage> { it.sortOrder }.thenBy { it.id })
-                    localCache.saveQuickMessages(username, next)
-                    _state.value = _state.value.copy(
-                        quickMessages = next
-                    )
-                }
-                .onFailure { e ->
-                    DebugLog.w(TAG, "updateQuickMessage failed: ${e.message}", e)
-                    _state.value = _state.value.copy(error = e.message ?: "更新快捷消息失败")
-                }
-        }
+        updateQuickMessageImpl(message)
     }
 
     fun deleteQuickMessage(messageId: Int) {
-        val username = prefs.username.takeIf { it.isNotBlank() } ?: return
-        if (messageId <= 0) return
-        viewModelScope.launch {
-            chatRepo.deleteQuickMessage(username, messageId)
-                .onSuccess {
-                    val next = _state.value.quickMessages.filterNot { it.id == messageId }
-                    localCache.saveQuickMessages(username, next)
-                    _state.value = _state.value.copy(
-                        quickMessages = next
-                    )
-                }
-                .onFailure { e ->
-                    DebugLog.w(TAG, "deleteQuickMessage failed: ${e.message}", e)
-                    _state.value = _state.value.copy(error = e.message ?: "删除快捷消息失败")
-                }
-        }
+        deleteQuickMessageImpl(messageId)
     }
 
     /**

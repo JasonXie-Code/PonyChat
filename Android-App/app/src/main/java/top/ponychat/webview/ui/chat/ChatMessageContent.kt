@@ -357,12 +357,15 @@ internal fun saveLocalChatImageFromUri(context: Context, uri: Uri): String? {
     }.getOrNull()
 }
 
-internal fun rememberLocalChatImageRemote(context: Context, localUrl: String, remoteUrl: String) {
-    if (localUrl.isBlank() || remoteUrl.isBlank()) return
-    context.getSharedPreferences(LOCAL_IMAGE_REMOTE_PREFS, Context.MODE_PRIVATE)
+internal fun rememberLocalChatImageRemote(context: Context, localUrl: String, remoteUrl: String,
+                                         synchronous: Boolean = false): Boolean {
+    if (localUrl.isBlank() || remoteUrl.isBlank()) return false
+    val edit = context.getSharedPreferences(LOCAL_IMAGE_REMOTE_PREFS, Context.MODE_PRIVATE)
         .edit()
         .putString(localUrl, remoteUrl)
-        .apply()
+    if (synchronous) return edit.commit()
+    edit.apply()
+    return true
 }
 
 internal fun loadChatImageBytesForUpload(context: Context, imageUrl: String): ByteArray? {
@@ -388,7 +391,7 @@ private fun localForRemoteChatImage(context: Context, remoteUrl: String): File? 
     return null
 }
 
-private fun localUrlForRemoteChatImage(context: Context, remoteUrl: String): String? {
+internal fun localUrlForRemoteChatImage(context: Context, remoteUrl: String): String? {
     if (!remoteUrl.startsWith("/chat_images/")) return null
     val prefs = context.getSharedPreferences(LOCAL_IMAGE_REMOTE_PREFS, Context.MODE_PRIVATE)
     prefs.all.entries.forEach { (localUrl, value) ->

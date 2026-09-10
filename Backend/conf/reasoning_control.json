@@ -1,177 +1,161 @@
 {
-  "version": "2026-06-01-reasoning-control-v1",
+  "version": "2026-09-07-agent-only-chat",
   "software": {
     "default": {
-      "enabled": false,
-      "depth": "high",
+      "enabled": true,
+      "depth": "low",
       "temperature": 0.3,
       "max_output_tokens": 16384,
       "timeout_seconds": 60,
-      "context_limit_tokens": 64000
+      "context_limit_tokens": 64000,
+      "locked": true
     },
     "tasks": {
-      "normal_director": {
-        "enabled": false,
-        "depth": "minimal",
-        "locked": true,
-        "temperature": 0.3,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 45
-      },
       "normal_main_reply": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 1.0,
         "max_output_tokens": 16384,
         "timeout_seconds": 120,
         "context_limit_tokens": 64000
       },
-      "normal_voice_reply": {
-        "enabled": false,
-        "depth": "minimal",
-        "locked": true,
-        "temperature": 0.85,
-        "max_output_tokens": 4096,
-        "timeout_seconds": 90,
-        "context_limit_tokens": 64000
-      },
       "context_memory": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 60
       },
       "conversation_summary": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 180
       },
       "proactive": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 1.0,
         "max_output_tokens": 16384,
         "timeout_seconds": 120
       },
-      "normal_planner": {
-        "enabled": false,
-        "depth": "minimal",
+      "proactive_decision": {
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 16384,
         "timeout_seconds": 45
       },
       "normal_vision": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 16384,
         "timeout_seconds": 90
       },
       "smart_router_classify": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 16384,
         "timeout_seconds": 45
       },
       "web_search": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 16384,
         "timeout_seconds": 90
       },
       "asset_selector": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.2,
         "timeout_seconds": 45
       },
       "user_sticker_tagging": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 4096,
         "timeout_seconds": 90
       },
       "memory_extract": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 30
       },
       "memory_layer": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 40
       },
       "memory_auto_summarize": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 120,
         "context_limit_tokens": 64000
       },
       "companion_frame": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 120
       },
       "companion_vision": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 30
       },
       "companion_slim_prompt": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 60
       },
       "companion_memory": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 30
       },
       "companion_agent_plan": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 8
       },
       "companion_agent_action": {
-        "enabled": false,
-        "depth": "minimal",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "max_output_tokens": 16384,
         "timeout_seconds": 120
       },
       "galgame": {
-        "enabled": false,
-        "depth": "high",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 16384,
@@ -179,77 +163,21 @@
         "context_limit_tokens": 64000
       },
       "galgame_lock": {
-        "enabled": false,
-        "depth": "high",
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 16384,
         "timeout_seconds": 120,
         "context_limit_tokens": 64000
       },
-      "galgame_seq_step_1_director": {
-        "enabled": false,
-        "depth": "high",
-        "locked": true,
-        "temperature": 0.3,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 60
-      },
-      "galgame_seq_step_2_vitals": {
-        "enabled": false,
-        "depth": "minimal",
-        "locked": true,
-        "temperature": 0.3,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 60
-      },
-      "galgame_seq_step_3_7_text": {
-        "enabled": false,
-        "depth": "high",
-        "locked": true,
-        "temperature": 0.3,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 60
-      },
-      "galgame_seq_step_7_response": {
-        "enabled": false,
-        "depth": "high",
-        "locked": true,
-        "temperature": 1.0,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 60
-      },
-      "galgame_seq_step_8_json": {
-        "enabled": false,
-        "depth": "minimal",
-        "locked": true,
-        "temperature": 0.3,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 60
-      },
-      "galgame_seq_step_9_options": {
-        "enabled": false,
-        "depth": "minimal",
-        "locked": true,
-        "temperature": 0.3,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 60
-      },
-      "galgame_seq_step_10_memory": {
-        "enabled": false,
-        "depth": "minimal",
+      "game_memory_agent": {
+        "enabled": true,
+        "depth": "low",
         "locked": true,
         "temperature": 0.3,
         "max_output_tokens": 16384,
         "timeout_seconds": 120
-      },
-      "galgame_seq_default": {
-        "enabled": false,
-        "depth": "high",
-        "locked": true,
-        "temperature": 0.3,
-        "max_output_tokens": 16384,
-        "timeout_seconds": 60
       }
     }
   },
@@ -257,41 +185,34 @@
     "deepseek_v4": {
       "match": {
         "uses_v4_thinking_api": true,
-        "model_name_contains": ["deepseek-v4-flash"],
-        "endpoint_contains": ["api.deepseek.com"]
+        "model_name_contains": [
+          "deepseek-v4-flash"
+        ],
+        "endpoint_contains": [
+          "api.deepseek.com"
+        ]
       },
       "disable": {
         "thinking": {
           "type": "disabled"
         },
-        "remove": ["reasoning_effort"]
+        "remove": [
+          "reasoning_effort"
+        ]
       },
       "enable": {
         "thinking": {
           "type": "enabled"
         },
         "effort_field": "reasoning_effort",
-        "supported_depths": ["high", "max"],
-        "fallback_depth": "high"
-      }
-    },
-    "doubao_seed": {
-      "match": {
-        "model_name_contains": ["doubao", "seed"]
-      },
-      "disable": {
-        "thinking": {
-          "type": "disabled"
-        },
-        "remove": ["reasoning_effort"]
-      },
-      "enable": {
-        "thinking": {
-          "type": "enabled"
-        },
-        "effort_field": "reasoning_effort",
-        "supported_depths": ["minimal", "low", "medium", "high"],
-        "fallback_depth": "high"
+        "supported_depths": [
+          "low",
+          "medium",
+          "high",
+          "xhigh",
+          "max"
+        ],
+        "fallback_depth": "low"
       }
     },
     "qwen_enable_thinking": {
@@ -300,25 +221,40 @@
       },
       "disable": {
         "enable_thinking": false,
-        "remove": ["thinking_budget", "reasoning_effort"]
+        "remove": [
+          "thinking_budget",
+          "reasoning_effort"
+        ]
       },
       "enable": {
         "enable_thinking": true,
         "effort_field": "thinking_budget",
-        "supported_depths": ["auto", "low", "medium", "high"],
+        "supported_depths": [
+          "auto",
+          "low",
+          "medium",
+          "high"
+        ],
         "fallback_depth": "high"
       }
     },
     "grok_3_mini": {
       "match": {
-        "model_name_contains": ["grok-3-mini"]
+        "model_name_contains": [
+          "grok-3-mini"
+        ]
       },
       "disable": {
-        "remove": ["reasoning_effort"]
+        "remove": [
+          "reasoning_effort"
+        ]
       },
       "enable": {
         "effort_field": "reasoning_effort",
-        "supported_depths": ["low", "high"],
+        "supported_depths": [
+          "low",
+          "high"
+        ],
         "fallback_depth": "high"
       }
     },
@@ -327,11 +263,19 @@
         "default": true
       },
       "disable": {
-        "remove": ["reasoning_effort", "reasoning"]
+        "remove": [
+          "reasoning_effort",
+          "reasoning"
+        ]
       },
       "enable": {
         "effort_field": "reasoning_effort",
-        "supported_depths": ["minimal", "low", "medium", "high"],
+        "supported_depths": [
+          "minimal",
+          "low",
+          "medium",
+          "high"
+        ],
         "fallback_depth": "high"
       }
     }

@@ -56,12 +56,13 @@ fun ChatViewModel.summarizeContext() {
             characterId = characterId,
             mode = _state.value.mode,
             conversationId = _state.value.conversationId
-        ).onSuccess {
+        ).onSuccess { result ->
             _state.value = _state.value.copy(
                 isSummarizingContext = false,
                 error = null
             )
-            // 摘要结果已持久化到后端，下次请求时会自动注入。
+            if (result["status"] == "queued") return@onSuccess
+            // 已完成的摘要已持久化到后端，下次请求时会自动注入。
             // 仅在用户当前未流式生成时才刷新历史，避免清空 sentMessages 干扰进行中的对话。
             if (!_state.value.isStreaming) {
                 loadConversationHistory(character)
@@ -97,6 +98,10 @@ fun ChatViewModel.debugForceSummarize() {
             force = true
         ).onSuccess { result ->
             _state.value = _state.value.copy(isSummarizingContext = false, error = null)
+            if (result["status"] == "queued") {
+                _snackbarMessages.emit("记忆整理任务已提交，可在 Agent 状态中查看进度")
+                return@onSuccess
+            }
             if (result["skipped"] == true) {
                 val reason = result["reason"]?.toString().orEmpty()
                 _snackbarMessages.emit(debugSummarizeSkippedMessage(reason))
@@ -123,190 +128,6 @@ fun ChatViewModel.debugForceSummarize() {
                 error = msg
             )
         }
-    }
-}
-
-fun ChatViewModel.loadRelationshipSnapshot(force: Boolean = false) {
-    val stateNow = _state.value
-    val character = stateNow.character ?: return
-    val characterId = character.id?.takeIf { it.isNotBlank() } ?: return
-    val conversationId = stateNow.conversationId?.takeIf { it.isNotBlank() }
-    val existing = stateNow.relationshipSnapshot
-    if (!force &&
-        existing != null &&
-        existing.characterId == characterId &&
-        existing.conversationId == conversationId &&
-        existing.currentMessageCount == stateNow.messages.size &&
-        !stateNow.isLoadingRelationshipSnapshot
-    ) {
-        return
-    }
-    if (stateNow.isLoadingRelationshipSnapshot) return
-
-    _state.value = stateNow.copy(
-        isLoadingRelationshipSnapshot = true,
-        hasLoadedRelationshipSnapshot = stateNow.hasLoadedRelationshipSnapshot || stateNow.relationshipSnapshot != null,
-        relationshipSnapshotError = null
-    )
-
-    viewModelScope.launch {
-        val username = prefs.username
-        val api = NetworkClient.createApiService(prefs)
-        val currentMessages = _state.value.messages
-
-        val relationshipState = runCatching {
-            val resp = if (force) {
-                api.refreshRelationshipState(
-                    RelationshipRefreshRequest(
-                        username = username,
-                        characterId = characterId,
-                        conversationId = conversationId
-                    )
-                )
-            } else {
-                api.getRelationshipState(
-                    username = username,
-                    characterId = characterId
-                )
-            }
-            if (!resp.isSuccessful) null else resp.body()
-        }.getOrNull()
-        val serverRelationshipStage = relationshipState
-            ?.takeIf { it.updatedAtMs > 0L || it.relationshipPageUpdatedAtMs > 0L }
-            ?.relationshipStage
-            ?.let(::normalizeRelationshipStageKey)
-        val pageContent = relationshipState
-            ?.relationshipPage
-            ?.takeIf { it.hasRelationshipPageContent() }
-
-        val fragmentMemories = runCatching {
-            val resp = api.getMemories(
-                username = username,
-                characterId = characterId,
-                memoryType = null,
-                layer = 0
-            )
-            if (!resp.isSuccessful) throw Exception("记忆加载失败 (${resp.code()})")
-            resp.body()?.memories ?: emptyList()
-        }
-
-        val summaryMemories = runCatching {
-            val resp = api.getMemories(
-                username = username,
-                characterId = characterId,
-                memoryType = null,
-                layer = 1
-            )
-            if (!resp.isSuccessful) emptyList() else resp.body()?.memories ?: emptyList()
-        }.getOrDefault(emptyList())
-
-        val conversations = charRepo.loadAllConversations(username, characterId, mode = "normal")
-            .getOrElse { emptyList() }
-        val currentConversation = conversationId?.let { id ->
-            conversations.firstOrNull { it.id == id }
-        } ?: conversations.firstOrNull()
-
-        val fragments = fragmentMemories.getOrDefault(emptyList())
-        val totalMessageCount = conversations.sumOf { it.messages.size }
-            .takeIf { it > 0 }
-            ?: currentMessages.size
-        val currentMessageCount = when {
-            currentMessages.isNotEmpty() -> currentMessages.size
-            currentConversation != null -> currentConversation.messages.size
-            else -> 0
-        }
-        val conversationCount = conversations.size
-            .takeIf { it > 0 }
-            ?: if (currentMessageCount > 0) 1 else 0
-        val latestSummary = currentConversation?.effectiveSummary()
-            ?.takeIf { it.isNotBlank() }
-            ?: summaryMemories.firstOrNull()?.content.orEmpty()
-        val fallbackStageKey = relationshipStageKey(totalMessageCount, fragments.size)
-        val snapshotStageKey = serverRelationshipStage ?: fallbackStageKey
-
-        if (_state.value.character?.id != characterId) return@launch
-
-        fragmentMemories.fold(
-            onSuccess = {
-                _state.value = _state.value.copy(
-                    isLoadingRelationshipSnapshot = false,
-                    hasLoadedRelationshipSnapshot = true,
-                    relationshipSnapshotError = null,
-                    relationshipSnapshot = RelationshipSnapshot(
-                        characterId = characterId,
-                        conversationId = conversationId,
-                        stageKey = snapshotStageKey,
-                        stageLabel = relationshipStageCn(snapshotStageKey),
-                        conversationCount = conversationCount,
-                        currentMessageCount = currentMessageCount,
-                        totalMessageCount = totalMessageCount,
-                        memoryCount = fragments.size,
-                        relationshipMemories = fragments.filter { it.memoryType == "relationship" },
-                        preferenceMemories = fragments.filter { it.memoryType == "preference" },
-                        episodeMemories = fragments.filter { it.memoryType == "episode" },
-                        activityMemories = fragments.filter { it.memoryType == "activity" },
-                        summaryMemories = summaryMemories,
-                        latestSummary = latestSummary,
-                        updatedAt = currentConversation?.updatedAt.orEmpty(),
-                        pageContent = pageContent,
-                        pageUpdatedAtMs = relationshipState?.relationshipPageUpdatedAtMs ?: 0L
-                    )
-                )
-            },
-            onFailure = { err ->
-                _state.value = _state.value.copy(
-                    isLoadingRelationshipSnapshot = false,
-                    hasLoadedRelationshipSnapshot = true,
-                    relationshipSnapshotError = err.toUserMessage("关系信息加载失败"),
-                    relationshipSnapshot = RelationshipSnapshot(
-                        characterId = characterId,
-                        conversationId = conversationId,
-                        stageKey = snapshotStageKey,
-                        stageLabel = relationshipStageCn(snapshotStageKey),
-                        conversationCount = conversationCount,
-                        currentMessageCount = currentMessageCount,
-                        totalMessageCount = totalMessageCount,
-                        memoryCount = fragments.size,
-                        summaryMemories = summaryMemories,
-                        latestSummary = latestSummary,
-                        updatedAt = currentConversation?.updatedAt.orEmpty(),
-                        pageContent = pageContent,
-                        pageUpdatedAtMs = relationshipState?.relationshipPageUpdatedAtMs ?: 0L
-                    )
-                )
-            }
-        )
-    }
-}
-
-private fun relationshipStageKey(totalMessages: Int, memoryCount: Int): String = when {
-    totalMessages >= 50 || memoryCount >= 12 -> "familiar"
-    totalMessages > 0 || memoryCount > 0 -> "new_contact"
-    else -> "uncertain"
-}
-
-private fun RelationshipPageContent.hasRelationshipPageContent(): Boolean =
-    overview.isNotBlank() ||
-        mood.isNotBlank() ||
-        selfPortrait.isNotBlank() ||
-        betweenPortrait.isNotBlank() ||
-        rememberedItems.any { it.isNotBlank() } ||
-        timelineItems.any { it.isNotBlank() } ||
-        suggestions.any { it.isNotBlank() }
-
-/** 本机调试：切换关系页阶段预览（只改当前 App 内存状态，不请求后端、不写服务器）。 */
-fun ChatViewModel.debugSetLocalRelationshipStage(stage: String) {
-    val normalized = normalizeRelationshipStageKey(stage)
-    _state.value = _state.value.copy(relationshipStageOverride = normalized)
-    viewModelScope.launch {
-        _snackbarMessages.emit("本地关系阶段：${relationshipStageCn(normalized)}")
-    }
-}
-
-fun ChatViewModel.debugUseServerRelationshipStage() {
-    _state.value = _state.value.copy(relationshipStageOverride = null)
-    viewModelScope.launch {
-        _snackbarMessages.emit("已恢复服务器关系数据")
     }
 }
 

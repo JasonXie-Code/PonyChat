@@ -1,0 +1,28 @@
+{
+  "_comment": "llama.cpp server 配置。由 scripts/start_server.ps1 读取。",
+  "_notes": {
+    "llama_cpp_version": "b8763-ff5ef8278",
+    "cuda": "12.4",
+    "flash_attn": "auto（由 start_server.ps1 固定传入）",
+    "vram_usage": "随主模型与 n_ctx 变化；无 mmproj 时为纯文本模式",
+    "model_type": "Qwen3.5-4B Q4_K_M with matching BF16 vision projector, 131072 tokens per slot",
+    "n_gpu_layers": "99 = 全部层 offload 到 GPU；显存不足可调小",
+    "n_threads": "Zen4 CPU 大核数量，按实际 CPU 调整",
+    "known_issue": "llama.cpp 混合模型每轮约重评估 512 个 tail tokens（llama.cpp #20239），影响多轮延迟但不影响正确性",
+    "parallel_hint": "parallel=并发槽数；单槽可用上下文 ≈ n_ctx÷parallel，故 128k 总上下文且 parallel=2 时每槽仅 64k。要单请求用满 n_ctx 请设 parallel=1"
+  },
+  "host": "127.0.0.1",
+  "port": 8068,
+  "open_browser": false,
+  "model": "models/Qwen3.5-4B/Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-Q4_K_M.gguf",
+  "n_ctx": 131072,
+  "n_gpu_layers": 99,
+  "n_batch": 512,
+  "n_threads": 6,
+  "parallel": 1,
+  "cont_batching": true,
+  "n_predict": 8192,
+  "reasoning_budget": 0,
+  "mmproj": "models/Qwen3.5-4B/mmproj-Qwen3.5-4B-Uncensored-HauhauCS-Aggressive-BF16.gguf",
+  "alias": "qwen3.5-4b-local"
+}

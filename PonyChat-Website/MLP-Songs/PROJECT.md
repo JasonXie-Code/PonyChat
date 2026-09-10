@@ -1,5 +1,7 @@
 # MLP Music（PonyChat）
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 ## 服务器密钥：唯一来源与用法
 
 **`scripts/deploy.py`** 依赖工作区 [`ServerKeys/ssh_lib.py`](../../../../ServerKeys/ssh_lib.py) 与 `servers.json` 中 **`usa`** 条目：**唯一权威**为 [`ServerKeys/servers.json`](../../../../ServerKeys/servers.json)；密钥安全与排障见 [`ServerKeys.md`](../../ServerKeys.md)（PonyChat 仓库根）。

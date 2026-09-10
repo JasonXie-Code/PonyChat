@@ -1,10 +1,12 @@
 import asyncio
 import json
+from types import SimpleNamespace
+
+import pytest
 
 from Backend.chat_modules.assistant_units import is_asset_only_reply_sequence_with_assets
 from Backend.chat_modules.normal_nonstream import (
     _inject_sys_before_last_user,
-    _payload_thinking_enabled,
 )
 from Backend.utils import ChatMessage, ChatRequest
 
@@ -23,7 +25,7 @@ def test_asset_only_reply_sequence_requires_selected_attachment():
     )
 
 
-def test_asset_only_selected_reply_skips_stage3_main_text(monkeypatch):
+def test_agent_asset_only_reply_delivers_attachment_without_text(monkeypatch):
     import Backend.chat_modules.normal_nonstream as normal_nonstream
 
     calls: list[tuple[str, str]] = []
@@ -46,14 +48,12 @@ def test_asset_only_selected_reply_skips_stage3_main_text(monkeypatch):
         mode="normal",
         messages=[ChatMessage(role="user", content="给我发一个表情包", message_id="u1")],
     )
-    request._normal_planner_result = {
-        "bubble_count": 1,
-        "speech_activity": 45,
-        "action_style": "plain_text",
-        "asset_plan": {"enabled": True, "count": 1, "explicit_request": True},
-        "reply_sequence": [{"type": "asset", "request_id": "asset_1", "intent": "send_emoticon"}],
-    }
-    request._assistant_reply_sequence = request._normal_planner_result["reply_sequence"]
+    request._autonomous_harness = True
+    request._autonomous_usage_accounted = True
+    request._autonomous_llm_response = SimpleNamespace(text=json.dumps({
+        "bubble_count": 0, "bubbles": [], "delivery_mode": "assets_only"}))
+    request._normal_planner_result = {"bubble_count": 0, "voice_reply": {"enabled": False}}
+    request._assistant_reply_sequence = [{"type": "asset", "request_id": "asset_1"}]
     request._assistant_asset_by_request_id = {
         "asset_1": {
             "id": "att_asset_1",
@@ -104,6 +104,16 @@ def test_asset_only_selected_reply_skips_stage3_main_text(monkeypatch):
     assert metadata["usage"] == {"input_tokens": 0, "output_tokens": 0}
 
 
+def test_delivery_rejects_requests_that_have_not_completed_the_agent():
+    from Backend.chat_modules.normal_nonstream import handle_normal_nonstream_sse
+
+    with pytest.raises(ValueError, match="completed Agent turn"):
+        asyncio.run(handle_normal_nonstream_sse(
+            request=SimpleNamespace(), model_name="unused", payload={}, api_url="", headers={},
+            provider=None, httpx_client=None, messages=[], request_tokens=0, username="", character_id="",
+            client_id="", effective_username="", release_lock=lambda: asyncio.sleep(0)))
+
+
 def test_system_injection_keeps_final_user_message_last():
     messages = [
         {"role": "system", "content": "base"},
@@ -122,24 +132,3 @@ def test_system_injection_keeps_final_user_message_last():
         "user",
     ]
     assert messages[-1] == {"role": "user", "content": "hello"}
-
-
-def test_payload_thinking_enabled_uses_final_payload_state():
-    assert not _payload_thinking_enabled(
-        {"thinking": {"type": "disabled"}},
-        {"enable_thinking": True},
-    )
-    assert not _payload_thinking_enabled(
-        {"enable_thinking": False},
-        {"enable_thinking": True},
-    )
-
-    assert _payload_thinking_enabled({"thinking": {"type": "enabled"}})
-    assert _payload_thinking_enabled({"enable_thinking": True})
-    assert _payload_thinking_enabled({"reasoning_effort": "high"})
-
-
-def test_payload_thinking_enabled_falls_back_to_log_params():
-    assert _payload_thinking_enabled({"messages": []}, {"enable_thinking": True})
-    assert not _payload_thinking_enabled({"messages": []}, {"enable_thinking": False})
-    assert not _payload_thinking_enabled({"messages": []}, None)

@@ -638,7 +638,8 @@ async def reset_character_chat(payload: dict, x_client_id: Optional[str] = Heade
       2. 将该角色所有当前可见普通消息标记为隐藏
       3. 将 character_memories 中所有活跃长期记忆标记为非活跃
       4. 清空没有隐藏字段的普通对话派生缓存
-      5. 清空 companion_sessions
+      5. 清空关系页面与关系在场状态
+      6. 清空 companion_sessions
 
     不影响：galgame_data / galgame_lock_data（游戏/锁分走独立表）。
     """
@@ -765,13 +766,20 @@ async def reset_character_chat(payload: dict, x_client_id: Optional[str] = Heade
                 (username, character_id)
             )
 
-            # 4. 清除陪玩记录
+            # 4. 清除关系页面及其派生在场状态，避免重置后继续展示旧关系摘要。
+            relationship_cur = await conn.execute(
+                "DELETE FROM relationship_presence_states WHERE username = ? AND character_id = ?",
+                (username, character_id),
+            )
+            cleared_relationship_state_count = max(0, relationship_cur.rowcount or 0)
+
+            # 5. 清除陪玩记录
             await conn.execute(
                 "DELETE FROM companion_sessions WHERE user_id = ? AND character_id = ?",
                 (user_id, character_id)
             )
 
-            # 5. 普通对话重置后，角色生命周期也回到可正常互动状态。
+            # 6. 普通对话重置后，角色生命周期也回到可正常互动状态。
             from ..chat_modules.normal_lifecycle import reset_normal_character_lifecycle_on_connection
 
             reset_lifecycle_count = await reset_normal_character_lifecycle_on_connection(
@@ -780,12 +788,16 @@ async def reset_character_chat(payload: dict, x_client_id: Optional[str] = Heade
                 character_id,
             )
 
+            from Backend.agent_memory.service import reset_on_connection
+            await reset_on_connection(conn, username, character_id)
+
             await conn.commit()
 
         logger.info(
             f"🔄 [重置] 用户 {username} 角色 {character_id[:8]}... 已重置"
             f"（隐藏消息 {hidden_message_count} 条 / 隐藏长期记忆 {hidden_memory_count} 条 / "
             f"清除场景锚点 {cleared_scene_state_count} 条 / 隐藏重复对话 {hidden_duplicate_conversation_count} 个 / "
+            f"清除关系状态 {cleared_relationship_state_count} 条 / "
             f"生命周期恢复 {reset_lifecycle_count} 条 / 陪玩记录已清除）"
         )
 
@@ -822,6 +834,7 @@ async def reset_character_chat(payload: dict, x_client_id: Optional[str] = Heade
             "hidden_messages": hidden_message_count,
             "hidden_memories": hidden_memory_count,
             "cleared_scene_states": cleared_scene_state_count,
+            "cleared_relationship_states": cleared_relationship_state_count,
             "reset_lifecycle_states": reset_lifecycle_count,
             "hidden_duplicate_conversations": hidden_duplicate_conversation_count,
             "conversation_id": canonical_conversation_id,

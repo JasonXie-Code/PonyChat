@@ -31,11 +31,11 @@ def load_deepseek_model() -> dict[str, Any]:
     config_path = BACKEND_DIR / "conf" / "models" / "deepseek.json"
     config = json.loads(config_path.read_text(encoding="utf-8"))
     for model in config.get("models", []):
-        if model.get("id") == "deepseek-v4-flash":
+        if model.get("id") == "deepseek-flash":
             if not model.get("api_key"):
-                raise RuntimeError("deepseek-v4-flash has no api_key")
+                raise RuntimeError("deepseek-flash has no api_key")
             return model
-    raise RuntimeError("deepseek-v4-flash model config not found")
+    raise RuntimeError("deepseek-flash model config not found")
 
 
 def goose_path() -> str:
@@ -49,7 +49,7 @@ def build_env(model: dict[str, Any]) -> dict[str, str]:
     env = os.environ.copy()
     env.pop("OPENAI_BASE_PATH", None)
     endpoint = str(model.get("endpoint") or "https://api.deepseek.com")
-    model_name = str(model.get("model_name") or "deepseek-v4-flash")
+    model_name = str(model.get("model_name") or "deepseek-flash")
     env.update(
         {
             "GOOSE_PROVIDER": "openai",

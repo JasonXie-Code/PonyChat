@@ -901,6 +901,9 @@ async def _validate_attempt_sendable(attempt: dict[str, Any]) -> dict[str, Any]:
     db = get_database()
     async with aiosqlite.connect(db.db_path) as conn:
         conn.row_factory = aiosqlite.Row
+        from .chat_modules.normal_lifecycle import scheduled_character_is_dead_on_connection
+        if await scheduled_character_is_dead_on_connection(conn, attempt):
+            return {"ok": False, "reason": "character_already_dead"}
         async with conn.execute(
             """
             SELECT rps.*, c.is_hidden
@@ -1055,6 +1058,10 @@ async def _append_long_proactive_message(task: dict[str, Any], content: str) -> 
         await conn.execute("PRAGMA foreign_keys = ON")
         await conn.execute("BEGIN IMMEDIATE")
         try:
+            from .chat_modules.normal_lifecycle import scheduled_character_is_dead_on_connection
+            if await scheduled_character_is_dead_on_connection(conn, task):
+                await conn.rollback()
+                return []
             async with conn.execute(
                 "SELECT status FROM proactive_touch_attempts WHERE id=? LIMIT 1",
                 (task["id"],),

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .Prompts import ASSET_SELECTOR_SYSTEM
+
 import json
 import re
 from typing import Any
@@ -31,22 +33,6 @@ _EXPLICIT_ASSET_REQUEST_RE = re.compile(
     re.IGNORECASE,
 )
 
-_ASSET_SELECTOR_SYSTEM = """你是聊天表情包选择器。只输出一行合法 JSON，不输出 markdown 或解释。
-
-你会看到：角色短设定摘要/基础字段、当前会话记忆/环境、最近对话、导演对表情包的请求、候选表情包池。
-你的任务不是写台词，而是判断候选表情包中哪一个在当前语境里最像角色要表达的态度。
-
-选择原则：
-- 先判断导演请求里的语用意图，例如接梗、害羞、装傻、安慰、吐槽、得意、认怂、拒绝但不冷。
-- 不要只按情绪标签选；必须结合 intro/detail/image_text/custom_tags 判断这张图发出去像在说什么。
-- 如果候选都不贴合、会显得敷衍/冒犯/太跳脱，selected_ref 必须为 null。
-- 严肃冲突、用户难过、正式道歉、事实纠错、敏感话题下，除非导演请求非常明确且候选非常合适，否则宁可不发。
-- 不要选择与 avoid 语义相反或容易误读成 avoid 的素材。
-- 如果上下文列出了“最近已发送表情包素材”，除非候选池只剩完全没有替代的唯一贴合素材，否则不要重复选择这些素材；连续重复会显得机械。
-- 如果导演请求里有 preferred_character_names，且多个候选语境贴合度相近，优先选择 name/intro/detail/image_text/custom_tags 中包含当前发言角色名字或简称的素材；但不要为了角色名选择语义明显不贴合的素材。
-
-输出格式：
-{"selected_ref":"platform:素材ID 或 null","confidence":0.0到1.0,"reason":"一句简短中文理由"}"""
 
 
 def _coerce_str_list(value: Any, *, limit: int = 16) -> list[str]:
@@ -645,7 +631,7 @@ async def _select_candidate_with_llm(
     payload = {
         "model": model_name,
         "messages": [
-            {"role": "system", "content": _ASSET_SELECTOR_SYSTEM},
+            {"role": "system", "content": ASSET_SELECTOR_SYSTEM},
             {
                 "role": "user",
                 "content": _selector_context_text(

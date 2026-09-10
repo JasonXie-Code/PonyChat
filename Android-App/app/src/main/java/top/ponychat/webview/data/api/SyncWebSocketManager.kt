@@ -475,6 +475,8 @@ object SyncWebSocketManager {
                                 ChatCompletionSource.HTTP_PULL,
                                 messageId.ifBlank { oid }.ifBlank { null },
                                 messageCount = messageCount,
+                                messageId = messageId.ifBlank { null },
+                                conversationId = conversationIdFromPayload(payload),
                             )
                             showChatCompleteNotification(
                                 appContext?.let { notificationTitleFromPayload(it, payload, characterId) }
@@ -704,6 +706,14 @@ object SyncWebSocketManager {
             val t = json.optString("type", "?")
             NotificationTrace.log("ws_frame", "type=$t len=${text.length}")
             when (t) {
+                "history_image_request" -> {
+                    if (receivingSocket !== ws) return
+                    val context = appContext ?: return
+                    val username = currentPrefs?.username ?: return
+                    scope?.launch(Dispatchers.IO) {
+                        if (receivingSocket === ws) HistoryImageResponder.respond(context, json, receivingSocket, username)
+                    }
+                }
                 "force_logout" -> {
                     val reason = json.optString("reason", "logged_in_elsewhere")
                     // Stale-socket 守卫：nudge 重连时，服务端会对旧连接推送 force_logout。
@@ -778,6 +788,8 @@ object SyncWebSocketManager {
                         ChatCompletionSource.WS,
                         messageId.ifBlank { outboxId }.ifBlank { null },
                         messageCount = messageCount,
+                        messageId = messageId.ifBlank { null },
+                        conversationId = conversationIdFromJson(json),
                     )
                     showChatCompleteNotification(
                         appContext?.let { notificationTitleFromJson(it, json, characterId) }

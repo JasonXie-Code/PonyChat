@@ -65,6 +65,7 @@ internal fun ChatScreenDisplaySettingsAndVitalsOverlays(
             onThemeChanged = onThemeChanged,
             onSave = onPrefsSavedFromDisplaySettings,
             currentMode = state.mode,
+            currentCharacterId = state.character?.id.orEmpty(),
             currentGalgameScore = galgameScore,
             onDebugForceScore = { viewModel.debugApplyLocalGalgameScore(it, forceZeroInLock = true) },
             onDebugAdjustScore = { viewModel.debugAdjustLocalGalgameScore(it, forceZeroInLock = true) },

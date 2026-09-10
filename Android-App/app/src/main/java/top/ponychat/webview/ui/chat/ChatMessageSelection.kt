@@ -400,6 +400,7 @@ internal fun SelectableMessageText(
     onSelectionRangeChange: (IntRange?) -> Unit,
     onCopySelection: (String) -> Unit,
     onCancelSelection: () -> Unit,
+    selectionTint: Color = MaterialTheme.colorScheme.primary,
     modifier: Modifier = Modifier,
     onTextLayout: ((TextLayoutResult) -> Unit)? = null,
     onLongPress: ((localOffset: Offset, windowOffset: Offset) -> Unit)? = null
@@ -408,8 +409,8 @@ internal fun SelectableMessageText(
     var textWindowTopLeft by remember(text) { mutableStateOf(Offset.Zero) }
     val selection = normalizedSelectionRange(text, selectionRange)
     val density = LocalDensity.current
-    val selectionColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.24f)
-    val handleColor = MaterialTheme.colorScheme.primary
+    val selectionColor = selectionTint.copy(alpha = 0.24f)
+    val handleColor = selectionTint
     val toolbarBackground = MaterialTheme.colorScheme.inverseSurface
     val toolbarText = MaterialTheme.colorScheme.inverseOnSurface
     val handleTouchSize = 28.dp

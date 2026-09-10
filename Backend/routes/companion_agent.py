@@ -27,7 +27,6 @@ from ..chat_modules.runtime import extract_usage_from_response, estimate_output_
 from ..utils import ClientContext, estimate_tokens, format_client_context
 from .companion_chat import (
     _MINI_MODEL,
-    _get_companion_model,
     _companion_effective_model_name,
     _companion_inject_no_think,
     _companion_reasoning_policy,
@@ -41,6 +40,7 @@ from .companion_chat import (
     _load_character_row,
     _get_effective_persona,
     _build_preference_override,
+    apply_personality_style,
     _write_companion_log,
     _write_companion_sub_log,
     FrameRequest,
@@ -48,6 +48,7 @@ from .companion_chat import (
 )
 from ..providers.llm_call import call_llm_payload, call_llm_stream_payload
 from ..reasoning_config import apply_llm_task_payload_config, llm_task_float
+from ..companion_model_policy import get_companion_model_for, is_high_difficulty_task
 
 router = APIRouter()
 
@@ -583,16 +584,17 @@ async def agent_plan_endpoint(
     if not task:
         return {"error": "no_task", "plan": [], "reaction": "你想让我做什么呢？"}
 
-    active_model = await _get_companion_model(auth_username or body.username)
-    if body.image_base64.strip() and not active_model.get("supports_vision", False):
-        logger.warning(
-            f"[AgentPlan] {body.username}: 活跃模型 {active_model.get('model_name', '?')} 不支持图片识别"
-        )
-        return {"error": "vision_not_supported", "plan": [], "reaction": ""}
+    # UI 树可用时不把截图发给模型，规划留在 DeepSeek Flash。
+    # 只有缺少结构化界面信息时才启用DeepSeek 视觉。
+    plan_image = body.image_base64.strip() if not body.ui_elements else ""
+    active_model = get_companion_model_for(
+        has_image=bool(plan_image),
+        high_difficulty=is_high_difficulty_task(task),
+    )
 
     t0 = time.perf_counter()
     result = await _create_agent_plan(
-        body.image_base64, task,
+        plan_image, task,
         username=body.username,
         client_context=body.client_context,
         model_cfg=active_model,
@@ -640,6 +642,7 @@ async def agent_action_stream(
     if _memory_block:
         persona_with_memory = f"{persona}\n\n{_memory_block}" if persona else _memory_block
     persona_with_memory = f"{persona_with_memory}\n\n{_COMPANION_ROLEPLAY_ANCHOR}" if persona_with_memory else _COMPANION_ROLEPLAY_ANCHOR
+    persona_with_memory = apply_personality_style(persona_with_memory, body.personality_style)
     _pref_override = _build_preference_override(_layers.get("c_entries", []))
     if _pref_override:
         persona_with_memory = f"{persona_with_memory}\n\n{_pref_override}"
@@ -761,7 +764,15 @@ async def agent_action_stream(
             headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"},
         )
 
-    active_model = await _get_companion_model(auth_username or body.username)
+    # 角色回应若包含截图仍需视觉模型；实际操作决策优先只用 UI 树。
+    active_model = get_companion_model_for(
+        has_image=has_image,
+        high_difficulty=is_high_difficulty_task(body.user_text),
+    )
+    action_model = get_companion_model_for(
+        has_image=bool(has_image and not body.ui_elements),
+        high_difficulty=is_high_difficulty_task(body.user_text),
+    )
     next_frame = session["frame_count"] + (0 if is_text_mode else 1)
 
     async def _generate():
@@ -774,19 +785,20 @@ async def agent_action_stream(
             t_decide_elapsed = 0.0
         else:
             user_task = body.user_text.strip() or "用户没有明确说要操作手机，请返回 none。"
-            if not active_model.get("supports_vision", False):
+            action_image = body.image_base64 if not body.ui_elements else ""
+            if action_image and not action_model.get("supports_vision", False):
                 yield f"data: {json.dumps({'error': 'vision_not_supported'}, ensure_ascii=False)}\n\n"
                 return
             t_decide = time.perf_counter()
             action = await _decide_agent_action(
-                body.image_base64, user_task, session["history"],
+                action_image, user_task, session["history"],
                 step_history=body.agent_step_history or None,
                 username=body.username,
                 client_context=body.client_context,
                 current_plan_step=body.current_plan_step,
                 plan_total=body.plan_total,
                 plan_step_index=body.plan_step_index,
-                model_cfg=active_model,
+                model_cfg=action_model,
                 ui_elements=body.ui_elements or None,
             )
             t_decide_elapsed = time.perf_counter() - t_decide

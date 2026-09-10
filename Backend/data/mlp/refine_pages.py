@@ -44,9 +44,9 @@ def load_api_config():
     from backend.model_manager import load_merged_model_config
     cfg = load_merged_model_config()
     for m in cfg.get("models", []):
-        if m.get("id") == "doubao-2-0-mini":
+        if m.get("id") == "deepseek-flash":
             return m["endpoint"], m["api_key"], m["model_name"]
-    raise RuntimeError("未找到 doubao-2-0-mini 配置")
+    raise RuntimeError("未找到 deepseek-flash 配置")
 
 ENDPOINT, API_KEY, MODEL_NAME = load_api_config()
 HEADERS = {"Content-Type": "application/json", "Authorization": f"Bearer {API_KEY}"}
@@ -101,7 +101,7 @@ def call_api(system: str, user: str, max_tokens: int) -> str:
             {"role": "system", "content": system},
             {"role": "user",   "content": user},
         ],
-        "reasoning_effort": "minimal",   # 关键：不触发思考链，响应 1-3s
+        "reasoning_effort": "low",   # 关键：不触发思考链，响应 1-3s
         "max_tokens": 8192,
         "temperature": 0.4,
     }

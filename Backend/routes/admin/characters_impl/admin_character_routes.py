@@ -17,7 +17,7 @@ from ...db.character_content_permissions import (
     load_system_official_source_ids,
 )
 from ...db.chat_images_dao import detect_image_mime_from_magic
-from ...utils import compute_character_hash
+from ...utils import character_setting_changed, compute_character_hash
 from ...official_characters import (
     OFFICIAL_SOURCE_IDS,
     is_official_reference_id,
@@ -378,7 +378,7 @@ async def _rename_character_id(conn, old_id: str, new_id: str) -> dict:
     await _set_character_row_id(conn, old_id, new_id)
     await _record_character_id_alias(conn, owner_user_id, old_id, new_id)
     await conn.execute(
-        "UPDATE hall_characters SET source_character_id = ?, updated_at = CURRENT_TIMESTAMP WHERE source_character_id = ?",
+        "UPDATE hall_characters SET source_character_id = ? WHERE source_character_id = ?",
         (new_id, old_id),
     )
 
@@ -699,13 +699,13 @@ async def _sync_hall_characters_from_snapshot(conn, char_id: str, snapshot: dict
     App 的 GET /api/character-hall 读的是本表，而非 characters。
     """
     async with conn.execute(
-        "SELECT id FROM hall_characters WHERE source_character_id = ?",
+        "SELECT id, data, name FROM hall_characters WHERE source_character_id = ?",
         (char_id,),
     ) as cur:
         row = await cur.fetchone()
     if not row:
         return
-    hid = row[0]
+    hid, previous_json, previous_name = row
     new_hash = compute_character_hash(snapshot)
     async with conn.execute(
         "SELECT id FROM hall_characters WHERE content_hash = ? AND id != ?",
@@ -717,15 +717,20 @@ async def _sync_hall_characters_from_snapshot(conn, char_id: str, snapshot: dict
                 detail="大厅内已存在相同内容的其它条目，请调整内容后再保存",
             )
     hall_data = _hall_data_from_snapshot(snapshot)
+    previous_data = _load_json_dict(previous_json)
+    previous_data.setdefault("name", previous_name or "")
+    setting_changed = character_setting_changed(previous_data, hall_data)
     now = datetime.now().isoformat()
     await conn.execute(
-        """UPDATE hall_characters SET name = ?, avatar = ?, content_hash = ?, data = ?, updated_at = ?
+        """UPDATE hall_characters SET name = ?, avatar = ?, content_hash = ?, data = ?,
+                                      updated_at = CASE WHEN ? THEN ? ELSE updated_at END
            WHERE id = ?""",
         (
             snapshot.get("name", "未命名"),
             snapshot.get("avatar"),
             new_hash,
             json.dumps(hall_data, ensure_ascii=False),
+            int(setting_changed),
             now,
             hid,
         ),

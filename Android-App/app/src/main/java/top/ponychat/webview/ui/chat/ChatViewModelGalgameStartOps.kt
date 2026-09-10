@@ -126,9 +126,7 @@ fun ChatViewModel.sendGalgameStartMessage(season: String, time: String, location
                                 quotaExceededMessage = "",
                             )
                         }
-                        if (currentMode == "normal") {
-                            scheduleNormalAcceptedRecoveryWatchdog("start_accepted_watchdog", null, recoveryStartedAt)
-                        } else {
+                        if (currentMode != "normal") {
                             startReplyRecoveryPolling("start_accepted", currentMode, null, recoveryStartedAt)
                         }
                     }

@@ -414,6 +414,9 @@ def check_py_syntax(files: list[str]) -> list[tuple[str, str]]:
 
 
 def main() -> int:
+    if (_PROJ_ROOT / ".env.local-stack").exists():
+        print("生产后端已迁移到本机。请使用 AAA启动后端.bat；Server-USA 只保留网页、公网入口及其他业务。", flush=True)
+        return 2
     TOTAL = 7
     t_wall0 = time.monotonic()
     phases: list[tuple[str, float]] = []

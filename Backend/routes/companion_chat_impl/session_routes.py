@@ -53,19 +53,25 @@ from ..db.memory_dao import (
     recall_memories_layered, format_layered_memories_for_prompt,
 )
 from ..utils import ClientContext, estimate_tokens, format_client_context
+from ..companion_identity import (
+    apply_personality_style,
+    character_identity_summary,
+    identity_session_key,
+)
+from ..companion_model_policy import get_companion_model_for
 
 _CHAT_LOGS_DIR = CHATLOGS_DIR
 
-# 后台工具任务（图片描述、精简人设、记忆摘要）与陪玩主 LLM 均使用豆包 mini：速度快、成本低。
+# 后台工具任务（图片描述、精简人设、记忆摘要）与陪玩主 LLM 均使用DeepSeek 视觉 low 思考。
 # 陪玩主交互固定为 COMPANION_LLM_MODEL_ID，不随模型大厅用户当前模型变化；用户主对话模型见 user_model_selection。
 _MINI_MODEL = {
-    "endpoint": "https://ark.cn-beijing.volces.com/api/v3",
-    "api_key": os.getenv("PONYCHAT_DOUBAO_API_KEY", ""),
-    "model_name": "doubao-seed-2-0-mini-260215",
+    "endpoint": "https://api.deepseek.com",
+    "api_key": os.getenv("PONYCHAT_DEEPSEEK_API_KEY", ""),
+    "model_name": "deepseek-flash",
 }
 
-# 聊天陪玩 / 操作陪玩主推理固定使用该清单 id（与 `backend/conf/models/doubao.json` 中 doubao-2-0-mini 一致）
-COMPANION_LLM_MODEL_ID = "doubao-2-0-mini"
+# 聊天陪玩 / 操作陪玩主推理固定使用该清单 id（与 `backend/conf/models/deepseek.json` 中 deepseek-flash 一致）
+COMPANION_LLM_MODEL_ID = "deepseek-flash"
 
 
 def _resolve_companion_llm_model() -> dict:
@@ -80,9 +86,10 @@ def _resolve_companion_llm_model() -> dict:
     return dict(_MINI_MODEL)
 
 
-async def _get_companion_model(username: str = "") -> dict:
-    """陪玩主交互固定为豆包 2.0-mini，不随模型大厅变化。username 仅保留与路由/鉴权兼容。"""
-    return _resolve_companion_llm_model()
+async def _get_companion_model(username: str = "", *, has_image: bool = False) -> dict:
+    """文字与视觉统一使用 DeepSeek 视觉模型。"""
+    del username  # 保留签名，兼容现有调用方。
+    return get_companion_model_for(has_image=has_image)
 
 
 def _companion_no_think_params(model_cfg: dict) -> dict:
@@ -177,8 +184,8 @@ _MAX_HISTORY_PAIRS = 20
 _SESSION_EXPIRE_SEC = 1800  # 30 分钟
 
 
-def _session_key(username: str, character_id: str) -> str:
-    return f"{username}:{character_id}"
+def _session_key(username: str, character_id: str, conversation_id: str = "") -> str:
+    return identity_session_key(username, character_id, conversation_id)
 
 
 def _get_or_create_session(key: str) -> dict:
@@ -552,6 +559,43 @@ class FrameRequest(BaseModel):
     plan_step_index: int = 0     # 当前步骤序号（0-based）
     skip_reaction: bool = False  # 操作陪玩自动循环模式：只决策操作，不生成角色回复，节省 token + 时间
     ui_elements: list[str] = []  # 无障碍树可交互元素列表，格式 "[标签](归一化x,归一化y)"，可为空
+    personality_style: str = "canonical"  # 只调整表达风格；身份、关系和记忆仍由 character_id 隔离
+    conversation_id: str = ""  # 来源会话隔离键；QQ 私聊等渠道必须提供稳定且不含明文联系人的值
+
+
+@router.get("/api/companion/characters")
+async def get_companion_characters(
+    username: str,
+    x_chat_auth: Optional[str] = Header(None, alias="X-Chat-Auth"),
+):
+    """Return the authenticated user's role identities without exposing full prompts."""
+    auth_username = await _verify(x_chat_auth)
+    if not auth_username or auth_username != username:
+        return {"status": "error", "message": "unauthorized", "characters": []}
+    db = get_database()
+    conn = await db.acquire()
+    try:
+        async with conn.execute(
+            """SELECT c.id, c.data, c.name
+               FROM characters c JOIN users u ON c.user_id = u.id
+               WHERE u.username = ? AND COALESCE(c.is_hidden, 0) = 0
+               ORDER BY COALESCE(c.updated_at, '') DESC, c.id""",
+            (username,),
+        ) as cursor:
+            rows = await cursor.fetchall()
+        characters = []
+        for character_id, raw_data, fallback_name in rows:
+            try:
+                data = json.loads(raw_data) if raw_data else {}
+            except (TypeError, json.JSONDecodeError):
+                data = {}
+            characters.append(character_identity_summary(character_id, data, fallback_name or ""))
+        return {"status": "ok", "characters": characters}
+    except Exception as exc:
+        logger.warning("[Companion/characters] 加载角色失败: %s", exc)
+        return {"status": "error", "message": "load_failed", "characters": []}
+    finally:
+        await db.release(conn)
 
 
 @router.post("/api/companion/frame")
@@ -606,12 +650,13 @@ async def analyze_frame(
         persona_with_memory = f"{persona}\n\n{_memory_block}" if persona else _memory_block
     # 角色扮演锚定：身份认同 + 行为风格指令，始终追加
     persona_with_memory = f"{persona_with_memory}\n\n{_COMPANION_ROLEPLAY_ANCHOR}" if persona_with_memory else _COMPANION_ROLEPLAY_ANCHOR
+    persona_with_memory = apply_personality_style(persona_with_memory, body.personality_style)
     # 用户明确偏好覆盖块：把 preference 记忆具体化为强制指令，放在最末尾权重最高
     _pref_override = _build_preference_override(_layers.get("c_entries", []) if _memory_block else [])
     if _pref_override:
         persona_with_memory = f"{persona_with_memory}\n\n{_pref_override}"
 
-    sess_key = _session_key(body.username, body.character_id)
+    sess_key = _session_key(body.username, body.character_id, body.conversation_id)
     session = _get_or_create_session(sess_key)
 
     # 环境上下文（时间/设备/位置/天气），每次请求随消息更新
@@ -683,7 +728,10 @@ async def analyze_frame(
 
     messages: List[dict] = [{"role": "system", "content": system_prompt}]
     messages.extend(session["history"])
-    active_model = await _get_companion_model(auth_username or body.username)
+    active_model = await _get_companion_model(
+        auth_username or body.username,
+        has_image=has_image,
+    )
     messages.append(current_user_msg)
     messages = _companion_inject_no_think(messages, active_model)
 
@@ -786,12 +834,13 @@ async def analyze_frame_stream(
     if _memory_block:
         persona_with_memory = f"{persona}\n\n{_memory_block}" if persona else _memory_block
     persona_with_memory = f"{persona_with_memory}\n\n{_COMPANION_ROLEPLAY_ANCHOR}" if persona_with_memory else _COMPANION_ROLEPLAY_ANCHOR
+    persona_with_memory = apply_personality_style(persona_with_memory, body.personality_style)
     # 用户明确偏好覆盖块：具体化为强制指令，放在最末尾权重最高
     _pref_override = _build_preference_override(_layers.get("c_entries", []))
     if _pref_override:
         persona_with_memory = f"{persona_with_memory}\n\n{_pref_override}"
 
-    sess_key = _session_key(body.username, body.character_id)
+    sess_key = _session_key(body.username, body.character_id, body.conversation_id)
     session = _get_or_create_session(sess_key)
 
     # 环境上下文（时间/设备/位置/天气），每次请求随消息更新
@@ -895,7 +944,10 @@ async def analyze_frame_stream(
         is_text_mode = False
 
     messages: List[dict] = [{"role": "system", "content": system_prompt}]
-    active_model = await _get_companion_model(auth_username or body.username)
+    active_model = await _get_companion_model(
+        auth_username or body.username,
+        has_image=has_image,
+    )
     messages.extend(session["history"])
     messages.append(current_user_msg)
     messages = _companion_inject_no_think(messages, active_model)

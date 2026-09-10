@@ -28,6 +28,9 @@ reportlab>=4.4.0
 # Environment Variables
 python-dotenv>=1.0.0
 
+# Optional normal-engine selector uses this pinned official agent runtime.
+deepseek-harness-sdk==0.1.2rc1
+
 # Database
 aiosqlite>=0.19.0
 
@@ -36,3 +39,5 @@ aiosqlite>=0.19.0
 orjson>=3.9.0
 redis>=5.0.0
 uvloop>=0.19.0; platform_system != "Windows"
+# Windows does not ship the IANA database used by ZoneInfo("Asia/Shanghai").
+tzdata>=2026.1; platform_system == "Windows"

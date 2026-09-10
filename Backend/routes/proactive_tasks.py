@@ -190,6 +190,14 @@ async def create_task(
     db = get_database()
     await db.init()
     async with aiosqlite.connect(db.db_path) as conn:
+        await conn.execute('BEGIN IMMEDIATE')
+        from ..proactive_task_conversation import resolve_task_conversation
+        try:
+            conversation_id = await resolve_task_conversation(
+                conn, db, username, body.character_id.strip(), body.conversation_id.strip())
+        except ValueError as exc:
+            await conn.rollback()
+            return JSONResponse(status_code=404, content={"status": "error", "message": str(exc)})
         await conn.execute(
             """
             INSERT INTO proactive_tasks (
@@ -204,7 +212,7 @@ async def create_task(
                 task_id,
                 username,
                 body.character_id.strip(),
-                body.conversation_id.strip(),
+                conversation_id,
                 body.title.strip()[:120],
                 normalize_task_type(body.task_type),
                 normalize_schedule_type(body.schedule_type),
@@ -238,18 +246,30 @@ async def update_task(
     db = get_database()
     await db.init()
     async with aiosqlite.connect(db.db_path) as conn:
+        await conn.execute('BEGIN IMMEDIATE')
+        owned = await (await conn.execute(
+            "SELECT 1 FROM proactive_tasks WHERE id=? AND username=? AND source='user'", (task_id, username))).fetchone()
+        if not owned:
+            return JSONResponse(status_code=404, content={"status": "error", "message": "not_found"})
+        from ..proactive_task_conversation import resolve_task_conversation
+        try:
+            conversation_id = await resolve_task_conversation(
+                conn, db, username, body.character_id.strip(), body.conversation_id.strip())
+        except ValueError as exc:
+            await conn.rollback()
+            return JSONResponse(status_code=404, content={"status": "error", "message": str(exc)})
         cur = await conn.execute(
             """
             UPDATE proactive_tasks
                SET character_id=?, conversation_id=?, title=?, task_type=?,
                    schedule_type=?, status=?, due_at_ms=?, interval_seconds=?,
                    time_of_day=?, timezone=?, days_json=?, jitter_minutes=?,
-                   prompt=?, style=?, cancel_if_user_replies=?, updated_at_ms=?
+                   prompt=?, style=?, cancel_if_user_replies=?, updated_at_ms=MAX(updated_at_ms+1,?)
              WHERE id=? AND username=? AND source='user'
             """,
             (
                 body.character_id.strip(),
-                body.conversation_id.strip(),
+                conversation_id,
                 body.title.strip()[:120],
                 normalize_task_type(body.task_type),
                 normalize_schedule_type(body.schedule_type),

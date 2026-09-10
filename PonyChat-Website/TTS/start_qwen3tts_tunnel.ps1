@@ -16,8 +16,8 @@ $ServerUser = "root"
 $ServerSshPort = 22
 $KeyCandidates = @(
     $env:PONYCHAT_VOICE_SSH_KEY,
-    (Join-Path (Split-Path -Parent $Root) "ServerKeys\DMIT - 154.17.23.237\Server-USA-id_rsa\id_rsa.pem"),
-    "P:\ServerKeys\DMIT - 154.17.23.237\Server-USA-id_rsa\id_rsa.pem"
+    (Join-Path (Split-Path -Parent $Root) "ServerKeys\Server-USA - 154.17.23.237\Server-USA-id_rsa\id_rsa.pem"),
+    "P:\ServerKeys\Server-USA - 154.17.23.237\Server-USA-id_rsa\id_rsa.pem"
 ) | Where-Object { $_ }
 $Key = $KeyCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 

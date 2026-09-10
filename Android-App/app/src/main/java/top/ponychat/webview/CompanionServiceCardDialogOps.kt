@@ -295,11 +295,37 @@ internal fun CompanionService.openChatDialog() {
             setPadding(dpToPx(18), dpToPx(14), dpToPx(14), dpToPx(10))
             gravity = Gravity.CENTER_VERTICAL
         }
-        val titleTv = TextView(this).apply {
+        val identityBlock = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        }
+        identityBlock.addView(TextView(this).apply {
             text = characterName
             textSize = 15f
             setTextColor(Color.WHITE)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
+        })
+        identityBlock.addView(TextView(this).apply {
+            val summary = characterPersonality.trim().take(24)
+            text = listOf(summary, currentPersonalityStyleLabel())
+                .filter { it.isNotBlank() }
+                .joinToString(" · ")
+            textSize = 10f
+            maxLines = 1
+            setTextColor(Color.parseColor("#88FFFFFF"))
+        })
+        val roleBtn = TextView(this).apply {
+            text = "换角色"
+            textSize = 12f
+            setTextColor(Color.parseColor("#FFB7B0FF"))
+            setPadding(dpToPx(8), dpToPx(5), dpToPx(8), dpToPx(5))
+            setOnClickListener { showCompanionCharacterMenu(this) }
+        }
+        val styleBtn = TextView(this).apply {
+            text = "个性"
+            textSize = 12f
+            setTextColor(Color.parseColor("#FFB7B0FF"))
+            setPadding(dpToPx(8), dpToPx(5), dpToPx(8), dpToPx(5))
+            setOnClickListener { showCompanionPersonalityMenu() }
         }
         val closeBtn = TextView(this).apply {
             text = "✕"
@@ -308,7 +334,9 @@ internal fun CompanionService.openChatDialog() {
             setPadding(dpToPx(10), dpToPx(4), dpToPx(6), dpToPx(4))
             setOnClickListener { closeChatDialog() }
         }
-        header.addView(titleTv)
+        header.addView(identityBlock)
+        header.addView(roleBtn)
+        header.addView(styleBtn)
         header.addView(closeBtn)
 
         val topDivider = View(this).apply {
@@ -411,6 +439,7 @@ internal fun CompanionService.openChatDialog() {
 }
 
 internal fun CompanionService.closeChatDialog() {
+    dismissCompanionIdentityChooser()
     val view = chatDialogView ?: return
     chatDialogView = null
     isChatDialogOpening = false

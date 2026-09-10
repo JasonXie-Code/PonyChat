@@ -34,9 +34,9 @@ async def _run_step4_next_turn_prep_decision(
     cfg = model_manager.get_model_for_task("chat_router") or model_manager.get_active_model()
     if not cfg or not cfg.get("api_key"):
         return None
-    model_name = str(cfg.get("model_name") or cfg.get("id") or "deepseek-v4-flash")
+    model_name = str(cfg.get("model_name") or cfg.get("id") or "deepseek-flash")
     reasoning_policy = resolve_software_reasoning_policy(
-        "normal_planner",
+        "proactive_decision",
         model_name=model_name,
         mode="normal",
         active_model=cfg,
@@ -57,18 +57,19 @@ async def _run_step4_next_turn_prep_decision(
                     planner=planner,
                     character_profile=character_profile,
                     is_new_contact_opening=is_new_contact_opening,
+                    chain_count=chain_count,
                 ),
             },
         ],
         "response_format": {"type": "json_object"},
         "stream": False,
     }
-    apply_llm_task_payload_config(payload, "normal_planner")
+    apply_llm_task_payload_config(payload, "proactive_decision")
     res = await call_llm_payload(
         payload,
         cfg,
         task="classify",
-        timeout=llm_task_float("normal_planner", "timeout_seconds", 45.0) or 45.0,
+        timeout=llm_task_float("proactive_decision", "timeout_seconds", 45.0) or 45.0,
         reasoning_policy=reasoning_policy,
         chat_debug_request={
             "username": username,
@@ -515,6 +516,7 @@ async def _process_one_due(task: dict[str, Any]) -> bool:
             await _finish_task(task_id, "cancelled", cancel_reason=validation.get("reason") or "not_sendable")
             return True
 
+        task['_scheduled_followup_row'] = True
         generation_task = asyncio.create_task(
             _generate_followup_via_normal_pipeline(task, validation.get("recent_messages") or [])
         )
@@ -541,13 +543,20 @@ async def _process_one_due(task: dict[str, Any]) -> bool:
                 task_id,
                 conversation_id[:12],
             )
-            await _finish_task(task_id, "cancelled", cancel_reason="user_replied_during_generation")
+            if await _is_task_processing(task_id):
+                await _finish_task(task_id, "cancelled", cancel_reason="user_replied_during_generation")
             return True
         finally:
             current = _pending_step4_followup_generation_tasks.get(task_id)
             if current and current[3] is generation_task:
                 _pending_step4_followup_generation_tasks.pop(task_id, None)
-        if not await _is_task_processing(task_id):
+        atomically_sent = False
+        if generated.get('persisted_by_normal_core'):
+            async with aiosqlite.connect(db.db_path) as conn:
+                row = await (await conn.execute('SELECT status,sent_message_id FROM scheduled_followups WHERE id=?',
+                                               (task_id,))).fetchone()
+            atomically_sent = bool(row and row[0] == 'sent' and row[1] in (generated.get('assistant_message_ids') or []))
+        if not atomically_sent and not await _is_task_processing(task_id):
             logger.info("[ScheduledFollowup] skip generated message: task no longer processing id=%s", task_id)
             return True
         if not generated.get("should_send"):
@@ -555,7 +564,7 @@ async def _process_one_due(task: dict[str, Any]) -> bool:
             return True
 
         if generated.get("persisted_by_normal_core"):
-            if is_shutdown_requested():
+            if is_shutdown_requested() and not atomically_sent:
                 await _requeue_processing_followup(task_id)
                 logger.info("[ScheduledFollowup] shutdown before normal-core audit; requeued task=%s", task_id)
                 return True
@@ -692,11 +701,17 @@ async def _process_one_due(task: dict[str, Any]) -> bool:
 async def _validate_task_still_sendable(task: dict[str, Any]) -> dict[str, Any]:
     db = get_database()
     source_message_id = str(task.get("source_message_id") or "")
+    expires_at = int(task.get("expires_at_ms") or 0)
+    if expires_at and expires_at < _now_ms():
+        return {"ok": False, "reason": "expired"}
     settings = await load_proactive_settings(str(task.get("username") or ""))
     if not settings.enabled:
         return {"ok": False, "reason": "proactive_messages_disabled"}
     async with aiosqlite.connect(db.db_path) as conn:
         conn.row_factory = aiosqlite.Row
+        from .chat_modules.normal_lifecycle import scheduled_character_is_dead_on_connection
+        if await scheduled_character_is_dead_on_connection(conn, task):
+            return {"ok": False, "reason": "character_already_dead"}
         async with conn.execute(
             """
             SELECT c.is_hidden, u.id AS user_id
@@ -726,10 +741,11 @@ async def _validate_task_still_sendable(task: dict[str, Any]) -> dict[str, Any]:
             (task["conversation_id"], source_message_id),
         ) as cur:
             src = await cur.fetchone()
-        if not src:
+        source_optional = not source_message_id and bool(task.get('_user_created_task'))
+        if not src and not source_optional:
             return {"ok": False, "reason": "source_message_missing"}
-        src_seq = int(src["sequence_number"] or 0)
-        src_ts = int(src["timestamp"] or 0)
+        src_seq = int(src["sequence_number"] or 0) if src else 0
+        src_ts = int(src["timestamp"] or 0) if src else int(task['created_at_ms'])
 
         if int(task.get("cancel_if_user_replies") or 0) == 1:
             async with conn.execute(
@@ -741,12 +757,14 @@ async def _validate_task_still_sendable(task: dict[str, Any]) -> dict[str, Any]:
                    AND deleted_at IS NULL
                    AND COALESCE(is_hidden, 0)=0
                    AND (
-                        COALESCE(sequence_number, 0) > ?
+                        (?=0 AND COALESCE(sequence_number, 0) > ?)
                         OR (COALESCE(sequence_number, 0)=? AND COALESCE(timestamp, 0) > ?)
+                        OR (?=1 AND COALESCE(timestamp, 0) > ?)
                    )
                  LIMIT 1
                 """,
-                (task["conversation_id"], src_seq, src_seq, src_ts),
+                (task["conversation_id"], int(source_optional), src_seq, src_seq, src_ts,
+                 int(source_optional), src_ts),
             ) as cur:
                 user_after = await cur.fetchone()
             if user_after:
@@ -813,11 +831,8 @@ async def _validate_task_still_sendable(task: dict[str, Any]) -> dict[str, Any]:
         for r in reversed(recent)
     ]
     latest_user_text = _latest_user_text(messages)
-    seed_text = str(task.get("seed") or "")
-    if _is_user_conversation_end(latest_user_text):
+    if int(task.get("cancel_if_user_replies") or 0) == 1 and _is_user_conversation_end(latest_user_text):
         return {"ok": False, "reason": "user_ended_conversation"}
-    if _is_early_morning_time_mismatch(seed_text):
-        return {"ok": False, "reason": "early_hours_morning_seed"}
     if _is_reminder_task(task):
         meta = _planner_json(task)
         agreed = coerce_user_agreed_task(meta.get("user_agreed_task"))
@@ -897,11 +912,21 @@ async def _generate_followup_via_normal_pipeline(
         pipeline="normal_proactive_core",
     )
     trigger_message_id = f"sf_trigger_{task.get('id') or uuid.uuid4().hex}"
-    trigger_text = _join_nonempty_context_parts(
-        _normal_proactive_fact_priority_context(trigger_type),
-        _build_due_trigger_text(task),
-        _scheduled_voice_inertia_prompt(recent_messages),
-    )
+    from .chat_modules.autonomous_followup_context import format_followup_context
+    agent_context = format_followup_context(task)
+    if agent_context:
+        trigger_text = _join_nonempty_context_parts(
+            "【系统内部任务触发】用户没有发送新消息。按本次真实时间、最近对话和下列原文证据，"
+            "自主决定并生成当前角色的下一条消息；任务摘要和原因只是先前计划，不是新增事实。"
+            "不得把内部触发当作用户的话，也不得把未回复当作用户同意、回答或行动。",
+            agent_context,
+        )
+    else:
+        trigger_text = _join_nonempty_context_parts(
+            _normal_proactive_fact_priority_context(trigger_type),
+            _build_due_trigger_text(task),
+            _scheduled_voice_inertia_prompt(recent_messages),
+        )
     request_messages = _recent_rows_to_chat_messages(recent_messages)
     request_messages.append(
         ChatMessage(
@@ -917,6 +942,7 @@ async def _generate_followup_via_normal_pipeline(
         character_id=str(task.get("character_id") or ""),
         conversation_id=str(task.get("conversation_id") or ""),
         mode="normal",
+        normal_engine="harness",
         memory_enabled=settings.memory_enabled,
         crisis_hotline_enabled=False,
         stream=False,
@@ -925,6 +951,10 @@ async def _generate_followup_via_normal_pipeline(
     setattr(request, "_scheduled_followup_chain_id", str(task.get("chain_id") or task.get("id") or "").strip())
     setattr(request, "_scheduled_followup_chain_count", int(task.get("chain_count") or 0) + 1)
     setattr(request, "_normal_internal_proactive_trigger", True)
+    if task.get('_scheduled_followup_row'):
+        setattr(request, "_normal_internal_followup_task_id", str(task.get('id') or ''))
+    elif task.get('_proactive_task_row'):
+        setattr(request, "_normal_internal_proactive_task_id", str(task.get('id') or ''))
     setattr(request, "_normal_internal_trigger_message_id", trigger_message_id)
     setattr(request, "_normal_internal_proactive_source_message_id", str(task.get("source_message_id") or "").strip())
     setattr(request, "_normal_persist_append_only", True)
@@ -963,72 +993,6 @@ async def _generate_followup_via_normal_pipeline(
     except Exception as exc:
         logger.warning("[ScheduledFollowup] normal core generation failed: %s", exc)
         return {"should_send": False, "reason": "generation_failed", "message": "", "active_model": active_model}
-
-
-async def _run_scheduled_normal_planner(
-    request: ChatRequest,
-    active_model: dict,
-    model_name: str,
-    *,
-    recent_chat: Optional[list[dict[str, Any]]] = None,
-    router_cfg: Optional[dict[str, Any]] = None,
-    environment_context: str = "",
-    character_prompt_context: str = "",
-    debug_role_params: Optional[dict[str, Any]] = None,
-) -> dict[str, Any]:
-    from .chat_modules.normal_planner import (
-        NormalVisionContext,
-        default_planner_result,
-        plan_normal_conversation,
-    )
-
-    planner_result = default_planner_result()
-    router_cfg = router_cfg if router_cfg is not None else model_manager.get_model_for_task("chat_router")
-    if not router_cfg:
-        planner_result["memory_use_policy"] = "判别：普通对话。无导演模型配置，沿用最近对话自然续接。"
-        planner_result["expression_policy"] = "按普通对话最近上下文自然生成下一条角色消息；默认使用中文。"
-        try:
-            from .chat_modules.voice_messages import force_text_reply_when_chat_voice_disabled
-
-            planner_result = force_text_reply_when_chat_voice_disabled(planner_result)
-        except Exception as exc:
-            logger.debug("[ScheduledFollowup] chat voice switch fallback check failed: %s", exc)
-        return planner_result
-
-    if recent_chat is None:
-        recent_chat = build_chat_router_recent_user_assistant(
-            request,
-            active_model,
-            model_name,
-            max_messages=6,
-        )
-    if not character_prompt_context:
-        character_prompt_context = _build_planner_character_prompt_context(
-            request.username,
-            request.character_id,
-        )
-    planner_result = await plan_normal_conversation(
-        recent_chat,
-        router_cfg,
-        vision_context=NormalVisionContext(),
-        environment_context=environment_context,
-        character_prompt_context=character_prompt_context,
-        username=request.username,
-        character_id=request.character_id,
-        prior_stored_count=0,
-        last_reply_based_on_image=False,
-        debug_mode="normal",
-        debug_stage_prefix="NORMAL_PROACTIVE",
-        charge_membership_chat_quota=True,
-        debug_role_params=debug_role_params,
-    )
-    try:
-        from .chat_modules.voice_messages import force_text_reply_when_chat_voice_disabled
-
-        planner_result = force_text_reply_when_chat_voice_disabled(planner_result)
-    except Exception as exc:
-        logger.debug("[ScheduledFollowup] chat voice switch check failed: %s", exc)
-    return planner_result
 
 
 async def _after_scheduled_message_saved(

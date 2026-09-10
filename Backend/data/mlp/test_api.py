@@ -12,7 +12,7 @@ from backend.model_manager import load_merged_model_config
 cfg = load_merged_model_config()
 models = cfg.get("models", [])
 for m in models:
-    if m.get("id") == "doubao-2-0-mini":
+    if m.get("id") == "deepseek-flash":
         ENDPOINT = m["endpoint"]
         API_KEY  = m["api_key"]
         MODEL    = m["model_name"]
@@ -43,6 +43,7 @@ for fname in test_files:
     text = path.read_text(encoding="utf-8")[:1500]
     payload = {
         "model": MODEL,
+        "thinking": {"type": "enabled"},
         "messages": [
             {"role": "system", "content": "你是 MLP 世界设定编辑。将下面的维基页面改写为约500字的角色/地点/概念设定卡，用 Markdown 格式输出，不要解释。"},
             {"role": "user",   "content": f"文件名：{fname}\n\n{text}"},

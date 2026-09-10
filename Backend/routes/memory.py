@@ -2,17 +2,15 @@
 长期记忆管理 API
 提供查询、新增、编辑、删除长期记忆的 REST 接口，供 App 端记忆管理页面调用。
 """
+import asyncio
 from fastapi import APIRouter, HTTPException, Query, Header
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from ..config import logger
-from ..db.memory_dao import (
-    list_memories,
-    add_memory,
-    update_memory,
-    deactivate_memories,
-    get_memory_count,
-)
+from ..config import DB_PATH
+from ..agent_memory.service import memories as unified_memories, manual
+from ..agent_memory.jobs import enqueue, status as review_status
+
 
 router = APIRouter(prefix="/api/memory", tags=["Memory"])
 
@@ -33,6 +31,10 @@ class MemoryItemResponse(BaseModel):
     recall_count: int
     layer: int = 0
     period: Optional[str] = None
+    category: str = "fact"
+    certainty: str = "explicit"
+    status: str = "active"
+    version: int = 1
 
 
 class MemoryListResponse(BaseModel):
@@ -82,8 +84,7 @@ async def get_memories(
     - layer=0：Fragment 碎片层，可额外用 memory_type 过滤
     - layer=1/2/3/4：Daily/Weekly/Monthly/Annual 摘要层
     """
-    types = [memory_type] if memory_type and memory_type in VALID_TYPES else None
-    memories = await list_memories(username, character_id, memory_types=types, layer=layer)
+    memories = await asyncio.to_thread(unified_memories, DB_PATH, username, character_id, memory_type=memory_type, layer=layer)
     return MemoryListResponse(
         status="ok",
         memories=[MemoryItemResponse(**m) for m in memories],
@@ -97,7 +98,7 @@ async def get_memory_count_api(
     character_id: str = Query(...),
 ):
     """获取活跃记忆数量。"""
-    count = await get_memory_count(username, character_id)
+    count = len(await asyncio.to_thread(unified_memories, DB_PATH, username, character_id))
     return MemoryCountResponse(status="ok", count=count)
 
 
@@ -112,33 +113,22 @@ async def create_memory(req: AddMemoryRequest):
     if not req.content.strip():
         raise HTTPException(status_code=400, detail="content 不能为空")
 
-    mem_id = await add_memory(
-        username=req.username,
-        character_id=req.character_id,
-        memory_type=req.memory_type,
-        content=req.content.strip(),
-        source=req.source,
-        importance=req.importance,
-    )
-    if not mem_id:
-        raise HTTPException(status_code=500, detail="写入记忆失败，请检查用户名是否存在")
+    try:
+        return MemoryItemResponse(**(await asyncio.to_thread(manual, DB_PATH, req.username, req.character_id,
+            content=req.content, category=req.memory_type, importance=req.importance)))
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    logger.info(f"🧠 [MemoryAPI] {req.username}/{req.character_id} 手动添加记忆 id={mem_id}")
-    from ..db.memory_dao import list_memories as _list
-    import datetime
-    return MemoryItemResponse(
-        id=mem_id,
-        memory_type=req.memory_type,
-        content=req.content.strip(),
-        source=req.source,
-        importance=req.importance,
-        is_active=True,
-        created_at=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        last_recalled_at=None,
-        recall_count=0,
-        layer=0,
-        period=None,
-    )
+
+@router.get("/review")
+async def get_review_status(username: str, character_id: str):
+    return await asyncio.to_thread(review_status, DB_PATH, username, character_id)
+
+
+@router.post("/review")
+async def request_review(req: DeleteMemoryRequest):
+    await asyncio.to_thread(enqueue, DB_PATH, req.username, req.character_id, immediate=True)
+    return {"status": "queued"}
 
 
 @router.put("/{memory_id}")
@@ -149,22 +139,22 @@ async def edit_memory(memory_id: int, req: UpdateMemoryRequest):
             status_code=400,
             detail=f"memory_type 必须是 {VALID_TYPES} 之一"
         )
-    ok = await update_memory(
-        username=req.username,
-        character_id=req.character_id,
-        memory_id=memory_id,
-        content=req.content,
-        importance=req.importance,
-        memory_type=req.memory_type,
-    )
-    if not ok:
-        raise HTTPException(status_code=404, detail="记忆不存在或无权限修改")
+    try:
+        await asyncio.to_thread(manual, DB_PATH, req.username, req.character_id, memory_id=memory_id,
+               content=req.content, category=req.memory_type, importance=req.importance)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return {"status": "ok", "id": memory_id}
 
 
 @router.delete("/{memory_id}")
 async def delete_memory(memory_id: int, req: DeleteMemoryRequest):
     """软删除一条记忆（标记为非活跃）。"""
-    await deactivate_memories(req.username, req.character_id, [memory_id])
+    try:
+        await asyncio.to_thread(manual, DB_PATH, req.username, req.character_id, memory_id=memory_id, retract=True)
+    except LookupError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
     logger.info(f"🗑️ [MemoryAPI] {req.username}/{req.character_id} 删除记忆 id={memory_id}")
     return {"status": "ok", "id": memory_id}

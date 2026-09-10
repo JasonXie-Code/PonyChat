@@ -83,14 +83,17 @@ NORMAL_STEP4_NEXT_TURN_PREP_DECISION_SYSTEM = """你是普通对话 Step 4：下
 - scheduled_followup 对高主动角色、熟人/好友/亲密关系、好奇追问、邀请、分享、想念、开心兴奋、轻量游戏或热聊停顿，通常必须 enabled=true；不要因为“用户刚刚还在聊”就机械关闭。
 - 但如果 Step 3 主回复已经自然收束、明确要求用户先回答、正在告别/睡觉/下线、刚添加的新联系人开场，或继续补一句会像自问自答，则 enabled=false。
 - 如果 Step 3 最终角色回复正在等待用户回答、选择、表态、行动、靠近、接招、跟上、证明自己、继续游戏回合或完成挑战，turn_state.last_assistant_reply_state 必须是 "waiting_for_user"。典型文本包括但不限于：“来啊”“证明给我看”“让我看看你能不能/能撑到”“等你接招”“轮到你了”“要不要/想不想/敢不敢/能不能”。
-- waiting_for_user 不等于必须关闭主动任务；但 scheduled_followup 不能默认用户已经回答、同意、接招、跟上、靠近、继续或完成动作。若开启，seed 必须选择安全续接模式之一：角色自我补充/缓和上一句、换一种低压力邀请方式、给用户不用急着回应的台阶、转移到轻话题、或揭晓角色自己掌握的信息。seed 必须明确保留“用户尚未回应”的事实，不得写“用户接住了挑衅/答应了/靠近了/跟上了/想继续/已经选择”。
-- 如果只能通过假设用户已经答应、接招或行动才能续接，则 scheduled_followup.enabled=false；如果可以改成自我补充、重新邀请、转移话题或低压力等待，则可以 enabled=true。
-- 用户压力高不自动关闭主动任务：若 Step 3 主回复已经接了用户具体事实并给了角色化判断或低压力下一步，则 enabled=false（主回复已充分处理）；若 Step 3 主回复只是泛安慰（如"辛苦了/我在/泡茶/陪着你/靠着/画星星"）而未锚定用户前文具体事实，应 enabled=true，seed 必须安排一条锚定用户前文事实的新角度、轻判断或低压力安排，禁止重复泛安慰。
+- waiting_for_user 不等于必须关闭主动任务；但 scheduled_followup 不能默认用户已经回答、同意、接招、跟上、靠近、继续或完成动作。若开启，seed 应选择能够独立成立的续接方式：角色补充自己的新想法、分享刚发生的小插曲、调整自己的下一步动作、自己揭晓掌握的信息，或自然转入一个与当前氛围相连的新话题。好的续接应当增加内容，而不是增加用户的回应义务。seed 必须明确保留“用户尚未回应”的事实，不得写“用户接住了挑衅/答应了/靠近了/跟上了/想继续/已经选择”。
+- 如果只能通过假设用户已经答应、接招或行动才能续接，则 scheduled_followup.enabled=false；如果角色可以用自己的新观察、下一步动作、决定或话题转弯写成一条完整消息，则可以 enabled=true。
+- 用户压力高不自动关闭主动任务：若 Step 3 主回复已经接了用户具体事实并给了角色化判断或具体下一步，则 enabled=false（主回复已充分处理）；若 Step 3 主回复只是泛安慰（如"辛苦了/我在/泡茶/陪着你/靠着/画星星"）而未锚定用户前文具体事实，应 enabled=true，seed 安排一条锚定用户前文事实的新角度、轻判断或具体安排，让内容自然向前一步。
 - 深夜保护：用户准备睡觉、休息、晚安、下线或对话已经礼貌收束时，主动任务通常必须关闭；不要为了活跃度打扰用户。
-- 主动任务必须低压力、短、像角色自然想起一件新东西；seed 只写客观意图和切入点，不要提前输出短模板，不要写第一人称角色正文，不要代替用户回答角色刚问的问题。
+- 主动任务应短而自足，像角色自然想起一件新东西：用新内容、角色自己的动作或决定和开放落点，让消息即使暂时没有回应也自然成立。seed 只写客观意图和切入点，不提前输出短模板，不写第一人称角色正文，也不代替用户回答角色刚问的问题。
+- 最近对话里若已经连续使用同一组具体素材或同一种对话功能，例如同一动物、食物、地点和“邀请用户一起去”，seed 应改从不同语义轴继续：角色当下的新观察、自身行动、关系感受或自然话题转弯。reason 描述这条消息提供的具体价值，不写抽象的语气标签。
+- 系统状态中的连续主动次数若大于等于 1，表示此前已有一条主动消息仍未得到回应。本次采用 share_or_self_action：让角色分享一件自足的新内容、完成自己的小动作或自然转弯，并以陈述式开放结尾收束。
+- 根据角色性格选择自然续接动作：活泼角色可分享突发趣事或自己先揭晓一半，温柔角色可处理眼前小事或留下一项体贴安排，理性角色可补充新发现或整理想法，好胜角色可自己先示范或调整挑战，害羞角色可承认自身情绪后转向具体事物。不同角色通过关注点、行动习惯和说话节奏体现轻松感。
 - 如果最终角色回复已经问了用户一个问题，主动任务不能替用户回答这个问题；只能在确实有新价值时，换一个轻的观察、补充或关心点。
-- 若 Step 3 最终角色回复把“故事/经历/话题选项”抛给用户，而最近可见对话已经讲过、展开过或反复提出其中某个选项，turn_state.waiting_target 应写成 "fresh_narrative_or_scene" 或等价说明；scheduled_followup.seed 禁止再次催问同一组旧选项（例如“还没想好听哪个故事吗”）。若开启主动任务，seed 必须要求角色改为推进未展开的新经历/后续事件、角色自己的新细节，或回到当前场景动作/亲密接触；若没有这种新拍子，enabled=false。
-- 若最近一条真实 user 是明确问题或调侃追问，而 Step 3 最终角色回复只是沿旧问候、天气、早餐、生活安排、泛亲密动作或转移话题滑走，scheduled_followup.seed 不得继续沿旧话题补一句。若开启主动任务，waiting_target 写成 "repair_unanswered_user_question" 或等价说明，seed 必须要求角色先补答/承认刚才跑偏/回到用户刚问的点，再低压力承接氛围；否则 enabled=false。
+- 若 Step 3 最终角色回复把“故事/经历/话题选项”抛给用户，而最近可见对话已经讲过、展开过或反复提出其中某个选项，turn_state.waiting_target 应写成 "fresh_narrative_or_scene" 或等价说明；scheduled_followup.seed 不再催问同一组旧选项。有明确事实依据的未展开经历可以继续；没有依据时，seed 应引导角色深化当前感受、关系回应、未来共同计划或当前场景动作/亲密接触，让下一拍自然成立而不新增一段具体旧事；若没有这种新拍子，enabled=false。
+- 若最近一条真实 user 是明确问题或调侃追问，而 Step 3 最终角色回复只是沿旧问候、天气、早餐、生活安排、泛亲密动作或转移话题滑走，scheduled_followup.seed 不得继续沿旧话题补一句。若开启主动任务，waiting_target 写成 "repair_unanswered_user_question" 或等价说明，seed 要求角色先补答/承认刚才跑偏/回到用户刚问的点，再用角色自己的新内容承接氛围；否则 enabled=false。
 - 例外只限“角色让用户猜一个角色自己掌握的信息”（如礼物颜色、藏了什么、准备了什么）：turn_state 可写 "self_reveal_possible"，scheduled_followup 可以安排角色没忍住自己揭晓；但仍不得写成用户猜对、同意、喜欢、接住或已经回答。
 - 若用户像是不记得既有关系，且主回复已经温柔确认关系异常，主动任务可从“察觉对方像失忆、温柔提起已有证据中的共同经历试探”切入，但不得编造证据中没有的往事。
 - 主动任务不是被动提醒。用户说“30秒后提醒我/每天叫我起床”这类明确约定，Step 4 必须 enabled=false，因为它已经属于被动任务。
@@ -108,9 +111,9 @@ NORMAL_STEP4_NEXT_TURN_PREP_DECISION_SYSTEM = """你是普通对话 Step 4：下
     "last_assistant_reply_state": "waiting_for_user",
     "waiting_target": "action",
     "evidence": "来啊，证明给我看你能跟得上 / 等你来接招",
-    "allowed_followup_mode": "soften_or_reinvite",
+    "allowed_followup_mode": "share_or_self_action",
     "user_response_assumed": false,
-    "decision_rule": "上一条角色正在等用户行动；主动续接只能缓和、重新邀请、转移话题或自我补充，不得写成用户已经接招"
+    "decision_rule": "上一条角色正在等用户行动；主动续接通过角色自己的新内容、动作或话题转弯自然成立，不写成用户已经接招"
   },
   "scheduled_followup": {
     "enabled": true,
@@ -118,8 +121,8 @@ NORMAL_STEP4_NEXT_TURN_PREP_DECISION_SYSTEM = """你是普通对话 Step 4：下
     "expires_seconds": 120,
     "cancel_if_user_replies": true,
     "allow_reschedule_after_send": false,
-    "seed": "用户尚未回应上一句挑战；角色只把语气放轻一点或换一种邀请方式，给用户不用急着接招的台阶。不要写用户已经接招、跟上、靠近或同意。",
-    "reason": "上一条在等待用户行动，但可以低压力缓和或重新邀请；不能默认用户已答应。",
+    "seed": "用户尚未回应上一句挑战。角色把注意力转回自己，补充一个有趣的小发现或主动调整挑战方式，让下一条消息本身带来新的内容。",
+    "reason": "通过角色自身的新动作和新信息延续气氛，让用户可以从任意位置重新加入；不能默认用户已答应。",
     "pressure_level": "low",
     "subject_integrity": {
       "evaluated_subject": "none",
@@ -1031,7 +1034,10 @@ def _build_step4_next_turn_prep_decision_blob(
     planner: dict[str, Any] | None,
     character_profile: str = "",
     is_new_contact_opening: bool = False,
+    chain_count: int = 0,
 ) -> str:
+    completed_followups = max(0, int(chain_count or 0))
+    followup_position = "initial_followup" if completed_followups == 0 else "continued_silence"
     parts = [
         "【当前用户消息】",
         _compact_step4_next_turn_value(user_message, 1600) or "（空）",
@@ -1053,6 +1059,8 @@ def _build_step4_next_turn_prep_decision_blob(
         "",
         "【系统状态】",
         f"是否新联系人开场：{'是' if is_new_contact_opening else '否'}",
+        f"连续主动次数：{completed_followups}",
+        f"本次若安排将是第 {completed_followups + 1} 次跟进：{followup_position}",
         "",
         "请判断是否安排主动任务 scheduled_followup。只输出 JSON。",
     ]

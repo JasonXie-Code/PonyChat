@@ -79,13 +79,13 @@ fun ChatViewModel.newConversation() {
 fun ChatViewModel.clearCurrentNormalLocalCache() {
     val username = prefs.username.ifBlank { return }
     val charId = _state.value.character?.id?.takeIf { it.isNotBlank() } ?: return
-    viewModelScope.launch(Dispatchers.IO) {
+    normalCacheResetJob = viewModelScope.launch(Dispatchers.IO) {
         localCache.clearForCharacterMode(username, charId, "normal")
     }
 }
 
 /** 角色重置成功后立即清空普通对话本地可见状态，让页面可立刻返回聊天页。 */
-fun ChatViewModel.applyNormalResetLocally() {
+fun ChatViewModel.applyNormalResetLocally(serverConversationId: String? = null) {
     if (_state.value.mode != "normal") {
         clearCurrentNormalLocalCache()
         return
@@ -99,16 +99,7 @@ fun ChatViewModel.applyNormalResetLocally() {
     autoSaveJob = null
     sentMessages.clear()
     resetNormalSendState()
-    _state.value = _state.value.copy(
-        messages = emptyList(),
-        inputText = "",
-        isStreaming = false,
-        isLoadingHistory = false,
-        isBackgroundRefreshing = false,
-        error = null,
-        errorDebug = null,
-        quotedMessage = null
-    )
+    _state.value = _state.value.afterNormalReset(serverConversationId)
     clearCurrentNormalLocalCache()
 }
 

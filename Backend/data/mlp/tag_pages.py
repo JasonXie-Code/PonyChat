@@ -44,9 +44,9 @@ def load_api_config():
     cfg = load_merged_model_config()
     models = cfg.get("models", [])
     for m in models:
-        if m.get("id") == "doubao-2-0-mini":
+        if m.get("id") == "deepseek-flash":
             return m["endpoint"], m["api_key"], m["model_name"]
-    raise RuntimeError("未找到 doubao-2-0-mini 配置")
+    raise RuntimeError("未找到 deepseek-flash 配置")
 
 ENDPOINT, API_KEY, MODEL_NAME = load_api_config()
 
@@ -96,7 +96,7 @@ def tag_page(filename: str, content_head: str) -> dict:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user",   "content": user_msg},
         ],
-        "reasoning_effort": "minimal",   # 分类任务不需要深度思考
+        "reasoning_effort": "low",   # 分类任务不需要深度思考
         "max_tokens": 8192,
         "temperature": 0.1,
     }

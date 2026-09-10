@@ -1,5 +1,7 @@
 # Standard MBTI
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 标准情境 MBTI 人格倾向自测（手机优先）。产品约定见 [PROJECT.md](PROJECT.md)，阶段规划见 [ROADMAP.md](ROADMAP.md)。
 
 ## 一键启动（Windows）
@@ -46,6 +48,6 @@ cd ..
 python misc/deploy_standard_mbti_server_usa.py
 ```
 
-远端静态目录：`/var/www/standard-mbti-static`，域名 **`standard-mbti.ponychat.org`**。HTTPS 与 Nginx 站点块说明见仓库根目录 **[SERVER.md](../SERVER.md)**。
+远端静态目录：`/var/www/standard-mbti-static`，域名 **`standard-mbti.ponychat.org`**。HTTPS 与 Nginx 站点块说明见仓库根目录 **[SERVER.md](../../../SERVER.md)**。
 
 连接参数从 `P:\ServerKeys\servers.json` 读取（与 `MBTI/MLP` 部署脚本相同机制）。

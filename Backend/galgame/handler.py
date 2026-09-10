@@ -3,10 +3,10 @@ handler.py
 Galgame / 锁分模式 AI 响应解析与状态持久化层。
 
 从 routes/chat.py 提取，包含 _handle_galgame_response 核心处理器。
-其余逻辑见同包内 constants / vitals / utils / retry / history。
+其余逻辑见同包内 constants / vitals / utils / history。
 
 正文后处理原则：仅对 think/thinking 等标签块做剥离（否则会污染 JSON 与展示）；
-其它格式问题由提示词约束，与 chat_modules.galgame_payload._strip_think_tag_blocks 一致。
+其它格式问题由游戏 Agent 输出合同与本处理器共同约束。
 """
 
 from __future__ import annotations
@@ -45,6 +45,7 @@ from ..utils import (
 )
 from ..websocket import galgame_locker, manager
 from .memory import schedule_char_memory_update_after_turn
+from .output_contract import REQUIRED_TOP_FIELDS, REQUIRED_SCENE_FIELDS, POSE_MAX_CHARS, POSITION_MAX_CHARS, restore_scene_siblings
 
 
 async def _handle_galgame_response(
@@ -58,7 +59,7 @@ async def _handle_galgame_response(
 ):
     """解析 AI 返回的 JSON，更新分数和时间，保存状态并广播同步
 
-    generated_text_fields: 导演本轮实际生成的 scene 文本字段集合（env/body_state/thoughts/response）。
+    generated_text_fields: 游戏 Agent 本轮生成的 scene 文本字段集合（env/body_state/thoughts/response）。
     传入时校验严格依据该集合；未传入时退回到保守默认（仅要求 env/response）。
     """
     galgame_saved = True
@@ -126,15 +127,13 @@ async def _handle_galgame_response(
                     "retry_preview": _preview_text(fixed_json),
                 }
 
+            restored = restore_scene_siblings(game_data, getattr(request, 'mode', 'galgame'))
+            if restored is not game_data:
+                logger.info('[Galgame-Parse] 恢复被scene闭合错误包入的同级字段，保留原值并继续完整校验')
+                game_data = restored
+
             # 严格字段完整性校验
-            required_top_fields = [
-                "score", "scene", "relationship_stage", "mood",
-                "character_pose", "player_pose",
-                "character_position", "player_position",
-                "character_gender", "player_gender",
-                "character_race", "player_race", "character_outfit", "player_outfit",
-                "memory_tags", "event_flags", "score_delta_reason", "suggested_options"
-            ]
+            required_top_fields = REQUIRED_TOP_FIELDS
             missing_paths = []
 
             for field in required_top_fields:
@@ -155,10 +154,7 @@ async def _handle_galgame_response(
                 missing_paths.append("scene(object)")
                 scene_obj = {}
             else:
-                required_scene_fields = [
-                    "time", "location", "env", "thoughts",
-                    "body_state", "third_party_dialogue", "response"
-                ]
+                required_scene_fields = REQUIRED_SCENE_FIELDS
                 for k in required_scene_fields:
                     if k not in scene_obj:
                         missing_paths.append(f"scene.{k}")
@@ -172,13 +168,17 @@ async def _handle_galgame_response(
                 for opt in options_obj:
                     if isinstance(opt, str):
                         s = opt.strip()
-                        if s in ("_options_perspective", "") or s.startswith("⚠"):
+                        if s in ("_options_perspective", "options_perspective", "视角提醒", "") or s.startswith("⚠"):
                             _normalized.append({"_options_perspective": s or "视角提醒"})
                         else:
                             _normalized.append({"label": s, "type": "dialogue", "tone": "neutral"})
                     elif isinstance(opt, dict):
-                        if "_options_perspective" in opt and "label" not in opt:
-                            _normalized.append(opt)
+                        if ("_options_perspective" in opt or "options_perspective" in opt or
+                                str(opt.get('label') or '').strip() in ('视角提醒', '_options_perspective', 'options_perspective')):
+                            # This is internal metadata, even if a format retry
+                            # added a label to it. Never offer it as a player action.
+                            _normalized.append({"_options_perspective": str(
+                                opt.get("_options_perspective") or opt.get("options_perspective") or "视角提醒")})
                         else:
                             if "type" not in opt or str(opt.get("type", "")).strip().lower() not in ("dialogue", "action", "speech", "text"):
                                 opt["type"] = "dialogue"
@@ -348,15 +348,15 @@ async def _handle_galgame_response(
             # 姿势字段限制为 10 字以内（去空白后计数）
             compact_character_pose_len = len(re.sub(r"\s+", "", str(game_data.get("character_pose", "") or "").strip()))
             compact_player_pose_len = len(re.sub(r"\s+", "", str(game_data.get("player_pose", "") or "").strip()))
-            if compact_character_pose_len > 10:
+            if compact_character_pose_len > POSE_MAX_CHARS:
                 non_empty_paths.append("character_pose(len<=10)")
-            if compact_player_pose_len > 10:
+            if compact_player_pose_len > POSE_MAX_CHARS:
                 non_empty_paths.append("player_pose(len<=10)")
             compact_character_position_len = len(re.sub(r"\s+", "", str(game_data.get("character_position", "") or "").strip()))
             compact_player_position_len = len(re.sub(r"\s+", "", str(game_data.get("player_position", "") or "").strip()))
-            if compact_character_position_len > 16:
+            if compact_character_position_len > POSITION_MAX_CHARS:
                 non_empty_paths.append("character_position(len<=16)")
-            if compact_player_position_len > 16:
+            if compact_player_position_len > POSITION_MAX_CHARS:
                 non_empty_paths.append("player_position(len<=16)")
 
             if non_empty_paths:
@@ -484,15 +484,21 @@ async def _handle_galgame_response(
         game_type = "galgame_lock" if getattr(request, "mode", "galgame") == "galgame_lock" else "galgame"
         state = await load_galgame_state_async(request.username, request.character_id, game_type=game_type)
         current_score = int(state.get("score", 40))
+        if game_type == 'galgame_lock' and hasattr(request, '_galgame_lock_settlement'):
+            from .lock_state import validate_preview
+            preview_error = validate_preview(request, game_data, state)
+            if preview_error:
+                return {'status': 'retry', 'error': preview_error, 'raw': raw_content,
+                        'retry_code': 'lock_settlement_mismatch'}
 
-        # 锁分模式：加载上一轮生命体征（首轮使用默认值）
+        # 锁分模式：先保留上轮基线，后面的统一合并负责应用 Agent 结果与副作用。
         is_lock_mode_early = getattr(request, "mode", "galgame") == "galgame_lock"
         if is_lock_mode_early:
             char_vitals = {**_DEFAULT_CHAR_VITALS, **(state.get("char_vitals") or {})}
             char_vitals = _clamp_vitals_dict(char_vitals, _DEFAULT_CHAR_VITALS)
             char_mood = {**_DEFAULT_CHAR_MOOD, **(state.get("char_mood") or {})}
             char_mood = _clamp_vitals_dict(char_mood, _DEFAULT_CHAR_MOOD)
-            # 首轮开场情绪扰动：generate.py 已将扰动注入 hints，此处同步叠加到基准值
+            # 兼容已保存的首轮情绪扰动，先应用到基准值。
             _init_mood_delta = state.get("_init_mood_delta") or {}
             if _init_mood_delta and not state.get("char_mood"):
                 for _mk, _dv in _init_mood_delta.items():
@@ -623,9 +629,9 @@ async def _handle_galgame_response(
         else:
             new_status = "win" if new_score >= 100 else ("lose" if new_score <= 0 else "playing")
 
-        # 锁分模式：合并模型输出的体征增量更新，执行副作用与服务端死亡兜底检测
+        # 锁分模式：采用完整绝对值快照，并保留服务端死亡兜底检测。
         if is_lock_mode:
-            # 合并模型提供的增量更新（只接受已知键，范围 clamp 到 [0,100]）
+            # 合并已验证的绝对值（只接受已知键，范围 clamp 到 [0,100]）。
             _model_vitals = game_data.get("char_vitals") or {}
             _model_mood = game_data.get("char_mood") or {}
             _model_organ = game_data.get("organ_fill") or {}
@@ -654,14 +660,13 @@ async def _handle_galgame_response(
                             pass
 
             # 胃部增加 → 直肠联动（进食消化传导：胃增量的 1/3 四舍五入，仅正向有效）
-            _stomach_delta = organ_fill.get("stomach", 0) - _prev_stomach
-            if _stomach_delta > 0:
-                _rectum_add = round(_stomach_delta / 3)
-                if _rectum_add > 0:
-                    organ_fill["rectum"] = min(100, organ_fill.get("rectum", 0) + _rectum_add)
-
-            # 应用联动副作用（lung_fill → oxygen，pain → consciousness）
-            _apply_lock_side_effects(char_vitals, char_mood, organ_fill)
+            if not getattr(request, '_galgame_lock_settlement', None):
+                # Compatibility for older saved-response callers. The Agent's
+                # validated preview already includes exactly this settlement.
+                from .lock_state import settle
+                settled = settle({'organ_fill': {'stomach': _prev_stomach}},
+                    {'char_vitals': char_vitals, 'char_mood': char_mood, 'organ_fill': organ_fill})
+                char_vitals, char_mood, organ_fill = (settled[k] for k in ('char_vitals', 'char_mood', 'organ_fill'))
 
             # 服务端兜底：对所有死亡条件做二次强制校验，不依赖模型自觉
             _vitals_death, _vitals_reason = _check_lock_death_conditions(char_vitals, char_mood, organ_fill)

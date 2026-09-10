@@ -16,12 +16,12 @@ logger = logging.getLogger(__name__)
 class ReasoningPolicy:
     # Chat Completions 兼容参数
     effort: Optional[str] = None  # minimal/low/medium/high
-    # Responses API（豆包等）或 DeepSeek V4 thinking.type
+    # Responses API或 DeepSeek V4 thinking.type
     thinking_type: Optional[str] = None  # enabled/disabled
-    reasoning_effort: Optional[str] = None  # minimal/low/medium/high（豆包等）
-    # DeepSeek V4 /chat/completions：单模型 + thinking + 顶层 reasoning_effort（仅 high|max）
+    reasoning_effort: Optional[str] = None  # minimal/low/medium/high
+    # DeepSeek V4 /chat/completions：单模型 + thinking + 顶层 reasoning_effort
     is_deepseek_v4: bool = False
-    deepseek_v4_api_reasoning_effort: Optional[str] = None  # "high" | "max"；思考关闭时为 None
+    deepseek_v4_api_reasoning_effort: Optional[str] = None  # low/medium/high/xhigh/max；思考关闭时为 None
 
 
 def _normalize_effort(effort: Optional[str]) -> str:
@@ -49,19 +49,19 @@ def is_deepseek_v4_model(
         return True
     ep = (endpoint or "").lower()
     mn = (model_name or "").lower()
-    return "api.deepseek.com" in ep and mn == "deepseek-v4-flash"
+    return "api.deepseek.com" in ep and (mn == "deepseek-flash" or mn.startswith("deepseek-v4-"))
 
 
 def map_ds_v4_api_reasoning_effort(raw: Optional[str]) -> str:
     v = str(raw or "high").strip().lower()
-    return "max" if v == "max" else "high"
+    return v if v in ("low", "medium", "high", "xhigh", "max") else "low"
 
 
 def _resolve_proactive_policy(model_name: str, am: dict, ep: str) -> ReasoningPolicy:
     """
     主动消息：只产出一条短句，必须关闭「思考/推理链」。
     否则 max_output_tokens 会被 reasoning 占满，正文无法输出（见 ChatMonitor proactive 仅 reasoning、incomplete）。
-    覆盖：DeepSeek V4、豆包/Seed 等；与主对话的 galgame 强制关思考语义一致（仅作用域不同）。
+    覆盖：DeepSeek V4；与主对话的 galgame 强制关思考语义一致（仅作用域不同）。
     """
     if is_deepseek_v4_model(am, model_name, ep):
         return ReasoningPolicy(
@@ -69,15 +69,6 @@ def _resolve_proactive_policy(model_name: str, am: dict, ep: str) -> ReasoningPo
             thinking_type="disabled",
             reasoning_effort=None,
             is_deepseek_v4=True,
-            deepseek_v4_api_reasoning_effort=None,
-        )
-    ml = (model_name or "").lower()
-    if any(k in ml for k in ("doubao", "seed")):
-        return ReasoningPolicy(
-            effort=None,
-            thinking_type="disabled",
-            reasoning_effort=None,
-            is_deepseek_v4=False,
             deepseek_v4_api_reasoning_effort=None,
         )
     return ReasoningPolicy(
@@ -92,13 +83,13 @@ def _resolve_proactive_policy(model_name: str, am: dict, ep: str) -> ReasoningPo
 def _resolve_deepseek_v4_policy(
     mode: str, active_model: dict, configured_effort: Optional[str]
 ) -> ReasoningPolicy:
-    """DeepSeek V4：thinking.type + 顶层 reasoning_effort（high|max）。"""
+    """旧版 DeepSeek V4 配置兼容：thinking.type + 顶层 reasoning_effort。"""
     gal = str(mode or "") in ("galgame", "galgame_lock")
     en = active_model.get("enable_thinking")
     th_on = (not gal) and (en is not False)
     ep = str(active_model.get("endpoint") or "")
     depth = _normalize_effort_for_model(
-        str(active_model.get("model_name") or active_model.get("id") or "deepseek-v4-flash"),
+        str(active_model.get("model_name") or active_model.get("id") or "deepseek-flash"),
         active_model,
         ep,
         configured_effort,
@@ -130,6 +121,9 @@ def resolve_reasoning_policy(
     """
     am = active_model or {}
     ep = str(endpoint or am.get("endpoint") or "")
+    if model_name == "deepseek-flash":
+        return ReasoningPolicy(thinking_type="enabled", is_deepseek_v4=True,
+                               deepseek_v4_api_reasoning_effort="low")
 
     if str(mode or "").strip() == "proactive":
         return _resolve_proactive_policy(model_name, am, ep)
@@ -139,17 +133,6 @@ def resolve_reasoning_policy(
 
     model_lower = str(model_name or "").lower()
     default_effort = _normalize_effort_for_model(model_name, am, ep, configured_effort)
-
-    # 豆包/seed：统一走 Responses API 的 thinking+reasoning 控制
-    if any(k in model_lower for k in ("doubao", "seed")):
-        effort = default_effort
-        return ReasoningPolicy(
-            effort=effort,
-            thinking_type="enabled",
-            reasoning_effort=effort,
-            is_deepseek_v4=False,
-            deepseek_v4_api_reasoning_effort=None,
-        )
 
     # Grok-3-mini：允许走 reasoning_effort（由参数策略层最终保留）
     if "grok-3-mini" in model_lower:
@@ -163,14 +146,7 @@ def resolve_reasoning_policy(
 
     # 显式非推理模型：关闭思考
     if "non-reasoning" in model_lower:
-        return ReasoningPolicy(
-            effort=None,
-            thinking_type="disabled",
-            reasoning_effort=None,
-            is_deepseek_v4=False,
-            deepseek_v4_api_reasoning_effort=None,
-        )
-
+        return ReasoningPolicy(thinking_type="disabled")
     # 其他模型按默认 high（或后端配置）处理
     # 仅用于支持 reasoning_effort 的兼容路径，Responses 的 thinking 字段不强制下发
     return ReasoningPolicy(
@@ -207,7 +183,7 @@ def resolve_software_reasoning_policy(
         active_model=am,
         endpoint=endpoint,
     )
-    if not enabled:
+    if not enabled and model_name != "deepseek-flash":
         policy.thinking_type = "disabled"
         policy.reasoning_effort = None
         policy.effort = None
@@ -234,7 +210,7 @@ def apply_model_param_policy(payload: dict, model_name: str, endpoint: str) -> d
         "temperature", "max_completion_tokens", "max_tokens", "max_output_tokens",
         "response_format",  # galgame/json 输出约束
         "thinking", "reasoning", "reasoning_effort",
-        "enable_thinking",  # Qwen3.5 / 豆包 思考开关
+        "enable_thinking",  # Qwen3.5 思考开关
         "thinking_budget",  # Qwen3.5 思考预算（token 数）
         "tools",  # Responses API 工具（如 web_search）
     }
@@ -246,10 +222,14 @@ def apply_model_param_policy(payload: dict, model_name: str, endpoint: str) -> d
     if dropped_keys:
         logger.info("🧩 [ParamPolicy] dropped non-essential keys: %s", dropped_keys)
 
-    # DeepSeek V4（api.deepseek.com + deepseek-v4-flash）：
-    # 思考关闭时直接移除 reasoning_effort；思考开启时 "minimal"/"low"/"medium" → "high"。
-    # 背景：memory layer 等后台任务固定写 reasoning_effort="minimal"，
-    # 但 DeepSeek V4 API 只接受 high/low/medium/max/xhigh，且关思考时该字段无意义。
+    # 当前统一模型固定启用 low；旧任务或客户端传入的 disabled/max 不能覆盖。
+    if model_name == "deepseek-flash":
+        payload["thinking"] = {"type": "enabled"}
+        payload["reasoning_effort"] = "low"
+        for key in ("reasoning", "enable_thinking", "thinking_budget"):
+            payload.pop(key, None)
+        return payload
+
     if is_deepseek_v4_model(None, model_name, endpoint):
         thinking = payload.get("thinking")
         thinking_disabled = isinstance(thinking, dict) and thinking.get("type") == "disabled"

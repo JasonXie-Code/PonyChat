@@ -8,8 +8,8 @@ async def _write_companion_memory(
     duration_seconds: int,
     frame_count: int,
     last_reaction: str,
-) -> None:
-    """后台任务：生成 LLM 摘要并写入 activity 记忆；失败时降级为统计模板。"""
+) -> bool:
+    """Write role-scoped memories shared by Companion and normal PonyChat chat."""
     try:
         from ..db.memory_dao import add_memory
         from ..memory.extractor import do_extract as _do_extract
@@ -75,9 +75,11 @@ async def _write_companion_memory(
             )
             if ep_written:
                 logger.info(f"🎮 [Companion/memory] 补充提取 episode/relationship {ep_written} 条")
+        return True
 
     except Exception as e:
         logger.warning(f"[Companion/end] 写记忆失败: {e}")
+        return False
 
 
 # ── POST /api/companion/end（结束会话） ─────────────────────────────────────────
@@ -100,7 +102,7 @@ async def end_companion(
     3. 写入 activity 类型记忆（供主动消息追问"那局赢了吗？"）
     """
     auth_username = await _verify(x_chat_auth)
-    if not auth_username:
+    if not auth_username or auth_username != body.username:
         return {"status": "error", "message": "unauthorized"}
 
     sess_key = _session_key(body.username, body.character_id)
@@ -158,10 +160,13 @@ async def end_companion(
     except Exception as e:
         logger.warning(f"[Companion/end] 写入 DB 失败: {e}")
 
-    # ── 2. 后台异步写记忆 ─────────────────────────────────────────────────────
+    # ── 2. 同步确认写入统一角色记忆 ───────────────────────────────────────────
+    # 身份切换必须等旧角色记忆落库后才能完成，避免用户马上回到普通聊天时
+    # 看不到刚才在 Companion 中共同经历的内容。
     history = session.get("history", [])
+    memory_persisted = True
     if history:
-        asyncio.create_task(_write_companion_memory(
+        memory_persisted = await _write_companion_memory(
             username=body.username,
             character_id=body.character_id,
             char_name=char_name,
@@ -169,9 +174,13 @@ async def end_companion(
             duration_seconds=body.duration_seconds,
             frame_count=frame_count,
             last_reaction=last_reaction,
-        ))
+        )
 
-    return {"status": "ok", "session_id": session_id}
+    return {
+        "status": "ok" if memory_persisted else "partial",
+        "session_id": session_id,
+        "memory_persisted": memory_persisted,
+    }
 
 
 # ── GET /api/companion/sessions（会话列表） ─────────────────────────────────────

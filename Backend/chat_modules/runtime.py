@@ -17,9 +17,10 @@ from ..galgame import generate_message_id
 from ..retry_manager import compute_backoff_delay
 from ..utils import ChatRequest
 from .assistant_units import build_assistant_units, split_assistant_paragraphs
-from .normal_speaker import speaker_message_fields
+from .normal_speaker import speaker_message_fields, effective_speaker_character_id
 from ..websocket import galgame_locker
 from .state import is_summary_placeholder_message
+from .agent_logging import logged_persistence
 
 
 def _is_internal_trigger_message(request: Any, msg: Any) -> bool:
@@ -246,6 +247,7 @@ def ensure_windows_cairo_runtime() -> None:
             pass
 
 
+@logged_persistence
 async def run_conversation_persistence(
     request,
     model_name: str,
@@ -639,7 +641,31 @@ async def run_conversation_persistence(
                 "contextSummaryCutoffTimestamp": (matched_conv or {}).get("contextSummaryCutoffTimestamp"),
                 "contextSummaryCutoffSequence": (matched_conv or {}).get("contextSummaryCutoffSequence"),
             }
-            ok = await convs_dao.save_conversation(request.username, request.character_id, conv_data)
+            transaction_hook = getattr(request, "_autonomous_before_reply_commit", None)
+            delivery_session = getattr(request, '_normal_delivery_session', None)
+            if transaction_hook is not None or delivery_session is not None:
+                request._autonomous_pending_reply_message_ids = tuple(ai_msg_ids + asset_msg_ids)
+                async def commit_on_resolved_conversation(conn):
+                    # DAO may select the user's canonical normal container.
+                    # All lifecycle/task checks must target that actual write.
+                    request.conversation_id = conv_data['id']
+                    # The foreground Agent store is created before the DAO
+                    # resolves the normal-chat canonical container.  Keep its
+                    # scene/memory scope aligned with that resolved ID; without
+                    # this, a later turn that supplies a new client ID can stage
+                    # memory for a conversation that the DAO intentionally did
+                    # not create, causing the whole reply transaction to fail.
+                    memory_store = getattr(request, "_autonomous_memory_store", None)
+                    if memory_store is not None:
+                        memory_store.conversation_id = str(conv_data['id'])
+                    if transaction_hook is not None:
+                        await transaction_hook(conn)
+                    if delivery_session is not None:
+                        delivery_session.register(request, ai_msg_ids + asset_msg_ids, db.db_path)
+                ok = await convs_dao.save_conversation(request.username, request.character_id, conv_data,
+                                                      before_commit=commit_on_resolved_conversation)
+            else:
+                ok = await convs_dao.save_conversation(request.username, request.character_id, conv_data)
             if ok:
                 conv_id = str(conv_data.get("id") or conv_id)
                 request.conversation_id = conv_id
@@ -693,7 +719,7 @@ async def run_conversation_persistence(
                                 else {}
                             ).get("relationship_stage")
                             or ""
-                        ),
+                        ) if (effective_speaker_character_id(request) or request.character_id) == request.character_id else "",
                     )
                 except Exception as lpe:
                     logger.debug("[LongProactive] presence update skipped: %s", lpe)
@@ -910,15 +936,11 @@ def get_smart_parameters(model_name: str, mode: str = "normal", model_id: str = 
         params["web_search"] = False
         logger.info("🚫 Galgame 模式：已禁用联网，基础温度来自软件层配置: %s", params["temperature"])
     else:
-        is_doubao = "ark.cn-beijing.volces.com" in (endpoint or "") or any(k in (model_name or "").lower() for k in ["doubao", "seed"])
         is_qwen = "dashscope.aliyuncs.com" in (endpoint or "") or "qwen" in (model_name or "").lower()
         is_grok = "grok" in (model_name or "").lower()
         if is_grok:
             params["web_search"] = False
             logger.info("🚫 对话模式：Grok 模型已强制关闭联网搜索（成本控制）")
-        elif is_doubao:
-            params["web_search"] = True
-            logger.info("🌐 对话模式：已启用联网（豆包）")
         elif is_qwen:
             params["web_search"] = True
             logger.info("🌐 对话模式：已启用联网（Qwen 官方 Responses API）")

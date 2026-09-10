@@ -1,6 +1,5 @@
 package top.ponychat.webview.data.repo
 
-import android.os.SystemClock
 import top.ponychat.webview.util.DebugLog
 import top.ponychat.webview.util.httpErrorForDisplay
 import top.ponychat.webview.util.toUserMessage
@@ -12,7 +11,6 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -32,11 +30,12 @@ class ChatRepository(private val prefs: AppPreferences) {
 
     private val TAG = "ChatRepository"
     private val gson = Gson()
-    private val displayScheduleOverdueGraceMs = 1_000L
     private fun api() = NetworkClient.createApiService(prefs)
 
-    private fun PagedMessagesResponse.visibleOnly(): PagedMessagesResponse =
-        copy(messages = messages.filter { it.isHidden != true })
+    private suspend fun PagedMessagesResponse.visibleOnly(): PagedMessagesResponse =
+        copy(messages = messages.filter { it.isHidden != true }.map { message ->
+            message.copy(attachments = message.attachments?.map { WebImageReceiver.receive(prefs, it) })
+        })
 
     private fun jsonArrayToList(arr: JSONArray): List<Any?> =
         (0 until arr.length()).map { i ->
@@ -72,90 +71,6 @@ class ChatRepository(private val prefs: AppPreferences) {
             }
         }
         return out
-    }
-
-    private fun displayDelayMsFromJson(jo: JSONObject): Long {
-        if (!isDisplayPacedEvent(jo)) {
-            return 0L
-        }
-        if (jo.has("display_delay_ms")) {
-            return jo.optLong("display_delay_ms", 0L).coerceAtLeast(0L)
-        }
-        if (jo.has("display_delay_seconds")) {
-            return (jo.optDouble("display_delay_seconds", 0.0) * 1000.0).toLong().coerceAtLeast(0L)
-        }
-        return 0L
-    }
-
-    private fun isDisplayPacedEvent(jo: JSONObject): Boolean =
-        jo.optString("type", "") in setOf("assistant_paragraph", "assistant_asset")
-
-    private fun displayAtServerMsFromJson(jo: JSONObject): Long? =
-        jo.optLong("display_at_server_ms", 0L).takeIf { it > 0L }
-
-    private fun serverNowMsFromJson(jo: JSONObject): Long? =
-        jo.optLong("server_now_ms", 0L).takeIf { it > 0L }
-
-    private fun estimatedServerNowMs(
-        serverClockBaseMs: LongArray,
-        clientClockBaseMs: LongArray,
-    ): Long? {
-        val baseServerMs = serverClockBaseMs[0]
-        val baseClientMs = clientClockBaseMs[0]
-        if (baseServerMs <= 0L || baseClientMs <= 0L) return null
-        return baseServerMs + (SystemClock.elapsedRealtime() - baseClientMs).coerceAtLeast(0L)
-    }
-
-    private suspend fun delayDisplayEventIfNeeded(
-        jo: JSONObject,
-        lastDisplayAtMs: LongArray,
-        firstDisplayEventPending: BooleanArray,
-        serverClockBaseMs: LongArray,
-        clientClockBaseMs: LongArray,
-        compensateElapsed: Boolean,
-    ) {
-        if (!isDisplayPacedEvent(jo)) return
-        val displayAtServerMs = displayAtServerMsFromJson(jo)
-        if (displayAtServerMs != null) {
-            val eventServerNowMs = serverNowMsFromJson(jo)
-            if (serverClockBaseMs[0] <= 0L && eventServerNowMs != null) {
-                serverClockBaseMs[0] = eventServerNowMs
-                clientClockBaseMs[0] = SystemClock.elapsedRealtime()
-            }
-            val beforeServerNowMs = estimatedServerNowMs(serverClockBaseMs, clientClockBaseMs)
-                ?: eventServerNowMs
-                ?: System.currentTimeMillis()
-            val remainingDelayMs = (displayAtServerMs - beforeServerNowMs).coerceAtLeast(0L)
-            if (remainingDelayMs > 0L) delay(remainingDelayMs)
-            val afterServerNowMs = estimatedServerNowMs(serverClockBaseMs, clientClockBaseMs)
-                ?: eventServerNowMs
-                ?: System.currentTimeMillis()
-            jo.put("client_display_overdue", afterServerNowMs - displayAtServerMs > displayScheduleOverdueGraceMs)
-            firstDisplayEventPending[0] = false
-            lastDisplayAtMs[0] = SystemClock.elapsedRealtime()
-            return
-        }
-        if (firstDisplayEventPending[0]) {
-            firstDisplayEventPending[0] = false
-            lastDisplayAtMs[0] = SystemClock.elapsedRealtime()
-            jo.put("client_display_overdue", false)
-            return
-        }
-        val delayMs = displayDelayMsFromJson(jo)
-        val nowMs = SystemClock.elapsedRealtime()
-        val elapsedSinceLastDisplayMs = if (lastDisplayAtMs[0] > 0L) {
-            nowMs - lastDisplayAtMs[0]
-        } else {
-            0L
-        }
-        val remainingDelayMs = if (compensateElapsed && lastDisplayAtMs[0] > 0L) {
-            (delayMs - elapsedSinceLastDisplayMs).coerceAtLeast(0L)
-        } else {
-            delayMs
-        }
-        if (remainingDelayMs > 0L) delay(remainingDelayMs)
-        lastDisplayAtMs[0] = SystemClock.elapsedRealtime()
-        jo.put("client_display_overdue", false)
     }
 
     /**
@@ -270,7 +185,8 @@ class ChatRepository(private val prefs: AppPreferences) {
                             emit(
                                 ChatDelta.AssistantAsset(
                                     messageId = jo.optString("message_id", "").ifBlank { null },
-                                    attachment = gson.fromJson(attObj.toString(), MessageAttachment::class.java),
+                                    attachment = WebImageReceiver.receive(prefs,
+                                        gson.fromJson(attObj.toString(), MessageAttachment::class.java)),
                                     index = jo.optInt("index", 0),
                                     total = jo.optInt("total", 1),
                                     sequenceNumber = if (jo.has("sequence_number")) jo.optInt("sequence_number") else null,
@@ -368,6 +284,7 @@ class ChatRepository(private val prefs: AppPreferences) {
                 if (useSseAccept) "text/event-stream" else "application/json",
             )
             .addHeader("X-Client-Id", clientIdForRequest)
+            .addHeader("X-PonyChat-Web-Images", "receipt-v1")
         prefs.authToken.takeIf { it.isNotBlank() }?.let { builder.addHeader("X-Chat-Auth", it) }
         DebugLog.d(TAG, "🚀 [sendMessage] 发送请求 mode=${request.mode} client_id=$clientIdForRequest")
         val httpReq = builder.build()
@@ -446,10 +363,7 @@ class ChatRepository(private val prefs: AppPreferences) {
                         }
                     }
                 }
-                val lastDisplayAtMs = longArrayOf(0L)
-                val firstDisplayEventPending = booleanArrayOf(true)
-                val serverClockBaseMs = longArrayOf(0L)
-                val clientClockBaseMs = longArrayOf(0L)
+                val bubbleDisplayPacer = BubbleDisplayPacer()
                 val contentType = (response.header("Content-Type") ?: "").lowercase()
                 val useSseLines = (isGalgameStream || isNormalMode) && !contentType.contains("application/json")
                 if (useSseLines) {
@@ -468,14 +382,7 @@ class ChatRepository(private val prefs: AppPreferences) {
                                     if (data.startsWith("{")) {
                                         val jo = JSONObject(data)
                                         emitImplicitNormalAcceptedIfNeeded(jo)
-                                        delayDisplayEventIfNeeded(
-                                            jo,
-                                            lastDisplayAtMs,
-                                            firstDisplayEventPending,
-                                            serverClockBaseMs,
-                                            clientClockBaseMs,
-                                            compensateElapsed = true,
-                                        )
+                                        bubbleDisplayPacer.pace(jo, compensateElapsed = true)
                                         payload = jo.toString()
                                     }
                                 } catch (e: CancellationException) {
@@ -503,14 +410,7 @@ class ChatRepository(private val prefs: AppPreferences) {
                             val e = events.get(i)
                             if (e is JSONObject) {
                                 emitImplicitNormalAcceptedIfNeeded(e)
-                                delayDisplayEventIfNeeded(
-                                    e,
-                                    lastDisplayAtMs,
-                                    firstDisplayEventPending,
-                                    serverClockBaseMs,
-                                    clientClockBaseMs,
-                                    compensateElapsed = false,
-                                )
+                                bubbleDisplayPacer.pace(e, compensateElapsed = false)
                                 if (emitFromChatPayload(e.toString(), jobIdHolder)) {
                                     return@flow
                                 }
@@ -530,14 +430,7 @@ class ChatRepository(private val prefs: AppPreferences) {
                                     if (data.startsWith("{")) {
                                         val jo = JSONObject(data)
                                         emitImplicitNormalAcceptedIfNeeded(jo)
-                                        delayDisplayEventIfNeeded(
-                                            jo,
-                                            lastDisplayAtMs,
-                                            firstDisplayEventPending,
-                                            serverClockBaseMs,
-                                            clientClockBaseMs,
-                                            compensateElapsed = false,
-                                        )
+                                        bubbleDisplayPacer.pace(jo, compensateElapsed = false)
                                         payload = jo.toString()
                                     }
                                 } catch (e: CancellationException) {
@@ -610,6 +503,7 @@ class ChatRepository(private val prefs: AppPreferences) {
             )
             if (resp.isSuccessful) resp.body()?.visibleOnly() else null
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             DebugLog.e(TAG, "loadMessagesBefore error: ${e.message}", e)
             null
         }
@@ -634,9 +528,28 @@ class ChatRepository(private val prefs: AppPreferences) {
             )
             if (resp.isSuccessful) resp.body()?.visibleOnly() else null
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             DebugLog.e(TAG, "loadMessagesAfter error: ${e.message}", e)
             null
         }
+    }
+
+    suspend fun loadDeliveredMessage(
+        username: String,
+        characterId: String,
+        conversationId: String,
+        messageId: String,
+    ): ChatMessage? = try {
+        val response = NetworkClient.createApiService(prefs).getConversationMessagesPaged(
+            username = username, characterId = characterId, conversationId = conversationId,
+            messageId = messageId, limit = 1,
+        )
+        response.body()?.visibleOnly()?.messages?.firstOrNull { it.messageId == messageId }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        DebugLog.e(TAG, "loadDeliveredMessage error: ${e.message}", e)
+        null
     }
 
     suspend fun cancelGeneration(

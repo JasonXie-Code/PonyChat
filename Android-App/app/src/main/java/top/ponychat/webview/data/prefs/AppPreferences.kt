@@ -7,6 +7,8 @@ import java.net.URI
 
 class AppPreferences(context: Context) {
 
+    internal val applicationContext: Context = context.applicationContext ?: context
+
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -33,7 +35,7 @@ class AppPreferences(context: Context) {
         private const val KEY_THEME = "theme"
         private const val KEY_FONT_SCALE = "font_scale"
         private const val KEY_CHAT_MODE = "chat_mode"
-        private const val KEY_LAST_CHARACTER_ID = "last_character_id"
+        internal const val KEY_LAST_CHARACTER_ID = "last_character_id"
         private const val KEY_LAST_CONVERSATION_ID = "last_conversation_id"
         private const val KEY_ROUTE_MODE = "route_mode"
         private const val KEY_WAN_URLS_CUSTOM = "wan_urls_custom"
@@ -54,6 +56,7 @@ class AppPreferences(context: Context) {
         // 合规
         private const val KEY_AI_DISCLAIMER_SHOWN = "ai_disclaimer_shown"
         private const val KEY_MEMORY_ENABLED = "memory_enabled"
+        private const val KEY_NORMAL_ENGINE = "normal_engine"
         private const val KEY_CRISIS_HOTLINE_ENABLED = "crisis_hotline_enabled"
 
         // 主动消息
@@ -80,10 +83,10 @@ class AppPreferences(context: Context) {
 
         // 调试模式
         private const val KEY_DEBUG_MODE = "debug_mode"
+        private const val KEY_PERSONAL_PREFERENCES_HELP_EXPANDED = "personal_preferences_help_expanded"
         private const val KEY_DEBUG_SHOW_MESSAGE_IDS = "debug_show_message_ids"
         private const val KEY_DEBUG_DISABLE_IME_SCROLL = "debug_disable_ime_scroll"
         private const val KEY_DEBUG_SHOW_RAW_CONTENT = "debug_show_raw_content"
-        private const val KEY_DEBUG_FORCE_ALWAYS_USER_EDIT = "debug_force_always_user_edit"
         private const val KEY_DEBUG_WEAK_NETWORK_CYCLE = "debug_weak_network_cycle"
         private const val KEY_DEBUG_WEAK_NETWORK_CYCLE_STARTED_AT = "debug_weak_network_cycle_started_at"
 
@@ -96,11 +99,15 @@ class AppPreferences(context: Context) {
         /** 版本更新弹窗最后一次弹出的日期（格式：YYYY-MM-DD），用于每日最多弹一次的限流 */
         private const val KEY_UPDATE_DIALOG_LAST_DATE = "update_dialog_last_date"
 
-        const val DEFAULT_WAN_URL = "https://www.ponychat.org"
+        const val DEFAULT_WAN_URL = "http://39.101.74.217:80"
+        private val LEGACY_PRODUCTION_URLS = setOf(
+            "https://www.ponychat.org", "https://ponychat.org",
+            "http://www.ponychat.org", "http://ponychat.org",
+        )
 
-        /** 固定公网域名。旧版多公网与内网直连配置不再参与 Android 端连接。 */
+        /** Server-CN 的 IP 入口，通过反向隧道连接本机后端。 */
         val WAN_CANDIDATES_FOR_SPEED_TEST: List<String> = listOf(
-            "https://www.ponychat.org"
+            DEFAULT_WAN_URL
         )
 
         /**
@@ -240,6 +247,11 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_MEMORY_ENABLED, true)
         set(value) = prefs.edit { putBoolean(KEY_MEMORY_ENABLED, value) }
 
+    /** 普通对话统一使用 Agent；兼容旧安装保存的设置。 */
+    var normalEngine: String
+        get() = "harness"
+        set(value) = prefs.edit { putString(KEY_NORMAL_ENGINE, "harness") }
+
     var crisisHotlineEnabled: Boolean
         get() = prefs.getBoolean(KEY_CRISIS_HOTLINE_ENABLED, true)
         set(value) = prefs.edit { putBoolean(KEY_CRISIS_HOTLINE_ENABLED, value) }
@@ -309,6 +321,14 @@ class AppPreferences(context: Context) {
     var lastCharacterId: String
         get() = prefs.getString(KEY_LAST_CHARACTER_ID, "") ?: ""
         set(value) = prefs.edit { putString(KEY_LAST_CHARACTER_ID, value) }
+
+    fun registerOnChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterOnChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+    }
 
     var lastConversationId: String
         get() = prefs.getString(KEY_LAST_CONVERSATION_ID, "") ?: ""
@@ -520,6 +540,11 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean(KEY_DEBUG_MODE, false)
         set(value) = prefs.edit { putBoolean(KEY_DEBUG_MODE, value) }
 
+    /** 偏好填写说明的本机展开状态；首次安装默认展开，与角色、模式和对话重置无关。 */
+    var personalPreferencesHelpExpanded: Boolean
+        get() = prefs.getBoolean(KEY_PERSONAL_PREFERENCES_HELP_EXPANDED, true)
+        set(value) = prefs.edit { putBoolean(KEY_PERSONAL_PREFERENCES_HELP_EXPANDED, value) }
+
     /** 在消息气泡下方显示消息内部 ID（调试用） */
     var debugShowMessageIds: Boolean
         get() = prefs.getBoolean(KEY_DEBUG_SHOW_MESSAGE_IDS, false)
@@ -534,11 +559,6 @@ class AppPreferences(context: Context) {
     var debugShowRawContent: Boolean
         get() = prefs.getBoolean(KEY_DEBUG_SHOW_RAW_CONTENT, false)
         set(value) = prefs.edit { putBoolean(KEY_DEBUG_SHOW_RAW_CONTENT, value) }
-
-    /** 强制所有保存操作使用 user_edit 意图（绕过防误删检测） */
-    var debugForceAlwaysUserEdit: Boolean
-        get() = prefs.getBoolean(KEY_DEBUG_FORCE_ALWAYS_USER_EDIT, false)
-        set(value) = prefs.edit { putBoolean(KEY_DEBUG_FORCE_ALWAYS_USER_EDIT, value) }
 
     /** 调试弱网：5 秒联网、5 秒断网循环。 */
     var debugWeakNetworkCycle: Boolean
@@ -631,11 +651,11 @@ class AppPreferences(context: Context) {
         }
     }
 
-    /** 获取当前有效 API Base URL（支持 auto / lan / wan 路由模式） */
+    /** 正式连接固定使用国内 IP；保留显式调试地址，淘汰旧生产域名。 */
     fun effectiveApiBase(): String {
         if (debugMode) {
             val override = normalizeApiBaseUrl(activeApiBase)
-            if (override.isNotBlank() && override != DEFAULT_WAN_URL) return override
+            if (override.isNotBlank() && override != DEFAULT_WAN_URL && override !in LEGACY_PRODUCTION_URLS) return override
         }
         return DEFAULT_WAN_URL
     }

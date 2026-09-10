@@ -167,17 +167,22 @@ def _strip_any_bracket_content(text: str) -> str:
     return cleaned.strip()
 
 
+def _format_response_dialogue(text: str) -> str:
+    """恢复统一台词格式：清除模型星号，仅给双引号内的台词加粗。
+
+    重复处理不会累积 Markdown；兼容模型偶尔输出的英文双引号。
+    """
+    text = text.replace('*', '')
+    text = re.sub(r'"([^"\n]*)"', lambda m: '“' + m.group(1) + '”', text)
+    return re.sub(r'“([^“”]+)”', lambda m: '“**' + m.group(1) + '**”', text)
+
+
 def _sanitize_scene_fields(scene: dict) -> None:
     """后处理清洗所有 scene 文本字段：
     - env/body_state/thoughts：移除 Markdown 格式（**加粗**、*斜体*）+ 移除任意括号及括号内容 + 合并换行为单段
-    - response：仅合并换行为单段，**不**移除 Markdown
+    - response：合并换行，清除模型星号后统一给双引号内的台词加粗。
 
-    response 保留 Markdown 的原因：
-        `galgame_steps.py` 在分步生成完成后会调用 `_fix_md_markers()`，
-        该函数先清除模型可能残留的所有 * 字符，然后统一将中文弯引号内的
-        台词（"台词"）重新包裹为 "**台词**"，以便 App 端以加粗样式显示对话。
-        因此 response 字段中的 ** 是后端**有意注入**的格式标记，
-        不应在此步骤被当作非法 Markdown 清除。
+    在持久化及推送前统一处理，使即时回复、历史消息和 HTML 的台词格式一致。
     """
     for field in ("env", "body_state", "thoughts", "response"):
         text = scene.get(field)
@@ -189,6 +194,8 @@ def _sanitize_scene_fields(scene: dict) -> None:
             text = _RE_MD_ITALIC.sub(r'\1', text)
             text = _strip_any_bracket_content(text)
         text = re.sub(r'\s*\n\s*', '', text).strip()
+        if field == "response":
+            text = _format_response_dialogue(text)
         if text != original:
             scene[field] = text
             logger.debug("🔧 [场景清洗] %s 已清洗（Markdown/括号/换行）", field)

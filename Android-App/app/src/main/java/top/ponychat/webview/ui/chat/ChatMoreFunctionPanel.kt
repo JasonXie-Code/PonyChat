@@ -201,6 +201,8 @@ import java.util.Locale
 
 @Composable
 internal fun MoreFunctionPanel(
+    normalMode: Boolean,
+    onPersonalPreferencesClick: () -> Unit,
     isCompanionActive: Boolean,
     showCompanionButton: Boolean,
     isAgentCompanionActive: Boolean,
@@ -228,7 +230,15 @@ internal fun MoreFunctionPanel(
         val onClick: () -> Unit
     )
 
-    val mainItems: List<FuncItem?> = listOf(
+    val preferencesItem = FuncItem(
+        icon = Icons.Filled.Tune,
+        label = "个人偏好",
+        onClick = onPersonalPreferencesClick
+    )
+    val mainItems: List<FuncItem?> = if (!normalMode) {
+        listOf(preferencesItem, null, null, null, null, null, null, null)
+    } else listOf(
+        preferencesItem,
         FuncItem(
             icon = Icons.Filled.NotificationsActive,
             label = "定时任务",
@@ -246,8 +256,7 @@ internal fun MoreFunctionPanel(
             enabled = showCompanionButton,
             onClick = onOpenCompanionPage
         ),
-        null, null,
-        null, null, null
+        null, null, null, null
     )
 
     val companionItems: List<FuncItem?> = listOf(
@@ -318,7 +327,7 @@ internal fun MoreFunctionPanel(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             AnimatedContent(
-                targetState = activePage,
+                targetState = if (normalMode) activePage else MoreFunctionPage.Main,
                 label = "more-function-page",
                 transitionSpec = {
                     val forward = targetState.ordinal > initialState.ordinal

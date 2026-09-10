@@ -92,6 +92,7 @@ async def get_messages_since(
             # 普通模式
             convs_dao = ConversationsDAO(db)
             async with aiosqlite.connect(db.db_path) as conn:
+                await conn.execute('BEGIN IMMEDIATE')
                 user_id = await db._get_user_id(conn, username)
                 # 确定目标对话（最新的 or 指定的）
                 if not conversation_id:
@@ -109,20 +110,26 @@ async def get_messages_since(
                 # 获取对话 version
                 conv_version = 0
                 async with conn.execute(
-                    "SELECT version FROM conversations WHERE id = ?", (conversation_id,)
+                    "SELECT version FROM conversations WHERE id = ? AND user_id=? AND character_id=? AND COALESCE(is_hidden,0)=0",
+                    (conversation_id, user_id, character_id)
                 ) as cur:
                     row = await cur.fetchone()
+                    if not row:
+                        return {"status": "success", "new_messages": [], "data_version": 0, "total_count": 0, "conversation_id": conversation_id}
                     conv_version = row[0] or 0 if row else 0
 
                 new_messages = []
+                from Backend.chat_modules.normal_delivery import pending_message_ids
+                pending = sorted(pending_message_ids(username, character_id, conversation_id))
+                pending_sql = f" AND (message_id IS NULL OR message_id NOT IN ({','.join('?' for _ in pending)}))" if pending else ''
                 async with conn.execute(
-                    """SELECT role, content, raw_content, image_url, timestamp, message_id,
+                    f"""SELECT role, content, raw_content, image_url, timestamp, message_id,
                               sequence_number, previous_message_id, suggestions, suggestions_status, client_id, think_translations, quoted_message_json
                        FROM messages
                        WHERE conversation_id = ? AND deleted_at IS NULL AND COALESCE(is_hidden, 0) = 0
-                         AND COALESCE(sequence_number, 0) > ?
+                         AND COALESCE(sequence_number, 0) > ? {pending_sql}
                        ORDER BY COALESCE(timestamp, 0) ASC, COALESCE(sequence_number, 0) ASC, rowid ASC""",
-                    (conversation_id, after_seq)
+                    [conversation_id, after_seq, *pending]
                 ) as cur:
                     async for row in cur:
                         msg = {
@@ -166,8 +173,8 @@ async def get_messages_since(
 
                 total_count = 0
                 async with conn.execute(
-                    "SELECT COUNT(*) FROM messages WHERE conversation_id = ? AND deleted_at IS NULL AND COALESCE(is_hidden, 0) = 0",
-                    (conversation_id,)
+                    f"SELECT COUNT(*) FROM messages WHERE conversation_id = ? AND deleted_at IS NULL AND COALESCE(is_hidden, 0) = 0 {pending_sql}",
+                    [conversation_id, *pending]
                 ) as cur:
                     row = await cur.fetchone()
                     total_count = row[0] if row else 0
@@ -274,7 +281,7 @@ async def get_conversation_detail(username: str, character_id: Optional[str] = N
             
             # 2. 普通模式（一角色一 id，仅精确匹配）
             convs_dao = ConversationsDAO(db)
-            conversations = await convs_dao.load_conversations(username, target_id)
+            conversations = await convs_dao.load_conversations(username, target_id, visible_delivery_only=True)
             if conversations:
                 use_placeholders = not load_full_images
                 # 若调用方指定了 conversation_id，则优先定位到该对话（switchConversation 场景）

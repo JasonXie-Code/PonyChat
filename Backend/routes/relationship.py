@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import time
-import uuid
+import asyncio
+from typing import Literal
 from typing import Any, Dict, List, Optional
 
 import aiosqlite
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from ..db import get_database
@@ -34,10 +34,13 @@ class RelationshipPageContent(BaseModel):
 
 class RelationshipStateResponse(BaseModel):
     status: str = "ok"
+    generation_status: str = "idle"
     username: str
     character_id: str
     conversation_id: str = ""
     relationship_stage: str = "uncertain"
+    relationship_mode: Literal['auto', 'manual'] = 'auto'
+    manual_relationship_stage: Optional[str] = None
     relationship_page: Optional[RelationshipPageContent] = None
     relationship_page_updated_at_ms: int = 0
     updated_at_ms: int = 0
@@ -46,7 +49,8 @@ class RelationshipStateResponse(BaseModel):
 class RelationshipStateUpdateRequest(BaseModel):
     username: str = Field(min_length=1)
     character_id: str = Field(min_length=1)
-    relationship_stage: str = Field(min_length=1)
+    relationship_stage: Optional[str] = None
+    relationship_mode: Literal['auto', 'manual'] = 'manual'
     conversation_id: Optional[str] = None
 
 
@@ -70,10 +74,13 @@ def _state_response_from_row(
         )
     page = row.get("relationship_page")
     return RelationshipStateResponse(
+        generation_status=str(row.get("generation_status") or "idle"),
         username=str(row.get("username") or username),
         character_id=str(row.get("character_id") or character_id),
         conversation_id=str(row.get("conversation_id") or ""),
         relationship_stage=normalize_relationship_stage(str(row.get("relationship_stage") or "")),
+        relationship_mode=row.get('relationship_mode', 'auto'),
+        manual_relationship_stage=row.get('manual_relationship_stage'),
         relationship_page=RelationshipPageContent(**page) if isinstance(page, dict) else None,
         relationship_page_updated_at_ms=int(row.get("relationship_page_updated_at_ms") or 0),
         updated_at_ms=int(row.get("updated_at_ms") or 0),
@@ -172,43 +179,28 @@ async def refresh_relationship_state(req: RelationshipRefreshRequest):
 
 
 @router.post("/state", response_model=RelationshipStateResponse)
-async def update_relationship_state(req: RelationshipStateUpdateRequest):
-    stage = normalize_relationship_stage(req.relationship_stage)
-    if stage != req.relationship_stage.strip().lower():
+async def update_relationship_state(req: RelationshipStateUpdateRequest,
+                                    x_chat_auth: Optional[str] = Header(None, alias='X-Chat-Auth')):
+    from .auth import auth_token_verify
+    username = await auth_token_verify((x_chat_auth or '').strip())
+    if not username:
+        raise HTTPException(status_code=401, detail='请先登录')
+    if username != req.username:
+        raise HTTPException(status_code=403, detail='只能修改自己的关系设置')
+    stage = str(req.relationship_stage or '').strip().lower()
+    if req.relationship_mode == 'manual' and stage not in RELATIONSHIP_STAGE_KEYS:
         raise HTTPException(
             status_code=400,
             detail=f"relationship_stage 必须是 {sorted(RELATIONSHIP_STAGE_KEYS)} 之一",
         )
     await _ensure_relationship_presence_table()
-    ts = int(time.time() * 1000)
-    conversation_id = (req.conversation_id or "").strip()
     db = get_database()
-    async with aiosqlite.connect(db.db_path) as conn:
-        await conn.execute(
-            """
-            INSERT INTO relationship_presence_states (
-                id, username, character_id, conversation_id, relationship_stage,
-                created_at_ms, updated_at_ms
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(username, character_id) DO UPDATE SET
-                conversation_id=CASE
-                    WHEN excluded.conversation_id <> '' THEN excluded.conversation_id
-                    ELSE relationship_presence_states.conversation_id
-                END,
-                relationship_stage=excluded.relationship_stage,
-                updated_at_ms=excluded.updated_at_ms
-            """,
-            (
-                f"rps_{uuid.uuid4().hex}",
-                req.username,
-                req.character_id,
-                conversation_id,
-                stage,
-                ts,
-                ts,
-            ),
-        )
-        await conn.commit()
+    from ..agent_memory.relationship_control import set_control
+    try:
+        await asyncio.to_thread(set_control, db.db_path, req.username, req.character_id,
+                               req.relationship_mode, stage)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     return _state_response_from_row(
         await load_relationship_state(req.username, req.character_id),
         username=req.username,

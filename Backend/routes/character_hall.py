@@ -16,7 +16,7 @@ import uuid
 from datetime import date, datetime
 
 from ..config import logger
-from ..utils import load_users_async, compute_character_hash
+from ..utils import character_setting_changed, load_users_async, compute_character_hash
 from ..official_characters import (
     build_official_reference_data,
     make_official_reference_id,
@@ -472,7 +472,7 @@ async def edit_hall_character(
         import aiosqlite
         async with aiosqlite.connect(db.db_path) as conn:
             async with conn.execute(
-                "SELECT publisher_username, data FROM hall_characters WHERE id = ?",
+                "SELECT publisher_username, data, name FROM hall_characters WHERE id = ?",
                 (hall_id,)
             ) as cur:
                 row = await cur.fetchone()
@@ -486,6 +486,14 @@ async def edit_hall_character(
                            'addedFrom', 'publishedAt', 'timesAdded', 'isPublic',
                            'lastChatTime', 'hallId', 'contentHash'}
             hall_data = {k: v for k, v in new_content.items() if k not in META_FIELDS}
+            try:
+                previous_data = json.loads(row[1]) if row[1] else {}
+            except (TypeError, ValueError):
+                previous_data = {}
+            if not isinstance(previous_data, dict):
+                previous_data = {}
+            previous_data.setdefault("name", row[2] or "")
+            setting_changed = character_setting_changed(previous_data, hall_data)
 
             new_hash = compute_character_hash(hall_data)
 
@@ -501,10 +509,12 @@ async def edit_hall_character(
             now = datetime.now().isoformat()
             await conn.execute(
                 """UPDATE hall_characters
-                   SET name = ?, avatar = ?, content_hash = ?, data = ?, updated_at = ?
+                   SET name = ?, avatar = ?, content_hash = ?, data = ?,
+                       updated_at = CASE WHEN ? THEN ? ELSE updated_at END
                    WHERE id = ?""",
                 (hall_data.get('name', '未命名'), hall_data.get('avatar'),
-                 new_hash, json.dumps(hall_data, ensure_ascii=False), now, hall_id)
+                 new_hash, json.dumps(hall_data, ensure_ascii=False),
+                 int(setting_changed), now, hall_id)
             )
             await conn.commit()
 
@@ -607,7 +617,7 @@ async def add_character_from_hall(
                         raise HTTPException(status_code=500, detail="Failed to save character")
                     if pub_user != username:
                         await conn.execute(
-                            "UPDATE hall_characters SET times_added = ?, updated_at = CURRENT_TIMESTAMP "
+                            "UPDATE hall_characters SET times_added = ? "
                             "WHERE id = ?",
                             ((times_added or 0) + 1, hall_id)
                         )
@@ -653,7 +663,7 @@ async def add_character_from_hall(
                 # 递增被添加次数；作者自添加通常用于误删恢复/复制，不计入大厅热度。
                 if pub_user != username:
                     await conn.execute(
-                        "UPDATE hall_characters SET times_added = ?, updated_at = CURRENT_TIMESTAMP "
+                        "UPDATE hall_characters SET times_added = ? "
                         "WHERE id = ?",
                         ((times_added or 0) + 1, hall_id)
                     )

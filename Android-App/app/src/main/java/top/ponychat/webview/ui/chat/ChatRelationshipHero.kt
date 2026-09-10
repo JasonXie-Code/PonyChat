@@ -40,7 +40,8 @@ internal fun RelationshipHero(
     displayName: String,
     userDisplayName: String,
     stage: RelationshipStageUi,
-    overview: String
+    overview: String,
+    overviewTextAlign: TextAlign = TextAlign.Start
 ) {
     Column(
         modifier = Modifier
@@ -115,17 +116,19 @@ internal fun RelationshipHero(
             )
         }
 
-        Text(
-            text = overview,
-            color = MaterialTheme.colorScheme.onSurface,
-            style = MaterialTheme.typography.bodyMedium,
-            textAlign = TextAlign.Start,
-            maxLines = 6,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 10.dp)
-        )
+        if (overview.isNotBlank()) {
+            Text(
+                text = overview,
+                color = MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = overviewTextAlign,
+                maxLines = 6,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp)
+            )
+        }
     }
 }
 
