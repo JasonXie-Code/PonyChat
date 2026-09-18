@@ -93,3 +93,11 @@ LocalLLM/server/config.before-*.json
 Backend/Agent-Test/cache/
 Backend/Agent-Test/reports/coverage-audit-20260906/tmp-candidate.tar.gz
 Android-App/20 Audition.lnk
+
+# 本地凭据与代理配置（严禁提交：曾于 2026-07 误提交，已于 2026-09 从全部历史中移除）
+Backend/data/admin_config.json
+Backend/conf/TUN.yaml
+TUN.yaml
+*.tun.yaml
+clash*.yaml
+mihomo*.yaml
