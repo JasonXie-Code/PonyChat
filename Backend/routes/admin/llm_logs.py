@@ -22,7 +22,7 @@ from typing import Any, Dict, List, Optional
 import aiosqlite
 from fastapi import APIRouter, HTTPException, Query
 
-from .llm_log_indexer import get_log_indexer, _loads_debug_log_literal
+from .llm_log_indexer import get_log_indexer, _loads_debug_log_literal, _extract_debug_log_literal
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +53,6 @@ async def _ensure_indexer():
 
 # ── 辅助函数：解析日志文件获取完整内容 ──
 
-_DEBUG_LOG_RE = re.compile(r'const\s+debug_log\s*=\s*(.+?)\s*;?\s*$', re.DOTALL)
-
-
 def _read_log_detail(file_path: str) -> Optional[Dict[str, Any]]:
     """从日志文件读取完整 debug_log 内容（兼容 JS 模板字符串）。"""
     try:
@@ -64,11 +61,11 @@ def _read_log_detail(file_path: str) -> Optional[Dict[str, Any]]:
     except Exception:
         return None
 
-    m = _DEBUG_LOG_RE.search(content)
-    if not m:
+    literal = _extract_debug_log_literal(content)
+    if literal is None:
         return None
 
-    return _loads_debug_log_literal(m.group(1))
+    return _loads_debug_log_literal(literal)
 
 
 # ── API 端点 ──

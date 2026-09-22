@@ -13,7 +13,6 @@ CHARACTER_REPLY_TASKS = frozenset({
     "galgame",
     "galgame_lock",
     "companion",
-    "normal_opening_greeting",
 })
 
 

@@ -69,10 +69,11 @@ def test_subscriber_disconnect_keeps_owner_and_reconnect_replays_once():
     asyncio.run(scenario())
 
 
-def test_live_sdk_waits_for_supplement_receipt_and_uses_same_session(monkeypatch):
-    spec = importlib.util.spec_from_file_location('tested_live_sdk', ROOT / 'chat_modules/harness_live_input.py')
-    adapter = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(adapter)
+@pytest.mark.parametrize("timeout", [2, None])
+def test_live_sdk_waits_for_supplement_receipt_and_uses_same_session(monkeypatch, timeout):
+    # 该适配器使用相对导入，必须以包内模块导入；SDK 在其内部按需导入，
+    # 因此这里先导入模块、再注入 SDK 桩即可。
+    from Backend.chat_modules import harness_live_input as adapter
     # Import path matches the pinned SDK; this explicitly guards its public API.
     monkeypatch.setitem(sys.modules, 'deepseek_harness.api', SimpleNamespace(
         normalize_input=lambda p: p, final_response=lambda events: events[-1]['data']['content'],
@@ -110,7 +111,7 @@ def test_live_sdk_waits_for_supplement_receipt_and_uses_same_session(monkeypatch
             session_prompt=prompt, subscribe_session_notifications=lambda sid: sub))
         result = await asyncio.to_thread(adapter.run_with_live_input, harness, 'original',
             session_id='same-session', turn=turn, loop=asyncio.get_running_loop(),
-            observe=observations.append, timeout=2)
+            observe=observations.append, timeout=timeout)
         assert result.final_response == 'updated'
         assert [p[0] for p in prompts] == ['same-session', 'same-session']
         assert turn.input_receipts[0]['message_ids'] == ['supplement']

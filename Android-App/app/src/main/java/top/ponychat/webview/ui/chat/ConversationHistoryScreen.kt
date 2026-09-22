@@ -69,7 +69,9 @@ import top.ponychat.webview.ui.common.adaptivePopupMenuContentColor
 import top.ponychat.webview.ui.common.adaptivePopupMenuDangerColor
 import top.ponychat.webview.ui.common.PonyDangerCountdownConfirmDialog
 import top.ponychat.webview.ui.common.PonyTopBar
+import top.ponychat.webview.ui.common.PonyTopBarBackButton
 import top.ponychat.webview.ui.common.PonyTopSearchBar
+import top.ponychat.webview.ui.common.SystemNavigationBarColorEffect
 import top.ponychat.webview.ui.theme.*
 import top.ponychat.webview.util.DebugLog
 import java.text.SimpleDateFormat
@@ -178,13 +180,10 @@ fun ConversationHistoryScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             PonyTopBar(containerColor = MaterialTheme.colorScheme.background) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                PonyTopBarBackButton(
+                    onClick = onNavigateBack,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 Spacer(Modifier.width(4.dp))
                 Row(
                     modifier = Modifier.weight(1f),
@@ -287,9 +286,11 @@ fun ConversationHistoryScreen(
             }
         },
         bottomBar = {
+            val bottomBarColor = MaterialTheme.colorScheme.surface
+            SystemNavigationBarColorEffect(color = bottomBarColor, restoreOnDispose = true)
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
+                color = bottomBarColor,
                 shadowElevation = 4.dp
             ) {
                 Box(

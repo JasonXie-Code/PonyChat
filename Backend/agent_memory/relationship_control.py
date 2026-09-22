@@ -48,11 +48,3 @@ def set_control(path, username, character_id, mode, stage=None):
         # Reject background prose generated from a selection that has since changed.
         bump(conn, username, character_id, delay=0)
         conn.commit()
-
-
-CONTROL_INSTRUCTION = (
-    'relationship_mode=manual 时，relationship_stage 是用户在控制面板明确指定的当前关系，'
-    '优先于系统推断、旧记忆和个人偏好文字；互动及关系页描述必须以此为准，'
-    '不得自行升级、降级或解除。只有用户在控制面板切回 auto 才恢复系统判断。'
-    '指定关系不代表发生过任何具体经历，不得补造共同历史。'
-)

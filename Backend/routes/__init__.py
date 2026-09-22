@@ -2,6 +2,7 @@ from . import auth, chat, characters, models_api, system, status, galgame, admin
 from . import companion_chat, companion_agent, messages, data_export, drive
 from . import mlp_database
 from . import minigames
+from . import derpibooru_search
 
 __all__ = [
     'auth', 'chat', 'characters', 'models_api', 'system',
@@ -12,4 +13,5 @@ __all__ = [
     'drive',
     'mlp_database',
     'minigames',
+    'derpibooru_search',
 ]

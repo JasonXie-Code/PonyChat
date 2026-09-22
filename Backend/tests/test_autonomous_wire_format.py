@@ -137,7 +137,9 @@ def test_actual_transform_preserves_media_history_language_and_memory_sources(im
     assert parsed["environment"] == data["environment"]
     assert parsed["source_message_times"] == data["source_message_times"]
     assert "timestamp" not in parsed["latest_user_message"]
-    assert "字符串数组" in system
+    # 交付 JSON 合同按现行结构放在按需读取的 delivery 技能里，不再常驻系统提示。
+    assert "load_chat_skill" in system
+    assert "字符串数组" in session.skill_instructions("delivery")
     assert source == before
     if image:
         assert result[1] == source[1]

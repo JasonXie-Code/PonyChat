@@ -1,221 +1,90 @@
-# PonyChat 生产服务器说明
+# PonyChat 运行与服务器说明
 
-> **唯一生产服务器**：**Server-USA**（DMIT 洛杉矶，`154.17.23.237`）  
-> 密钥与连接配置的唯一来源：**`P:\ServerKeys\`**（与本仓库分离）
-> **e5 GPU 节点已退役**：`P:\ServerKeys` 中的 e5 大桥条目与私钥已删除；`voice.ponychat.org` 的默认 TTS 能力为 Server-USA 上的 CosyVoiceTTS 网关，调用官方 DashScope / 百炼在线 API。本机 Qwen3TTS 自启任务已停用，不再作为默认生产依赖。
+> 本次迁移：2026-09-09。正式切换及清理结果见 `docs/operations/local-backend-migration-20260909.md`。
 
----
+> 长期运行约定（2026-09-10 用户明确确认）：以后 PonyChat 后端都在本机 `P:\PonyChat` 运行。这是默认生产架构，不是临时开发或测试模式。后续“部署后端”应更新本机服务，不向 Server-USA 恢复后端进程、数据库或知识库；架构迁回远端需要用户另行明确要求。
 
-## 架构概览
+部署时先核对 `var/local-stack/status.json`、本机 5000 监听进程和 `Backend/.deploy_revision`，再核对 CN IP 与官网 `/api/health` 的 `deploy_token`。公网 URL 所在服务器不是后端进程所在地；即使 Server-USA 回环 5000 能返回健康响应，也可能只是隧道转发。完整步骤见 [本机后端部署](Backend/deploy/README.md)。
 
-```
-公网入口 / DNS
-  www.ponychat.org           → A → 154.17.23.237
-  ponychat.org               → A → 154.17.23.237
-  admin.ponychat.org         → Server-USA 主站 SPA 管理入口
-  mbti.ponychat.org          → A → 154.17.23.237
-  standard-mbti.ponychat.org → A → 154.17.23.237
-  voice.ponychat.org         → Server-USA CosyVoiceTTS（/cosyvoice）
-  llm.ponychat.org           → 历史 e5 GPU LLM 入口（已退役）
-  great-bridge*.ponychat.org → SSH 大桥入口
-  server.ponychat.org        → Server-USA 管理入口
+## 当前拓扑
 
-Server-USA（154.17.23.237）
-  Nginx stream :443 SNI
-    www/ponychat.org / admin / mbti / standard-mbti → 127.0.0.1:8443
-                                └─ Nginx TLS（Let's Encrypt）
-                                    ├─ /var/www/ponychat-static           ← 主站 + admin 路由
-                                    ├─ /var/www/mbti-ponychat-static      ← PonyChat-Website/MBTI/MLP/ dist
-                                    └─ /var/www/standard-mbti-static      ← PonyChat-Website/MBTI/Standard/ dist
+聊天、用户数据库、聊天日志、CosyVoice 网关和 SearXNG 在本机 `P:\PonyChat` 运行。Qwen3TTS 沿用本机 `C:\PonyChatVoice\TTS` 的 GPU 服务。
 
-  SSH 大桥（sshd GatewayPorts yes）
-    :2222  jx@...    ← GreatBridgeHome
-    :2223  aiopc@... ← GreatBridgeAIOPC
-    :2224  dckj@...  ← GreatBridgeCQ
-    :2225  e5@...    ← 已退役，连接条目与私钥已删除
+```text
+Android 6.0.6+ → https://39.101.74.217（Server-CN）
+                 → Nginx → 127.0.0.1:18500（SSH 反向隧道）
+                 → 本机 127.0.0.1:5000（FastAPI + SQLite）
 
-  TTS 服务域名
-    voice.ponychat.org → Server-USA 本地 CosyVoiceTTS 网关（/cosyvoice，旧 /qwen3tts 跳转）
-    llm.ponychat.org   → 已退役
+PonyChat 官网（Server-USA）→ /download/apk → USA 回环 5000
+                           → SSH 反向隧道 → 本机最新签名 APK
+官网 /api、/ws 与管理台 → 同一本机后端
+voice.ponychat.org/cosyvoice/* API → USA 回环 18010 → 本机 CosyVoice
+voice.ponychat.org/qwen3tts/*     → USA 回环 18012 → 本机 Qwen3TTS 8010
 ```
 
----
+手机 App 的正式 API 和更新下载使用 IP、443 端口及 HTTPS；旧生产域名偏好在升级后不再作为正式 API 地址。官网域名继续用于官网浏览与下载，旧版 App 的域名入口保留兼容转发。
 
-## Server-USA 基本信息
+## 服务与目录
 
-| 项目 | 内容 |
-|------|------|
-| 服务商 | DMIT, Inc. |
-| 套餐 | LAX.AN4.Pro.STARTER |
-| IP（IPv4） | `154.17.23.237` |
-| SSH | 端口 `22`，用户 `root` |
-| 操作系统 | Ubuntu 24.04 LTS x64 |
-| 规格 | 2 vCPU / 2 GB RAM / 80 GB SSD / 3 TB 流量 |
+| 服务 | 本机端口 / 目录 | 管理方式 |
+| --- | --- | --- |
+| 聊天 FastAPI | `5000`；`P:\PonyChat\Backend` | `PonyChat Local Backend Stack` 计划任务 |
+| 当前数据库 | `P:\PonyChat\Backend\database\ponychat.db` | SQLite，单进程写入 |
+| 日志 | `P:\PonyChat\var\.chatlogs`、`backlogs`、`applogs`、`chatlogs` | 后端运行数据 |
+| 附件与知识数据 | `var/drive`、`Backend/data` | 本机持久保存 |
+| CosyVoice | `127.0.0.1:18010`；`var/services/cosyvoice` | 同一本地守护任务 |
+| SearXNG | `127.0.0.1:18786`；`var/services/searxng` | Waitress + 独立 Python 环境 |
+| Qwen3TTS | `127.0.0.1:8010`；`C:\PonyChatVoice\TTS` | 既有 `PonyChat Qwen3TTS Local Stack` 任务 |
+| 最新 APK | `P:\PonyChat\var\releases\latest.json` 及同目录版本 APK | 原子发布指针，立即生效 |
+| 守护状态 | `P:\PonyChat\var\local-stack` | `status.json` 与各组件日志 |
 
----
+本机守护程序负责聊天、CosyVoice、搜索、USA/CN 两条隧道；子进程退出后自动重启，服务连续三次健康检查失败后重启。计划任务在当前 Windows 用户登录时启动。电脑必须保持开机、联网并登录该用户；休眠、断网或关机期间，依赖本机的聊天与 APK 下载不可用。
 
-## 静态站部署
+## 启动、停止与检查
 
-### 一键部署
-
-```bash
-cd PonyChat-Website/Main/frontend
-npm run build
-cd ../../..
-python PonyChat-Website/Main/deploy/server-usa/deploy_static_web_now.py
-```
-
-默认连接参数从 `P:\ServerKeys\servers.json`（`servers.usa` 条目）读取；可通过 `PONYCHAT_USA_HOST`、`PONYCHAT_USA_KEY` 环境变量覆盖。
-
-### Nginx 配置
-
-生产配置：`PonyChat-Website/Main/deploy/server-usa/nginx-ponychat-www.conf`
-
-- `:80`：ACME 验证 + 301 重定向（覆盖 `www`、根域、`admin`、`mbti`、`standard-mbti` 等域名）
-- `127.0.0.1:8443`：Let's Encrypt TLS 终止
-  - `www.ponychat.org` / `ponychat.org` → `/var/www/ponychat-static`
-  - `admin.ponychat.org` → `/var/www/ponychat-static`，根路径 302 到 `/admin`
-  - `mbti.ponychat.org` → `/var/www/mbti-ponychat-static`
-  - `standard-mbti.ponychat.org` → `/var/www/standard-mbti-static`
-- `voice.ponychat.org/cosyvoice` 运行在 Server-USA 的 `/opt/ponychat-cosyvoice`，由 `ponychat-cosyvoice.service` 监听 `127.0.0.1:18010`，调用官方 DashScope / 百炼 CosyVoice HTTP API。
-- `voice.ponychat.org` 原双引擎 Voice Lab（Qwen3TTS / OmniVoice）已退役；`/qwen3tts` 跳转到 `/cosyvoice/`，`/omnivoice` 返回 410。
-- `voice.ponychat.org:8443` 不是正式用户入口；为兼容旧链接，公网 `8443` 只返回 301 到标准 `https://voice.ponychat.org/...`。
-
-### 后端语音与计费
-
-`ponychat-backend.service` 已在 Server-USA 显式打开聊天语音：
-
-- `PONYCHAT_VOICE_ENABLED=1`
-- `PONYCHAT_VOICE_LAB_ENABLED=1`
-- `PONYCHAT_TTS_PROVIDER=cosyvoice`
-- `PONYCHAT_COSYVOICE_BASE_URL=https://voice.ponychat.org/cosyvoice`
-
-角色音色迁移策略：PonyChat 后端保存用户上传的参考音频作为兜底源；正常情况下首次语音生成时注册到 CosyVoice 并缓存 `cosy_voice_id`，后续直接使用阿里音色 ID 合成。仅当阿里侧音色失效、合成失败或本地 voice recipe 变化时，才用后端保存的参考音频重新注册。
-
-计费规则：每条成功生成的语音消息扣 `10` 今日积分；同一回复拆成多条语音时按条累计。成本可通过 `PONYCHAT_VOICE_MESSAGE_CREDIT_COST` 调整。缓存重发、失败或超时不会再次扣分。
-
-详细流程见 `PonyChat-Website/Main/deploy/server-usa/DEPLOY-STATIC-WEB.md`。
-
-### Let's Encrypt 证书
-
-- 路径：`/etc/letsencrypt/live/www.ponychat.org/`
-- SAN：以 `certbot certificates` 为准；主证书 `www.ponychat.org` 至少包含 `www.ponychat.org`、`ponychat.org`、`admin.ponychat.org`、`mbti.ponychat.org`、`standard-mbti.ponychat.org`，并含 `great-bridge*.ponychat.org`、`server.ponychat.org` 等（扩展示例见下）。
-- `voice.ponychat.org` / `llm.ponychat.org` 为 GPU 服务域名，证书位置跟随实际反向代理入口；如合并进主证书，扩展 SAN 时必须一并加入。
-- 如需新增子域 SAN：`certbot certonly --webroot --expand -d ... -d 新子域`
-- 扩展示例（主站、管理入口、MBTI 与大桥域名）：
-  ```bash
-  sudo certbot certonly --webroot --expand --cert-name www.ponychat.org \
-    -w /var/www/html \
-    -d www.ponychat.org -d ponychat.org -d admin.ponychat.org \
-    -d mbti.ponychat.org -d standard-mbti.ponychat.org \
-    -w /var/www/certbot \
-    -d great-bridge.ponychat.org -d great-bridge-aiopc.ponychat.org \
-    -d great-bridge-cq.ponychat.org -d server.ponychat.org
-  ```
-
----
-
-## 大桥 SSH（GreatBridge）
-
-所有大桥经 Server-USA 转发；密钥均在 `P:\ServerKeys\`：
-
-| 大桥 | 连接方式 | 密钥 |
-|------|---------|------|
-| GreatBridgeHome | `jx@154.17.23.237:2222` | `P:\ServerKeys\GreatBridgeHome\id_ed25519` |
-| GreatBridgeAIOPC | `aiopc@154.17.23.237:2223` | `P:\ServerKeys\GreatBridgeAIOPC\id_ed25519_aiopc` |
-| GreatBridgeCQ | `dckj@154.17.23.237:2224` | `P:\ServerKeys\GreatBridgeCQ\id_ed25519` |
-| e5 GPU 节点 | 已退役 | `P:\ServerKeys\servers.json` / `ssh_lib.py` 中的 e5 条目与私钥已删除 |
-
-推荐用 `P:\ServerKeys\ssh_lib.py` 统一管理（自动处理密钥 ACL、临时目录复制、执行后清理）：
-
-```python
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path("P:/ServerKeys")))
-from ssh_lib import load_server, load_bridge, ssh_exec
-
-ssh_exec(load_server("usa"), "nginx -t && systemctl reload nginx")
-ssh_exec(load_bridge("home"), "systemctl status ponychat")
-```
-
-命令行快速连通测试：
+双击仓库根 `AAA启动后端.bat` 可在后台启动整套服务；单实例保护避免重复启动。重新登记任务：
 
 ```powershell
-python P:\ServerKeys\ssh_lib.py usa
-python P:\ServerKeys\ssh_lib.py home
+.\scripts\ops\install_local_stack.ps1 -Start
 ```
 
----
+停止本机整套聊天/CosyVoice/搜索及其隧道：
 
-## 机内核对（登录 Server-USA 后）
-
-```bash
-# Nginx 状态与监听
-systemctl is-active nginx
-ss -tlnp | grep -E ':80|:443|:8443'
-
-# 配置语法与已启用站点
-nginx -t && ls /etc/nginx/sites-enabled/
-
-# 证书
-certbot certificates 2>/dev/null | grep -A3 "www.ponychat.org"
-
-# 活跃大桥端口（e5 的 2225 已退役）
-ss -tlnp | grep -E ':2222|:2223|:2224|:55222|:55322'
-
-# CosyVoiceTTS
-ss -tlnp | grep ':18010'
-curl https://voice.ponychat.org/cosyvoice/health
-curl -I https://voice.ponychat.org/qwen3tts
-curl -I https://voice.ponychat.org/omnivoice
+```powershell
+.\.venv\Scripts\python.exe scripts/ops/local_stack.py stop
 ```
 
----
+Qwen3TTS 由独立任务管理，此命令不停止 GPU 引擎。日志与数据库不会被停止命令删除。
 
-## 域名一览
+```powershell
+Invoke-RestMethod http://127.0.0.1:5000/api/health
+Invoke-RestMethod http://127.0.0.1:18010/cosyvoice/health
+Invoke-RestMethod http://127.0.0.1:8010/qwen3tts/health
+Invoke-WebRequest http://127.0.0.1:18786/healthz
+Invoke-RestMethod https://39.101.74.217/api/health
+Invoke-RestMethod https://www.ponychat.org/api/health
+Get-Content var/local-stack/status.json
+```
 
-| 域名 | 服务 | 备注 |
-|------|------|------|
-| `www.ponychat.org` / `ponychat.org` | 静态展示站（`PonyChat-Website/Main/frontend` 构建产物） | |
-| `admin.ponychat.org` | 主站管理控制台 | 与主站共用 `/var/www/ponychat-static`，根路径跳转到 `/admin` |
-| `mbti.ponychat.org` | MLP MBTI 静态站（PonyChat-Website/MBTI/MLP/） | |
-| `standard-mbti.ponychat.org` | 标准 MBTI 人格测试（`PonyChat-Website/MBTI/Standard` 构建产物） | |
-| `great-bridge.ponychat.org` | GreatBridgeHome SSH 中继 | DNS A → 154.17.23.237，端口 2222 |
-| `great-bridge-aiopc.ponychat.org` | GreatBridgeAIOPC SSH 中继 | DNS A → 154.17.23.237，端口 2223 |
-| `great-bridge-cq.ponychat.org` | GreatBridgeCQ SSH 中继 | DNS A → 154.17.23.237，端口 2224 |
-| `server.ponychat.org` | Server-USA 管理/证书域名 | 随主证书维护，实际管理入口以 `P:\ServerKeys\servers.json` 为准 |
-| `voice.ponychat.org/cosyvoice` | PonyChat CosyVoiceTTS | Server-USA 本地 FastAPI 网关调用官方 DashScope / 百炼 CosyVoice HTTP API；`/qwen3tts` 跳转到 `/cosyvoice`，`/omnivoice` 已移除 |
-| `llm.ponychat.org` | 历史 PonyChat LLM 静态站与聊天 API | e5 已退役，不再作为生产入口维护 |
+本机与两个公网入口应返回相同 `deploy_token`。排查时先确认本机健康，再检查隧道和远端 Nginx，不要用静态官网 200 代替后端验收。
 
----
+## 服务器保留内容
 
-## 关键文件
+- **Server-USA `154.17.23.237`**：Nginx、TLS、公网入口、PonyChat 网页与语音静态页面、歌曲/乐谱业务、原有历史备份，以及其他业务。
+- **Server-CN `39.101.74.217`**：只新增 PonyChat IP 路由与 SSH 回环入口；原有 Scenery、Recorder、五龙源等业务保持原路径。
+- USA 上的 `ponychat-backend`、`ponychat-cosyvoice`、`ponychat-searxng` 原计算服务及对应应用数据已清理；历史备份保留，详细校验见迁移记录。不能再向这些旧目录部署生产后端。
+- APK 由本机提供；USA 的下载代理关闭缓冲、缓存及临时落盘。历史备份不搬迁、不删除；歌曲、乐谱和网页不搬迁。
 
-| 路径 | 用途 |
-|------|------|
-| `Backend/deploy/deploy_backend_server_usa.py` | 增量同步后端到 Server-USA 并重启 `ponychat-backend` |
-| `PonyChat-Website/Main/deploy/server-usa/deploy_static_web_now.py` | 一键同步静态站到 Server-USA |
-| `PonyChat-Website/**/deploy.py` | 各网站根目录部署入口；只部署对应站点内容，远端 manifest 增量同步 |
-| `PonyChat-Website/deploy_lib/incremental.py` | 网站部署脚本共用的 SSH、manifest 与增量同步工具 |
-| `PonyChat-Website/Main/deploy/server-usa/nginx-ponychat-www.conf` | 当前生产 Nginx 配置（含 `admin`、`mbti`、`standard-mbti` 子域） |
-| `PonyChat-Website/MBTI/MLP/misc/deploy_mbti_server_usa.py` | 同步 MLP MBTI 静态站到 Server-USA |
-| `PonyChat-Website/MBTI/Standard/misc/deploy_standard_mbti_server_usa.py` | 同步 Standard MBTI 静态站到 Server-USA |
-| `PonyChat-Website/TTS/deploy.py` | 部署 CosyVoiceTTS 到 Server-USA `/opt/ponychat-cosyvoice`，写入 systemd 与 `voice.ponychat.org` Nginx 路由 |
-| `PonyChat-Website/TTS/deploy_omni_runtime.py` | e5 退役后已禁用；不再安装 OmniVoice 运行环境 |
-| `PonyChat-Website/TTS/deploy_voice_nginx_split.py` | e5 退役后已禁用；不再配置旧 Voice Lab 分流 |
-| `PonyChat-Website/TTS/PonyChat-Voice-Lab.md` | Voice Lab 架构、API、队列与 GPU 节点说明 |
-| `PonyChat-Website/LLM/README.md` | 本地 LLM 静态站接口与部署说明 |
-| `PonyChat-Website/LLM/index.html` | `llm.ponychat.org` 静态站入口 |
-| `PonyChat-Website/Main/deploy/server-usa/DEPLOY-STATIC-WEB.md` | 完整部署流程文档 |
-| `PonyChat-Website/Main/deploy/server-usa/fix-ssh-key-acl.ps1` | Windows SSH 密钥 ACL 修复 |
-| `P:\ServerKeys\servers.json` | 各服务器/大桥连接参数 |
-| `P:\ServerKeys\ssh_lib.py` | 统一 SSH 工具库 |
+## 连接与配置
 
-> `PonyChat-Website/Main/deploy/server-usa/` 目录内其余脚本（`deploy-hk-cn2-cf-ws.sh`、`fix-cn2-nginx-443-stream-merge.sh`、`nginx-panel-www-ponychat-le.conf` 等）均为 2026-04-04 迁移前 HK-CN2 时代的历史存档，不再使用。
+服务器私钥唯一来源是独立的 `P:\ServerKeys`。USA 使用 `servers.json` 的 `usa`；CN 使用 `yuelimei`，密钥目录是 `Server-CN - 39.101.74.217`。不修改全局 SSH `GatewayPorts`，所有新隧道仅绑定远端回环，由 Nginx 提供公网入口。
 
----
+本机 `.env` 与 `.env.local-stack` 保存迁移后的配置；CosyVoice 私密配置位于 `var/services/cosyvoice/.env`。这些文件及 `var/` 不提交 Git。Python 3.12 基础运行时位于 `var/runtime/python312`，不依赖 Codex App 的缓存目录。
 
-## 注意事项
+Clash Verge 的当前本地配置已将 `IP-CIDR,39.101.74.217/32,DIRECT,no-resolve` 放在规则首位，保持 `mode: rule` 和原有 TUN 设置，避免 CN 隧道绕行 USA 代理。独立导入文件为 `C:\Users\Jason Xie\Downloads\VPN-USA Clash_v1.yaml`，原 `VPN-USA Clash.yaml` 保留未改。已让本套服务的 CN SSH 隧道重新连接，实际 22、80 端口连接均命中 `IPCIDR / DIRECT`；CN 完整 APK 下载哈希一致。以后导入配置应使用此版本或保留该优先规则；Global 模式不会按此规则分流。
 
-- SSH 私钥**不提交**至本仓库；密钥实体在 `P:\ServerKeys\DMIT - 154.17.23.237\`，仓库内 `TheServerUSA-id_rsa/` 为空占位目录。
-- Windows OpenSSH 报 `bad permissions`：优先用 `ssh_lib.py` 自动处理，或在 `PonyChat-Website/Main/deploy/server-usa/` 目录执行 `fix-ssh-key-acl.ps1`。
+CN 的增量路由模板是 `Backend/deploy/ponychat-local-cn.nginx.conf`，安装到 `/etc/nginx/snippets/ponychat-local-ip.conf`，由现有 IP 虚拟主机包含。USA 继续使用既有 `ponychat-www`、`voice.ponychat.org` 配置；静态网站部署不应重置本次下载代理与语音静态路由。
+
+Android 构建和本地 APK 发布见 `Android-App/README.md`；后端更新与测试见 `Backend/deploy/README.md`。
+
+当前 Nginx 模板同时保存在 `Backend/deploy/ponychat-local-usa-download.nginx.conf`、`ponychat-local-cn.nginx.conf` 和 `ponychat-local-voice.nginx.conf`，分别对应 USA 下载、CN IP API 和 USA 语音网页/API。

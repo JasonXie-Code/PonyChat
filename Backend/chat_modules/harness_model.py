@@ -7,7 +7,13 @@ def provider(config):
 
 def provider_patch(config):
     if provider(config) != 'ponychat-local':
-        return []
+        if not config.get('supports_vision'):
+            return []
+        # The SDK's built-in catalog predates unified deepseek-flash. Unknown
+        # IDs otherwise fall back to text-only and replace pixels with a notice.
+        return [{'id': 'llm-deepseek', 'config': {'models': [{
+            'id': config['model_name'], 'inputModalities': ['text', 'image'],
+        }]}}]
     return [{'insert': [{'id': 'ponychat-local-llm', 'name': '@deepseek-ai/dsh-llm-pi-ai',
         'config': {'providers': {'ponychat-local': {
             'api': 'openai-completions',

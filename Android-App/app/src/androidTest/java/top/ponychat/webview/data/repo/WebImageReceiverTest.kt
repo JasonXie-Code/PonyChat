@@ -20,10 +20,39 @@ import top.ponychat.webview.data.prefs.AppPreferences
 import top.ponychat.webview.ui.chat.loadChatImageBytesForUpload
 import top.ponychat.webview.ui.chat.localUrlForRemoteChatImage
 import top.ponychat.webview.ui.chat.messagePreviewImages
+import top.ponychat.webview.ui.chat.retryChatImageReceipt
 import java.io.ByteArrayOutputStream
 import java.io.File
 
 class WebImageReceiverTest {
+    @Test fun failedTransferRetriesAndSavesBeforeReceipt() = runBlocking {
+        val context = testContext()
+        val prefs = AppPreferences(context).apply { username = "web_retry_test" }
+        val url = "/chat_images/tmp_android_retry.png"
+        val bitmap = Bitmap.createBitmap(8, 8, Bitmap.Config.ARGB_8888)
+        val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.PNG, 100, it) }.toByteArray()
+        bitmap.recycle()
+        val attachment = MessageAttachment(type = "image", url = url,
+            metadata = mapOf("source" to "web_search", "sha256" to WebImageReceiver.sha256(bytes)))
+        val calls = mutableListOf<String>()
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            val request = chain.request()
+            calls.add(request.method)
+            if (request.method == "POST") assertArrayEquals(bytes, loadChatImageBytesForUpload(context, url))
+            Response.Builder().request(request).protocol(Protocol.HTTP_1_1)
+                .code(if (calls.size == 1) 503 else 200).message("test")
+                .body(bytes.toResponseBody("image/png".toMediaType())).build()
+        }.build()
+        try {
+            cleanup(context, prefs.username, url)
+            retryChatImageReceipt(prefs, attachment) { WebImageReceiver.receive(prefs, attachment, client) }
+            assertEquals(listOf("GET", "GET", "POST"), calls)
+            assertArrayEquals(bytes, loadChatImageBytesForUpload(context, url))
+        } finally {
+            cleanup(context, prefs.username, url)
+        }
+    }
+
     private fun testContext(): Context = object : ContextWrapper(
         InstrumentationRegistry.getInstrumentation().targetContext) {
         override fun getApplicationContext(): Context = this
@@ -32,7 +61,11 @@ class WebImageReceiverTest {
             super.getSharedPreferences("web_image_receipt_test_$name", mode)
     }
 
-    @Test fun savesPhoneBytesBeforeReceiptAndReplaysFromLocalStorage() = runBlocking {
+    @Test fun savesPhoneBytesBeforeReceiptAndReplaysFromLocalStorage() = verifySavedImage("web_search")
+
+    @Test fun historyRepeatSavesOriginalBytesAndReplaysFromLocalStorage() = verifySavedImage("history_repeat")
+
+    private fun verifySavedImage(source: String) = runBlocking {
         val context = testContext()
         val prefs = AppPreferences(context).apply { username = "web_image_test" }
         val bitmap = Bitmap.createBitmap(32, 24, Bitmap.Config.ARGB_8888)
@@ -42,7 +75,7 @@ class WebImageReceiverTest {
         bitmap.recycle()
         val bytes = output.toByteArray()
         val url = "/chat_images/tmp_android_test.jpg"
-        val metadata = mapOf("source" to "web_search", "sha256" to WebImageReceiver.sha256(bytes))
+        val metadata = mapOf("source" to source, "sha256" to WebImageReceiver.sha256(bytes))
         val attachment = MessageAttachment(type = "image", url = url, metadata = metadata)
         val existingImage = File(context.filesDir, "chat_images/gallery_existing.jpg").apply {
             parentFile!!.mkdirs()
@@ -101,6 +134,38 @@ class WebImageReceiverTest {
         }
     }
 
+    @Test fun animatedGifIsSavedUnchangedBeforeReceipt() = runBlocking {
+        val context = testContext()
+        val prefs = AppPreferences(context).apply { username = "gif_receipt_test" }
+        val bytes = android.util.Base64.decode("R0lGODlhAgACAIEAAP8AAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQACgAAACwAAAAAAgACAAAIBgABCAQQEAAh+QQBCgABACwAAAAAAgACAIEAAP8AAAAAAAAAAAAIBgABCAQQEAA7", android.util.Base64.DEFAULT)
+        val url = "/chat_images/tmp_android_animation.gif"
+        val attachment = MessageAttachment(type = "image", url = url,
+            metadata = mapOf("source" to "web_search", "sha256" to WebImageReceiver.sha256(bytes)))
+        val calls = mutableListOf<String>()
+        val client = OkHttpClient.Builder().addInterceptor { chain ->
+            val request = chain.request()
+            calls.add(request.method)
+            if (request.method == "POST") {
+                val local = requireNotNull(localUrlForRemoteChatImage(context, url))
+                assertTrue(local.endsWith(".gif"))
+                val saved = File(android.net.Uri.parse(local).path!!).readBytes()
+                assertArrayEquals(bytes, saved)
+                val movie = android.graphics.Movie.decodeByteArray(saved, 0, saved.size)
+                assertNotNull(movie)
+                assertEquals(200, movie.duration())
+            }
+            Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("OK")
+                .body(if (request.method == "GET") bytes.toResponseBody("image/gif".toMediaType())
+                      else "{}".toResponseBody("application/json".toMediaType())).build()
+        }.build()
+        try {
+            WebImageReceiver.receive(prefs, attachment, client)
+            assertEquals(listOf("GET", "POST"), calls)
+        } finally {
+            cleanup(context, prefs.username, url)
+        }
+    }
+
     @Test fun corruptDownloadNeverAcknowledgesDeletion() = runBlocking {
         val context = testContext()
         val prefs = AppPreferences(context).apply { username = "web_image_test" }
@@ -124,7 +189,8 @@ class WebImageReceiverTest {
 
     private fun cleanup(context: Context, username: String, url: String) {
         val key = WebImageReceiver.sha256("$username\n$url".toByteArray())
-        val file = File(context.filesDir, "chat_images/web_$key.jpg")
+        val extension = url.substringAfterLast('.')
+        val file = File(context.filesDir, "chat_images/web_$key.$extension")
         context.getSharedPreferences("ponychat_local_image_remote", Context.MODE_PRIVATE).edit()
             .remove(android.net.Uri.fromFile(file).toString()).commit()
         file.delete()

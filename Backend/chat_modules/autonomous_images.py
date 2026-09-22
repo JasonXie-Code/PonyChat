@@ -5,6 +5,11 @@ import re
 
 import aiosqlite
 
+from .Prompts import AUTONOMOUS_IMAGES_TEXT
+
+
+CURRENT_IMAGE_GUIDANCE = AUTONOMOUS_IMAGES_TEXT['current_image_guidance']
+
 
 async def resolve_image_inputs(urls, db_path):
     result = []

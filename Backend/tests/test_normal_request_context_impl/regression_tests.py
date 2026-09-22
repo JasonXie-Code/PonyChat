@@ -89,29 +89,37 @@ def test_normal_mode_uses_writer_anchor_not_roleplay_anchor(monkeypatch):
     )
     monkeypatch.setattr(request_context, "get_model_context_messages", lambda request: request.messages)
 
-    request = ChatRequest(
-        username="tester",
-        character_id="char_a",
-        mode="normal",
-        messages=[ChatMessage(role="user", content="（请详细写出当前你的身体状态）", message_id="u1")],
-        memory_enabled=False,
-    )
-
-    messages, _, _ = asyncio.run(
-        assemble_messages(
-            request,
-            active_model={},
-            model_name="deepseek-v4-flash",
-            user_context_prompt="",
+    def system_text(mode):
+        request = ChatRequest(
+            username="tester",
+            character_id="char_a",
+            mode=mode,
+            messages=[ChatMessage(role="user", content="（请详细写出当前你的身体状态）", message_id="u1")],
+            memory_enabled=False,
         )
-    )
+        messages, _, _ = asyncio.run(
+            assemble_messages(
+                request,
+                active_model={},
+                model_name="deepseek-v4-flash",
+                user_context_prompt="",
+            )
+        )
+        return "\n".join(m["content"] for m in messages if m.get("role") == "system")
 
-    system_text = "\n".join(m["content"] for m in messages if m.get("role") == "system")
-    assert "第三者写作者/表演导演" in system_text
-    assert "推演“这个角色此刻会怎样回复”" in system_text
-    assert "思考时请使用第三者视角" not in system_text
-    assert "你就是上方设定中描述的那个角色" not in system_text
-    assert "你就是情境中的那个主体" not in system_text
+    normal_text = system_text("normal")
+    # 扮演锚点只属于非普通模式；普通模式只注入角色设定本身。
+    assert request_context.ROLEPLAY_ANCHOR_PROMPT in system_text("companion")
+    assert request_context.ROLEPLAY_ANCHOR_PROMPT not in normal_text
+    assert "小呆是小马谷邮差" in normal_text
+    assert "你就是上方设定中描述的那个角色" not in normal_text
+    assert "你就是情境中的那个主体" not in normal_text
+    assert "思考时请使用第三者视角" not in normal_text
+    # 普通模式的回复框架由主 Agent 合同承担，不再注入扮演锚点。
+    from Backend.chat_modules.autonomous_normal import SYSTEM as normal_agent_system
+
+    assert "你是PonyChat普通对话Agent" in normal_agent_system
+    assert request_context.ROLEPLAY_ANCHOR_PROMPT not in normal_agent_system
 
 
 def test_character_profile_fields_are_merged_into_persona_prompt():

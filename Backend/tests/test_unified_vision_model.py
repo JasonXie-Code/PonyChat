@@ -13,13 +13,20 @@ MODEL = "deepseek-flash"
 CONFIG = {"model_name": MODEL, "endpoint": "https://api.deepseek.com", "api_key": "test"}
 
 
-def test_manifest_only_loads_unified_model_source():
+def test_manifest_only_loads_sanctioned_model_sources():
+    """清单只允许载入统一主模型源与本地模型源；退役供应商配置不得被载入。"""
     conf = Path(__file__).parents[1] / "conf"
     manifest = json.loads((conf / "model_config.json").read_text())
     assert manifest["active_model"] == MODEL
+    # models/deepseek.json：统一主模型源（全部模型必须是 MODEL）
+    # models/local.json：本地模型源，独立开关与独立测试见 test_local_model_switch.py
+    sanctioned = {"models/deepseek.json", "models/local.json"}
+    assert set(manifest["model_sources"]) == sanctioned
     for source in manifest["model_sources"]:
         models = json.loads((conf / source).read_text(encoding="utf-8"))["models"]
-        assert all(m["model_name"] == MODEL for m in models)
+        assert models and all(m.get("model_name") for m in models)
+    primary = json.loads((conf / "models/deepseek.json").read_text(encoding="utf-8"))["models"]
+    assert all(m["model_name"] == MODEL for m in primary)
 
 
 @pytest.mark.parametrize("task", ["normal_main_reply", "proactive", "normal_vision", "galgame_lock", "companion_frame"])

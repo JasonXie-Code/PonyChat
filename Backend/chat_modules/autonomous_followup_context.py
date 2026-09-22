@@ -1,4 +1,5 @@
 """Speaker-labelled evidence for a delayed Agent turn, without semantic rewriting."""
+from .Prompts import AUTONOMOUS_FOLLOWUP_CONTEXT_TEXT
 import json
 import time
 from datetime import datetime, timezone
@@ -16,9 +17,7 @@ def capture_followup_context(business, data):
         'user_messages': [{'role': 'user', 'message_id': m.get('message_id'),
                            'content': m.get('content', '')} for m in user_batch(business.history)],
         'assistant_bubbles': data['bubbles'],
-        'instruction': '这是安排追发时的原文证据。用户、当前角色和第三者各自的行为不能互换；'
-                       '计划时间不是当前时间。按本次触发时间判断实际经过的时间；'
-                       '未收到用户新消息不代表其同意或行动。',
+        'instruction': AUTONOMOUS_FOLLOWUP_CONTEXT_TEXT['capture_followup_context_1'],
     }
 
 
@@ -40,9 +39,7 @@ def format_followup_context(task, *, now_ms=None):
              'due_at_utc': timestamp(task['due_at_ms']),
              'planned_at_utc': timestamp(context['planned_at_ms']),
              'elapsed_seconds': max(0, (now - context['planned_at_ms']) // 1000)}
-    return ('【Agent追发原文与时间事实｜系统内部】\n'
-            '这是服务器到期触发的续接任务，不是用户的新消息。用当前角色身份自然补充计划中的新内容；'
-            '计划是待办而非已发生事实，以原文证据和当前时间决定怎样表达，不代替用户回应。\n'
+    return (AUTONOMOUS_FOLLOWUP_CONTEXT_TEXT['format_followup_context_1']
             + json.dumps({'clock': clock, 'evidence': context,
                           'plan': {'summary': plan.get('seed', ''), 'reason': plan.get('reason', '')}},
                          ensure_ascii=False))

@@ -19,6 +19,8 @@ def test_game_turn_uses_one_agent_and_preserves_result_contract(monkeypatch,mode
     async def no_op(*args,**kwargs):pass
     monkeypatch.setattr(harness,'run_harness_turn',runner)
     monkeypatch.setattr(harness,'_apply_usage_metering',no_op)
+    # This test covers prompt/routing; real tool gates have separate tests.
+    monkeypatch.setattr(harness.GameAgentSession, 'finish', lambda self, text: text)
     payload={'messages':[{'role':'system','content':'Only JSON'},
                          {'role':'assistant','content':'{"scene":{"thoughts":"他也喜欢星星，我想给他看。小禾还没来，她明天来借书。"}}'},
                          {'role':'user','content':'Keep score 40'}]}
@@ -30,9 +32,11 @@ def test_game_turn_uses_one_agent_and_preserves_result_contract(monkeypatch,mode
     assert calls[0][0]['ordered_messages']==payload['messages'][1:]
     assert calls[0][0]['context'] == ['Only JSON']
     if mode == 'galgame_lock':
-        assert set(calls[0][1]) == {'preview_lock_state'} and calls[0][2]['max_tool_calls'] == 4
+        assert 'preview_lock_state' in calls[0][1]
     else:
-        assert calls[0][1]=={} and calls[0][2]['max_tool_calls']==0
+        assert 'preview_lock_state' not in calls[0][1]
+    assert {'load_game_skill', 'review_game_turn', 'read_game_history'} <= set(calls[0][1])
+    assert calls[0][2]['max_tool_calls'] == 24
     assert '默认不要使用破折号' in calls[0][2]['system_prompt']
     assert '必须用第二人称“你”指用户' in calls[0][2]['system_prompt']
     assert calls[0][2]['system_prompt'].count(DEFAULT_CHARACTER_REPLY_STYLE_PROMPT) == 1

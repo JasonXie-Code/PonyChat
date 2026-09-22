@@ -20,7 +20,14 @@ async def get_agent_status(response: Response, character_id: str = Query(..., mi
     response.headers['Cache-Control'] = 'no-store'
     state = await asyncio.to_thread(read, username, character_id, mode, conversation_id)
     agents = await asyncio.to_thread(read_all, username, character_id, mode)
-    return {'success': True, 'agent': state, 'agents': agents}
+    from ..conversation_activity import read_conversation_activity
+    try:
+        activity = await read_conversation_activity(username, character_id, mode, conversation_id)
+    except Exception:
+        # A missing/locked status source must not pretend there is no pending plan,
+        # nor interrupt the independent Agent progress display.
+        activity = {'state': 'unavailable', 'server_now_ms': int(time.time() * 1000)}
+    return {'success': True, 'agent': state, 'agents': agents, 'conversation_activity': activity}
 
 @router.get("/status")
 async def get_system_load():

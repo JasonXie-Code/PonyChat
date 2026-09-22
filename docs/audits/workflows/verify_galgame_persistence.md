@@ -1,6 +1,8 @@
 
 # Galgame History Persistence Verification
 
+> 文档状态：2026-08-09 已复核。本文是计划或审计记录，结论对应其记录时点；当前实现与风险以 `docs/PROJECT_STATUS.md` 和代码为准。
+
 ## Changes Applied
 1.  **Backend Saving Enabled for Galgame Mode**: 
     -   Modified `js/chat/chat-api.js` to allow `saveConversationsToBackend()` to be called even when `isGalgameMode` is true.

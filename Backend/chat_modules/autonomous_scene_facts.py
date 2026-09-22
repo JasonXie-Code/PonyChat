@@ -1,6 +1,5 @@
 """Resident participant and event-state rules for the normal-chat Agent."""
 
-from .Prompts import PARTICIPANT_AND_SCENE_RULES
 from copy import deepcopy
 
 

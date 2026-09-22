@@ -1,6 +1,7 @@
 package top.ponychat.webview.ui.chat
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -34,6 +35,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,6 +57,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import top.ponychat.webview.ui.common.PonyPromptBubble
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -78,6 +81,7 @@ internal fun ChatScreenImagePreviewOverlay(
     val previewOffsetState = remember { mutableStateOf(Offset.Zero) }
     var previewBoxSize by remember { mutableStateOf(Size.Zero) }
     var isSavingPreview by remember { mutableStateOf(false) }
+    var isSharingPreview by remember { mutableStateOf(false) }
     var previewPromptMessage by remember { mutableStateOf<String?>(null) }
     var previewPromptNonce by remember { mutableIntStateOf(0) }
 
@@ -113,6 +117,30 @@ internal fun ChatScreenImagePreviewOverlay(
         }
     }
 
+    val shareCurrentPreview = rememberUpdatedState<() -> Unit>(share@{
+        if (isSharingPreview) return@share
+        val target = previewImages.getOrNull(pagerState.currentPage) ?: previewImageUrl
+        coroutineScope.launch {
+            isSharingPreview = true
+            try {
+                showPreviewPrompt("准备分享...", false)
+                val intent = createPreviewImageShareIntent(context, target)
+                if (intent == null) {
+                    showPreviewPrompt("图片暂时无法分享，请稍后重试", true)
+                } else {
+                    context.startActivity(Intent.createChooser(intent, "分享图片"))
+                    previewPromptMessage = null
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                showPreviewPrompt("分享失败，请稍后重试", true)
+            } finally {
+                isSharingPreview = false
+            }
+        }
+    })
+
     val saveCurrentPreview: () -> Unit = save@{
         if (isSavingPreview) return@save
         val target = if (previewImages.isNotEmpty()) previewImages.getOrNull(pagerState.currentPage) else previewImageUrl
@@ -132,7 +160,7 @@ internal fun ChatScreenImagePreviewOverlay(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = true, dismissOnClickOutside = true)
     ) {
-        Surface(color = Color.Black.copy(alpha = 0.92f), modifier = Modifier.fillMaxSize()) {
+        Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
                 if (previewImages.isEmpty()) {
                     AsyncImage(
@@ -175,7 +203,7 @@ internal fun ChatScreenImagePreviewOverlay(
                             //   • 单指 scale>1 或多指转单指 → 消费 → 平移图片（1:1 跟手）
                             //   • 双指捏合 → 消费 → 实时缩放+平移（无黑屏，因为不重组）
                             //   • 双击 → 平滑动画缩放（消除闪烁）
-                            //   • 长按 → 保存图片
+                            //   • 长按 → 系统分享（仅左上角按钮保存到相册）
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -209,7 +237,7 @@ internal fun ChatScreenImagePreviewOverlay(
 
                                                 if (event == null) {
                                                     // ── 长按 ──
-                                                    saveCurrentPreview()
+                                                    shareCurrentPreview.value()
                                                     while (true) {
                                                         val e = awaitPointerEvent()
                                                         e.changes.forEach { it.consume() }

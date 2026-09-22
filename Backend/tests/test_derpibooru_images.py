@@ -31,7 +31,7 @@ def test_filter_injection_never_requests(query):
     assert asyncio.run(module.search_ranked(query, rating='safe', transport=httpx.MockTransport(forbidden))) == []
 
 
-def test_no_results_falls_back_once_and_respects_shared_budget():
+def test_no_results_falls_back_without_shared_call_limit():
     calls = []
     def handle(request):
         calls.append(request.url.host)
@@ -40,9 +40,9 @@ def test_no_results_falls_back_once_and_respects_shared_budget():
     async def run():
         for _ in range(3):
             await provider.search_images({'query': '紫悦', 'derpibooru_tags': 'twilight sparkle', 'rating': 'safe'})
-        assert (await provider.search_images({'query': '紫悦', 'derpibooru_tags': 'twilight sparkle', 'rating': 'safe'}))['status'] == 'budget_exhausted'
+        assert (await provider.search_images({'query': '紫悦', 'derpibooru_tags': 'twilight sparkle', 'rating': 'safe'}))['status'] == 'no_results'
     asyncio.run(run())
-    assert len(calls) == 6
+    assert len(calls) == 8
 
 
 def test_rating_required():
@@ -60,6 +60,42 @@ def test_requested_rating_is_sent_and_other_ratings_filtered():
     rows = asyncio.run(module.search_ranked('pinkie pie', rating='semi-grimdark',
         transport=httpx.MockTransport(handle)))
     assert len(rows) == 1 and rows[0]['rating'] == 'semi-grimdark'
+
+
+def test_repeated_requested_rating_tag_is_canonicalized():
+    def handle(request):
+        assert request.url.params['q'] == 'explicit, pony, vector'
+        return httpx.Response(200, json={'images': [{
+            'id': 1, 'score': 100, 'tags': ['explicit', 'pony', 'vector'],
+            'representations': {'large': 'https://derpicdn.net/a.png'}}]})
+    rows = asyncio.run(module.search_ranked('pony, explicit, vector', rating='explicit',
+        transport=httpx.MockTransport(handle)))
+    assert len(rows) == 1 and rows[0]['rating'] == 'explicit'
+
+
+def test_g4_style_relaxes_vector_and_show_accurate_when_strict_results_are_few():
+    calls = []
+    def handle(request):
+        calls.append(request.url.params['q'])
+        if 'vector, show accurate' in request.url.params['q']:
+            images = [{'id': 1, 'score': 100, 'tags': ['safe', 'pony', 'vector', 'show accurate'],
+                       'representations': {'large': 'https://derpicdn.net/strict.png'}}]
+        else:
+            assert 'pony' in request.url.params['q']
+            assert 'vector' not in request.url.params['q'] and 'show accurate' not in request.url.params['q']
+            images = [{'id': 2, 'score': 90, 'tags': ['safe', 'pony'],
+                       'representations': {'large': 'https://derpicdn.net/relaxed.png'}},
+                      {'id': 3, 'score': 80, 'tags': ['safe', 'pony', '3d'],
+                       'representations': {'large': 'https://derpicdn.net/excluded.png'}}]
+        return httpx.Response(200, json={'images': images})
+    rows = asyncio.run(module.search_ranked('pinkie pie, pony, vector, show accurate',
+        rating='safe', g4_pony=True, transport=httpx.MockTransport(handle)))
+    assert len(calls) == 2
+    assert 'vector, show accurate' in calls[0] and 'vector' not in calls[1] and 'show accurate' not in calls[1]
+    assert all(tag in calls[0] and tag in calls[1] for tag in ('pony', '-human', '-anthro', '-3d', '-g5'))
+    assert [row['source_url'] for row in rows] == [
+        'https://derpibooru.org/images/1', 'https://derpibooru.org/images/2']
+    assert rows[0]['style_relaxed'] is False and rows[1]['style_relaxed'] is True
 
 
 @pytest.mark.parametrize('rating', module.RATINGS)

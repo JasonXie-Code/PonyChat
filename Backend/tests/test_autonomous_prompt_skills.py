@@ -27,22 +27,60 @@ def payload(text="今天有点累", **extra):
                        "current_user_batch": [{"role": "user", "content": text}], **extra}, ensure_ascii=False)
 
 
+@pytest.mark.parametrize('allow_tools', [True, False])
+def test_item_continuity_is_a_required_skill_including_finalization(allow_tools):
+    from copy import deepcopy
+    s = session()
+    state = {'revision': 1, 'fields': {'item:相册': {
+        'value': '归角色所有，用户借阅', 'source_message_ids': ['original']}}}
+    original = deepcopy(state)
+    history = [{'message_id': 'original', 'role': 'assistant',
+                'speaker_name': '青竹', 'content': '这是我的相册，你拿着看。'}]
+    raw = payload('里面有合照吗？', current_scene=state, recent_raw_messages=history)
+    p, system = s.transform(raw, normal.SYSTEM, allow_tools=allow_tools)
+    data = json.loads(p)
+    assert s.skill_instructions('continuity') not in system
+    assert 'continuity' in data['required_skills_before_reply']
+    assert 'continuity' not in s.loaded
+    if not allow_tools:
+        assert {'skill': 'continuity', 'instructions': s.skill_instructions('continuity')} in data['finalization_skills']
+    else:
+        assert asyncio.run(s.load({'name': 'continuity'}))['instructions'] == s.skill_instructions('continuity')
+    assert data['current_scene'] == original
+    assert data['recent_raw_messages'] == history
+    s.transform(raw, normal.SYSTEM, allow_tools=allow_tools)
+    assert not [r for r in s.reads if r['type'] == 'resident_skill']
+
+
+def test_item_manual_does_not_load_for_empty_state_or_leak_between_turns():
+    s = session()
+    raw = payload(current_scene={'fields': {'item:相册': {'value': None}}})
+    p, system = s.transform(raw, normal.SYSTEM)
+    assert s.skill_instructions('continuity') not in system
+    assert 'continuity' not in json.loads(p).get('loaded_skills', [])
+    assert 'continuity' not in session().loaded
+    # Identity and ownership still apply with no memory/card, including pure speech.
+    assert '用户资料只属于用户' in s.catalog['evidence'][1]
+    assert '用户资料只属于用户' not in system
+    assert '计划、提议' in s.catalog['evidence'][1]
+
+
 def test_plain_chat_keeps_contract_without_loading_task_rules():
     s = session()
     prompt, system = s.transform(payload(), normal.SYSTEM)
     data = json.loads(prompt)
     assert s.loaded == set()
-    assert normal.RELATIONSHIP_INTERACTION_POLICY not in system
-    assert normal.RELATIONSHIP_INTERACTION_POLICY in asyncio.run(s.load({"name": "relationship"}))["instructions"]
-    assert "关系状态有实质变化才更新" in system
-    assert "没有变化时沿用现有状态" in system
-    assert "调度业务说明" not in data["environment"]
-    assert len(system) < len(normal.SYSTEM)
+    assert skills.CHAT_SKILL_TEXTS['relationship'] not in system
+    assert skills.CHAT_SKILL_TEXTS['relationship'] in asyncio.run(s.load({"name": "relationship"}))["instructions"]
+    assert "没有变化时沿用原状态" in s.catalog["relationship"][1]
+    assert "关系状态有实质变化才更新" not in system
+    assert "调度业务说明" in data["environment"]
+    assert 'load_chat_skill' in system
     assert "青竹" in data["character_profile"] and "陆马" in data["character_profile"]
 
 
-def test_language_continuity_is_mandatory_without_loading_delivery_manual():
-    from prompt_skills_under_test.autonomous_prompt_rules import CORE_LANGUAGE
+def test_language_continuity_is_available_without_mandatory_manual_loading():
+    from prompt_skills_under_test.autonomous_prompt_rules import reply_language
     s = session()
     state = '【当前角色回复状态】\n' + json.dumps({
         'voice_reply': True, 'previous_reply_language': 'English',
@@ -50,13 +88,13 @@ def test_language_continuity_is_mandatory_without_loading_delivery_manual():
     for text in ('今天有点累，陪我聊聊', '改成文字回复', '现在改用中文回复'):
         prompt, system = s.transform(payload(text, environment=state), normal.SYSTEM)
         assert not s.loaded
-        assert CORE_LANGUAGE in ('\n'.join(pair[1] for pair in s.catalog.values()))
+        assert reply_language in ('\n'.join(pair[1] for pair in s.catalog.values()))
         assert json.loads(prompt)['environment'] == state
         assert '用户本轮使用中文' not in ('\n'.join(pair[1] for pair in s.catalog.values()))
         assert '只有用户明确要求切换时才改变语言' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert '语言与语音开关分别判断' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert '只有用户限定本次、这一轮或App内置临时描写查看时才临时覆盖' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert '普通切换要求从本轮生效并延续' in ('\n'.join(pair[1] for pair in s.catalog.values()))
+        assert '不决定是否生成音频' in ('\n'.join(pair[1] for pair in s.catalog.values()))
+        assert '仅限定本次的要求只影响本轮' in ('\n'.join(pair[1] for pair in s.catalog.values()))
+        assert json.loads(prompt)['required_skills_before_reply'] == ['evidence', 'reply_expression', 'reply_language', 'voice_reply', 'delivery']
 
 
 def test_roleplay_defaults_survive_lazy_loading_without_rewriting_user_requests():
@@ -67,11 +105,13 @@ def test_roleplay_defaults_survive_lazy_loading_without_rewriting_user_requests(
         data = json.loads(prompt)
         assert not s.loaded
         assert DEFAULT_CHARACTER_REPLY_STYLE_PROMPT not in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert '默认角色用我、当前用户用你' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert '凡指当前用户一律用“你／你的”' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert 'speech、action、thought及括号内心理' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert '真正的第三者仍可用他／她' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-        assert '历史回复中的错误人称不构成要求' in ('\n'.join(pair[1] for pair in s.catalog.values()))
+        assert '依据所读技能完成角色回复' in system
+        assert '本轮只生成speech' in skills.CHAT_SKILL_TEXTS['reply_conditions']
+        assert '本轮只生成speech' not in s.catalog['reply_expression'][1]
+        assert '本轮只生成speech' not in system
+        assert '默认不使用破折号' in s.catalog['reply_expression'][1]
+        assert '逐字引用原文时保留原有符号' in s.catalog['reply_expression'][1]
+        assert '默认不使用破折号' not in system
         assert data['latest_user_message']['content'] == text
         assert data['current_user_batch'][0]['content'] == text
         assert '本轮用户明确要求优先' in ('\n'.join(pair[1] for pair in s.catalog.values()))
@@ -80,7 +120,6 @@ def test_roleplay_defaults_survive_lazy_loading_without_rewriting_user_requests(
 
 
 def test_subject_and_plan_rules_survive_lazy_prompt_composition():
-    from prompt_skills_under_test.autonomous_scene_facts import PARTICIPANT_AND_SCENE_RULES
     from prompt_skills_under_test.harness_live_input import LIVE_INPUT_RULE
     background = {'species': '人类', 'display_name': '小林'}
     s = skills.PromptSkills(profile='陆马', preferences='', business=None, normal_module=normal,
@@ -88,9 +127,9 @@ def test_subject_and_plan_rules_survive_lazy_prompt_composition():
     background['species'] = '独角兽'
     prompt, system = s.transform(payload('（我牵起你的蹄子）走吧'), normal.SYSTEM)
     assert not s.loaded
-    assert PARTICIPANT_AND_SCENE_RULES not in ('\n'.join(pair[1] for pair in s.catalog.values())) and LIVE_INPUT_RULE not in ('\n'.join(pair[1] for pair in s.catalog.values()))
-    assert '角色档案、用户资料分别属于各自主体' in ('\n'.join(pair[1] for pair in s.catalog.values()))
-    assert '计划不能当作完成' in ('\n'.join(pair[1] for pair in s.catalog.values()))
+    assert LIVE_INPUT_RULE not in ('\n'.join(pair[1] for pair in s.catalog.values()))
+    assert '角色资料用于理解角色；用户资料只属于用户' in ('\n'.join(pair[1] for pair in s.catalog.values()))
+    assert '不等于已经发生' in ('\n'.join(pair[1] for pair in s.catalog.values()))
     assert '物品所有权、责任方向' in s.catalog['continuity'][1]
     data = json.loads(prompt)
     assert data['participants']['user']['profile']['species'] == '人类'
@@ -114,8 +153,9 @@ def test_current_images_and_original_blocks_are_preserved():
                 {"type": "image", "url": "test-image"}]
     p, system = s.transform(original, normal.SYSTEM)
     assert p[1] == original[1] and p is not original
-    assert not s.loaded and "image_observation" in system
-    assert "image_observation" in asyncio.run(s.load({"name": "media"}))["instructions"]
+    assert not s.loaded and "image_observation" not in system
+    assert "image_observation" in s.catalog["delivery"][1]
+    assert "image_observation" in asyncio.run(s.load({"name": "media_handling"}))["instructions"]
     assert "original" in original[0]["text"]
 
 
@@ -196,15 +236,6 @@ def test_duplicate_reply_text_and_time_explanations_are_only_removed_from_model_
     assert "recent_assistant_replies" in json.loads(raw)["reply_dedup_context"]
 
 
-def test_missing_prompt_boundary_fails_instead_of_dropping_rules():
-    try:
-        skills._section("changed", "old boundary", "end")
-    except ValueError:
-        pass
-    else:
-        raise AssertionError("Missing deployed boundary must be explicit")
-
-
 def test_pending_tools_and_retry_contract_survive_composition():
     s = session()
     p, system = s.transform(payload(required_tools_before_reply=["web_search"],
@@ -217,12 +248,15 @@ def test_pending_tools_and_retry_contract_survive_composition():
     asyncio.run(s.reference({"query": "性格 竹林"}))
     asyncio.run(s.load({"name": "instant_messaging"}))
     p, _ = s.transform(payload(), normal.SYSTEM)
-    assert json.loads(p)["required_skills_before_reply"] == ["reply_expression", "reply_language"]
-    asyncio.run(s.load({"name": "reply_expression"}))
-    asyncio.run(s.load({"name": "reply_language"}))
+    assert json.loads(p)["required_skills_before_reply"] == ["evidence", "reply_expression", "reply_language", "voice_reply", "delivery"]
     _, next_system = s.transform(payload(required_tools_before_reply=[]), normal.SYSTEM)
+    assert "必须先成功调用：load_chat_skill" in next_system
+    for name in json.loads(p)["required_skills_before_reply"]:
+        asyncio.run(s.load({"name": name}))
+    final_prompt, next_system = s.transform(payload(required_tools_before_reply=[]), normal.SYSTEM)
+    assert json.loads(final_prompt)["required_skills_before_reply"] == []
     assert "必须先成功调用：" not in next_system
-    assert "最终回复协议" in s.catalog["delivery"][1]
+    assert "最终交付格式" in s.catalog["delivery"][1]
 
 
 def test_homepage_is_exact_and_no_detail_chapters_are_guessed():
@@ -340,6 +374,46 @@ def test_agent_owns_visible_style_and_final_reply():
     assert "直接填写最终回复 JSON" in skills.COGNITION_CORE
 
 
+def test_history_source_boundary_is_resident_without_rewriting_history():
+    from prompt_skills_under_test.Prompts import HISTORY_CONTEXT_RULE
+    s = session()
+    source = [{'role': 'assistant', 'content': '先定义变量，再逐项验证。', 'message_id': 'old'}]
+    p, system = s.transform(payload(recent_raw_messages=source), normal.SYSTEM)
+    assert system.count(HISTORY_CONTEXT_RULE) == 1
+    assert json.loads(p)['recent_raw_messages'] == source
+    assert '不是语言风格的参考来源' in system
+    assert '引用或复述历史原话' in system
+
+
+@pytest.mark.parametrize('allow_tools', [True, False])
+def test_resident_system_only_routes_tasks_even_with_dynamic_contracts(allow_tools):
+    from prompt_skills_under_test import Prompts
+    s = session()
+    p, system = s.transform(payload(
+        current_scene={'fields': {'item:book': {'value': '角色所有'}}},
+        followup_contract='followup source',
+        description_shortcut_contract='shortcut source', web_images_available=True),
+        normal.SYSTEM, allow_tools=allow_tools)
+    data = json.loads(p)
+    for manual in (Prompts.reply_expression, Prompts.delivery, Prompts.continuity):
+        assert manual not in system
+    for phrase in ('默认只写台词', '固定3个纯描写气泡', '不套用统一安慰', 'scene_patch'):
+        assert phrase not in system
+    expected = {'evidence', 'reply_expression', 'reply_language', 'voice_reply', 'delivery', 'continuity',
+                'followup', 'shortcut', 'character_body'}
+    assert set(data['required_skills_before_reply']) == expected
+    assert not s.loaded  # Listing a requirement never pretends a skill was read.
+    if not allow_tools:
+        assert {x['skill'] for x in data['finalization_skills']} == expected
+    else:
+        for name in expected:
+            assert asyncio.run(s.load({'name': name}))['instructions'] == s.skill_instructions(name)
+    assert Prompts.reply_expression == s.catalog['reply_expression'][1]
+    assert Prompts.delivery in s.catalog['delivery'][1]
+    assert not hasattr(Prompts, 'NEUTRAL_EXAMPLES')
+    assert not hasattr(Prompts, 'NEUTRAL_EXAMPLE_NOTICE')
+
+
 @pytest.mark.parametrize('name', sorted(skills.SKILL_TITLES))
 def test_skill_title_matches_registered_name_without_changing_body(name):
     s = session()
@@ -370,14 +444,15 @@ def test_all_registered_skill_names_have_prompt_titles():
 def test_direct_session_has_complete_metadata_and_no_delegation_even_on_retry():
     s = session()
     p, system = s.transform(payload(completion_feedback="修订语言对象"), normal.SYSTEM)
-    assert "直接以角色身份生成" in s.catalog["reply_expression"][1]
-    assert 'reply_language是含language规范语言名、reason依据字符串的对象' in s.catalog['reply_expression'][1]
+    assert "最终可见文字以角色身份面向当前用户" in s.catalog["reply_expression"][1]
+    assert 'reply_language是含language规范语言名、reason依据字符串的对象' in s.catalog['delivery'][1]
     assert "你看不到任何工具" not in system
     assert "completion_feedback" in system
     for text in [system, *[manual for _, manual in s.catalog.values()]]:
         assert "compose_character_reply" not in text and "Actor" not in text
     assert "情境资料包" not in s.catalog["delivery"][0]
-    assert "image_observation" in system
+    assert "image_observation" not in system
+    assert "image_observation" in s.catalog["delivery"][1]
 
 
 def test_turn_has_only_the_agent_reply_composer():
@@ -388,31 +463,19 @@ def test_turn_has_only_the_agent_reply_composer():
     assert result["prompt_skills"]["reply_composer"] == "agent"
 
 
-def test_direct_reply_does_not_invoke_independent_expression_review(monkeypatch):
-    editor = importlib.import_module(PACKAGE + '.agent_expression_review')
-
-    async def forbidden(*args, **kwargs):
-        raise AssertionError('Direct Agent replies must not invoke an extra editor')
-
-    monkeypatch.setattr(editor, 'review_expression', forbidden)
-    draft = {'bubble_count': 1, 'bubbles': [{'index': 1, 'parts': [
-        {'kind': 'speech', 'text': '测试回复'}]}]}
-
-    async def actual(**kwargs):
-        return {'bubble_count': 1, 'envelope': json.dumps(draft, ensure_ascii=False)}
-
-    result = asyncio.run(skills.run_skill_turn(actual, character_profile='角色资料', harness_runner=forbidden))
-    assert json.loads(result['envelope']) == draft
-    assert result['prompt_skills']['expression_review']['independent_review_calls'] == 0
-    assert result['prompt_skills']['expression_review']['status'] == 'disabled'
-
 def test_production_runner_keeps_mandatory_continuity_and_interaction_rules():
-    from prompt_skills_under_test.autonomous_behavior_policy import CONTINUITY_REVIEW
+    from prompt_skills_under_test.autonomous_behavior_policy import continuity
     seen = []
 
     async def transport(prompt, config, tools, **options):
         await tools['load_chat_skill'].callback({'name': 'virtual_roleplay'})
-        bundle = await tools['load_chat_skill'].callback({'name': 'reply_expression'})
+        await tools['load_chat_skill'].callback({'name': 'reply_expression'})
+        await tools['load_chat_skill'].callback({'name': 'reply_conditions'})
+        await tools['select_reply_paths'].callback({'paths': ['interaction_reply']})
+        await tools['load_chat_skill'].callback({'name': 'reply_perspective'})
+        bundle = await tools['load_chat_skill'].callback({'name': 'interaction_reply'})
+        await tools['load_chat_skill'].callback({'name': 'reply_deduplication'})
+        await tools['load_chat_skill'].callback({'name': 'reply_review'})
         seen.append((json.loads(prompt), options['system_prompt'], bundle['instructions']))
         return {'finish_reason': 'completed', 'final_response': '{}'}
 
@@ -425,10 +488,10 @@ def test_production_runner_keeps_mandatory_continuity_and_interaction_rules():
         character_profile='名称：碧琪\n简介：活泼陆马',
         home_profile='名称：碧琪\n简介：活泼陆马', harness_runner=transport))
     assert len(seen) == 1
-    assert CONTINUITY_REVIEW not in seen[0][1]
+    assert continuity not in seen[0][1]
     assert '由自己独立决定和实施的回应' in seen[0][2]
     assert '不代写用户反应' in seen[0][2]
-    assert CONTINUITY_REVIEW == session().catalog['continuity'][1]
+    assert continuity == session().catalog['continuity'][1]
     assert '叼着一片' in seen[0][0]['latest_user_message']['content']
 
 
@@ -451,10 +514,10 @@ def test_latest_turn_follows_background_without_rewriting_history_or_batch():
 
 
 def test_wiki_manual_keeps_background_exception_and_proactive_lookup():
-    from prompt_skills_under_test.autonomous_web_search import MLP_WIKI_POLICY
+    from prompt_skills_under_test.Prompts import mlp_reference
     s = session(profile='只采用前三季；前三季没有确认父母现状，不得自行解释。')
-    manual = asyncio.run(s.load({'name': 'web_search'}))['instructions']
-    assert MLP_WIKI_POLICY in manual
-    assert '资料只列出家人而没有所问的父母爱情故事，不算已经足够回答' in manual
-    assert '主动加载web_search' in skills.COGNITION_REFERENCE
+    manual = asyncio.run(s.load({'name': 'mlp_reference'}))['instructions']
+    assert mlp_reference in manual
+    assert '只覆盖相关人物而未包含所问事件细节时，仍视为证据不足' in manual
+    assert '角色资料用于理解角色' in skills.evidence
     assert '关系和经历只采用明确属于前三季的结果' not in manual

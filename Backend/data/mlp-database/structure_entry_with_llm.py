@@ -294,11 +294,11 @@ def load_deepseek_flash_config() -> dict[str, Any]:
 
     cfg = load_merged_model_config()
     for model in cfg.get("models", []):
-        if model.get("id") == "deepseek-v4-flash" or model.get("model_name") == "deepseek-v4-flash":
+        if model.get("id") == "deepseek-flash" or model.get("model_name") == "deepseek-flash":
             if not model.get("api_key"):
-                raise SystemExit("deepseek-v4-flash 配置缺少 api_key")
+                raise SystemExit("deepseek-flash 配置缺少 api_key")
             return dict(model)
-    raise SystemExit("未找到 deepseek-v4-flash 配置")
+    raise SystemExit("未找到 deepseek-flash 配置")
 
 
 SYSTEM_PROMPT = """你是 PonyChat 的小马世界资料库结构化编辑器。
@@ -574,7 +574,7 @@ async def structure_with_deepseek(context: dict[str, Any]) -> dict[str, Any]:
     from Backend.reasoning_policy import resolve_reasoning_policy
 
     model_cfg = load_deepseek_flash_config()
-    model_name = str(model_cfg.get("model_name") or model_cfg.get("id") or "deepseek-v4-flash")
+    model_name = str(model_cfg.get("model_name") or model_cfg.get("id") or "deepseek-flash")
     endpoint = str(model_cfg.get("endpoint") or "")
     no_thinking_cfg = dict(model_cfg)
     no_thinking_cfg["enable_thinking"] = False

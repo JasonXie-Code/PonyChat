@@ -1,6 +1,6 @@
 """Evidence-bound, per-conversation scene patches committed with delivered replies."""
+from .Prompts import AUTONOMOUS_SCENE_STATE_TEXT
 
-from .Prompts import SCENE_STATE_CONTRACT
 from contextlib import closing
 import json
 
@@ -12,33 +12,33 @@ FIELDS = {'scene_time', 'location', 'user_position', 'character_position', 'cont
 
 def validate_patch(value, allowed_sources, *, initial=False, previous=None):
     if not isinstance(value, dict) or set(value) != {'reset', 'changes'} or type(value['reset']) is not bool:
-        raise ValueError('scene_patch需要reset布尔值及changes对象')
+        raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_1'])
     changes = value['changes']
     if not isinstance(changes, dict) or len(changes) > 48 or value['reset'] and not changes:
-        raise ValueError('scene_patch.changes最多48项，重置必须提供有依据的新状态')
+        raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_2'])
     if initial and not FIELDS <= changes.keys():
-        raise ValueError('初次场景卡必须初始化六个字段，原文明示的状态按原文填写，未知为null；缺少：' +
+        raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_3'] +
                          ','.join(sorted(FIELDS - changes.keys())))
     if not value['reset']:
         for moving, other, subject in [('character_position', 'user_position', '角色'),
                                        ('user_position', 'character_position', '用户')]:
             old_position = str((previous or {}).get(other, {}).get('value') or '')
             if moving in changes and other not in changes and subject in old_position:
-                raise ValueError('一方姿势变化时需同步核对依赖其相对位置的' + other + '，保留未移动者的固定落点，不代写其移动')
+                raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_9'] + other + AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_8'])
     clean = {}
     for key, item in changes.items():
         if key not in FIELDS | {'interaction_mode'} and not (key.startswith('item:') and 5 < len(key) <= 85):
             raise ValueError('未知场景字段：' + key)
         if not isinstance(item, dict) or set(item) != {'value', 'source_message_ids'}:
-            raise ValueError('场景字段需要value与source_message_ids')
+            raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_4'])
         text, refs = item['value'], item['source_message_ids']
         if key == 'interaction_mode' and text not in ('instant_messaging', 'virtual_roleplay'):
-            raise ValueError('interaction_mode必须是已知对话模式')
+            raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_5'])
         if text is not None and (not isinstance(text, str) or not text.strip() or len(text) > 600):
-            raise ValueError('场景value必须为1到600字字符串或null')
+            raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_6'])
         if (not isinstance(refs, list) or not 1 <= len(refs) <= 8 or
                 any(not isinstance(ref, str) or ref not in allowed_sources | {'$reply'} for ref in refs)):
-            raise ValueError('场景来源必须是已读原文ID或$reply')
+            raise ValueError(AUTONOMOUS_SCENE_STATE_TEXT['validate_patch_7'])
         clean[key] = {'value': text.strip() if text is not None else None,
                       'source_message_ids': list(dict.fromkeys(refs))}
     return {'reset': value['reset'], 'changes': clean}
@@ -87,16 +87,18 @@ def commit_scene(conn, store, snapshot, patch, reply_ids):
     if patch['reset']:
         fields = {}
     for key, item in patch['changes'].items():
+        if '$reply' in item['source_message_ids'] and not reply_ids:
+            # 本轮没有保存任何 assistant 段落（回复级重复保护清空，或零文本静默交付）：
+            # 丢弃依赖 $reply 的字段，不让整笔回复事务失败。该字段下一轮按新原文重新判定，
+            # 其它不依赖 $reply 的字段照常提交。
+            continue
         refs = []
         for ref in item['source_message_ids']:
             refs.extend(reply_ids if ref == '$reply' else [ref])
-        if '$reply' in item['source_message_ids'] and not reply_ids:
-            raise RuntimeError('Scene action requires a saved reply')
         manifest = {}
         for ref in dict.fromkeys(refs):
             # Scene state must not borrow evidence from another private conversation.
-            raw = conn.execute(evidence.RAW_SELECT +
-                " AND COALESCE(NULLIF(m.message_id,''),m.id)=? AND m.conversation_id=?",
+            raw = conn.execute(evidence.RAW_SELECT + evidence.RAW_REF_FILTER + " AND m.conversation_id=?4",
                 (store.username, store.character_id, ref, store.conversation_id)).fetchone()
             fingerprint = evidence.resolve(conn, store.username, store.character_id, ref) if raw else None
             if not fingerprint:

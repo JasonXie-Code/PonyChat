@@ -101,8 +101,10 @@ internal fun MessageSearchTab(
     onVisibleMessageDeleted: (Int) -> Unit
 ) {
     val username = prefs.username
+    val context = androidx.compose.ui.platform.LocalContext.current
     val characterId = character.id ?: ""
     val scope = rememberCoroutineScope()
+    val gallery = rememberHistoryImageGallery()
 
     // 多选删除状态
     var selectedMessageIds by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -113,6 +115,8 @@ internal fun MessageSearchTab(
     var debouncedQuery by remember { mutableStateOf("") }
     var senderFilter by remember { mutableStateOf("all") }
     var dateFilter by remember { mutableStateOf("all") }
+    var contentFilter by remember { mutableStateOf("all") }
+    LaunchedEffect(contentFilter) { selectedMessageIds = emptySet() }
 
     // 搜索模式状态
     var searchResults by remember { mutableStateOf<List<SearchMessageResult>>(emptyList()) }
@@ -183,6 +187,7 @@ internal fun MessageSearchTab(
                     if (generation != localHistoryGeneration) return@launch
                     val body = resp.body()
                     val newItems = (body?.messages ?: emptyList()).map { it.toSearchResult(body?.conversationId) }
+                        .withLocalHistoryImages(context, username, characterId)
                     if (beforeSeq == null) {
                         // 首次加载：最新 50 条，倒序（新↑旧↓）
                         browseMessages = newItems.reversed()
@@ -211,16 +216,16 @@ internal fun MessageSearchTab(
     }
 
     // 浏览模式加载：空 query 时筛选项同样生效
-    LaunchedEffect(debouncedQuery, senderFilter, dateFilter, resetVersion) {
-        if (debouncedQuery.isBlank()) {
+    LaunchedEffect(debouncedQuery, senderFilter, dateFilter, contentFilter, resetVersion) {
+        if (contentFilter == "all" && debouncedQuery.isBlank()) {
             clearLocalHistoryState()
             loadBrowseMessages()
         }
     }
 
     // 搜索触发（有 query 时）
-    LaunchedEffect(debouncedQuery, senderFilter, dateFilter, resetVersion) {
-        if (debouncedQuery.isBlank()) {
+    LaunchedEffect(debouncedQuery, senderFilter, dateFilter, contentFilter, resetVersion) {
+        if (contentFilter != "all" || debouncedQuery.isBlank()) {
             isSearching = false
             searchResults = emptyList()
             searchTotal = 0
@@ -244,7 +249,7 @@ internal fun MessageSearchTab(
             )
             if (resp.isSuccessful) {
                 val body = resp.body()
-                searchResults = body?.results ?: emptyList()
+                searchResults = body?.results.orEmpty().withLocalHistoryImages(context, username, characterId)
                 searchTotal = body?.total ?: 0
             }
         } catch (_: Exception) {}
@@ -255,7 +260,7 @@ internal fun MessageSearchTab(
     // 浏览模式：滑到底部时加载更多旧消息
     val lastVisibleIndex by remember { derivedStateOf { browseListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 } }
     LaunchedEffect(lastVisibleIndex) {
-        if (debouncedQuery.isBlank() && hasBrowseMore && !isBrowseLoading) {
+        if (contentFilter == "all" && debouncedQuery.isBlank() && hasBrowseMore && !isBrowseLoading) {
             val total = browseListState.layoutInfo.totalItemsCount
             if (total > 0 && lastVisibleIndex >= total - 3) {
                 loadBrowseMessages(beforeSeq = browseMinSeq)
@@ -280,6 +285,8 @@ internal fun MessageSearchTab(
             onSenderChange = { senderFilter = it },
             dateFilter = dateFilter,
             onDateChange = { dateFilter = it },
+            contentFilter = contentFilter,
+            onContentChange = { contentFilter = it },
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
         )
 
@@ -295,6 +302,18 @@ internal fun MessageSearchTab(
                 browseMessages.isEmpty() &&
                 (isBrowseLoading || completedBrowseKey != browseLoadKey)
             when {
+                contentFilter != "all" -> key(username, characterId, prefs.effectiveApiBase(),
+                    contentFilter, debouncedQuery, senderFilter, dateFilter, resetVersion) {
+                    HistoryFilteredResults(
+                        character = character, prefs = prefs, contentFilter = contentFilter,
+                        query = debouncedQuery, senderFilter = senderFilter, dateFilter = dateFilter,
+                        onNavigate = onNavigateToMessagePosition, onPrompt = onPrompt,
+                        onDelete = { message ->
+                            viewModel.deleteMessage(message.messageId, message.conversationId)
+                            onVisibleMessageDeleted(1)
+                        },
+                    )
+                }
                 // 搜索中
                 isCurrentSearchLoading -> {
                     Column(
@@ -349,6 +368,7 @@ internal fun MessageSearchTab(
                                         viewModel.deleteMessage(id, result.conversationId)
                                     },
                                     onClick = { onNavigateToMessagePosition(result.sequenceNumber) },
+                                    onPreviewImage = { gallery.open(searchResults, result, it) },
                                     onPrompt = onPrompt
                                 )
                             }
@@ -401,6 +421,7 @@ internal fun MessageSearchTab(
                                     viewModel.deleteMessage(id, msg.conversationId)
                                 },
                                 onClick = { onNavigateToMessagePosition(msg.sequenceNumber) },
+                                onPreviewImage = { gallery.open(browseMessages, msg, it) },
                                 onPrompt = onPrompt
                             )
                         }
@@ -467,13 +488,14 @@ internal fun MessageSearchTab(
             }
         }
     }
+    gallery.Preview()
 }
 
 // ==================== 搜索结果条目 ====================
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MessageSearchResultItem(
+internal fun MessageSearchResultItem(
     result: SearchMessageResult,
     keyword: String,
     character: Character,
@@ -483,7 +505,8 @@ private fun MessageSearchResultItem(
     onToggleSelect: (String) -> Unit = {},
     onDelete: (String) -> Unit = {},
     onClick: () -> Unit,
-    onPrompt: (String) -> Unit
+    onPrompt: (String) -> Unit,
+    onPreviewImage: (String) -> Unit,
 ) {
     val isUser = result.role == "user"
     val context = androidx.compose.ui.platform.LocalContext.current
@@ -491,13 +514,25 @@ private fun MessageSearchResultItem(
     var showMenu by remember { mutableStateOf(false) }
     var menuPosition by remember(result.messageId) { mutableStateOf(IntOffset.Zero) }
     var rowWindowTopLeft by remember(result.messageId) { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+    val onMediaLongClick: () -> Unit = {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        if (isSelectionMode) onToggleSelect(result.messageId) else {
+            menuPosition = IntOffset(rowWindowTopLeft.x.roundToInt(), rowWindowTopLeft.y.roundToInt())
+            showMenu = true
+        }
+    }
     val actionMenuTextColor = historyActionMenuContentColor()
     val actionMenuDeleteColor = historyActionMenuDangerColor()
     val stickerAttachments = remember(result.attachments) {
         result.attachments.orEmpty().filter { it.type == "sticker" || it.type == "emoji_asset" }
     }
-    val previewText = remember(result.content, stickerAttachments) {
-        result.searchPreviewText(stickerAttachments)
+    val media = remember(result.content, context) { splitMessageMedia(result.content, context) }
+    val imageUrls = remember(result.content, result.attachments, context) {
+        result.copy(attachments = result.attachments.orEmpty().filter { it.type == "image" })
+            .historyImageUrls(context)
+    }
+    val previewText = remember(media.text, stickerAttachments) {
+        result.searchPreviewText(stickerAttachments, media.text)
     }
 
     Box {
@@ -586,8 +621,16 @@ private fun MessageSearchResultItem(
                         )
                     }
                     Spacer(Modifier.height(3.dp))
+                    if (imageUrls.isNotEmpty()) {
+                        SearchImagePreviewRow(imageUrls,
+                            onClick = { if (isSelectionMode) onToggleSelect(result.messageId) else onPreviewImage(it) },
+                            onLongClick = onMediaLongClick)
+                        Spacer(Modifier.height(4.dp))
+                    }
                     if (stickerAttachments.isNotEmpty()) {
-                        SearchStickerPreviewRow(stickerAttachments)
+                        SearchStickerPreviewRow(stickerAttachments,
+                            onClick = { if (isSelectionMode) onToggleSelect(result.messageId) else onPreviewImage(it) },
+                            onLongClick = onMediaLongClick)
                         Spacer(Modifier.height(4.dp))
                     }
                     // 消息预览（关键词高亮，最多 2 行）

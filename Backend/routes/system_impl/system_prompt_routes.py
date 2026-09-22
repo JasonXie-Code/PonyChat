@@ -1105,8 +1105,23 @@ async def acknowledge_web_image(filename: str, x_chat_auth: Optional[str] = Head
 
 @router.get("/chat_images/{filename}")
 async def get_chat_image(filename: str):
-    """聊天图片服务接口 - 从数据库读取消息中的图片二进制数据"""
+    """Serve short-lived handoff images before falling back to stored images."""
     try:
+        # Agent-selected web images and a user's just-uploaded image are kept in
+        # the process-local transfer cache until the phone has safely saved them.
+        # They are deliberately not copied into SQLite.  Looking only in the DAO
+        # made every /chat_images/tmp_* attachment persist as an empty message:
+        # the Android client received the asset event but its download was 404.
+        from ..chat_image_transfer import load_chat_image_transfer
+        transfer = load_chat_image_transfer(filename)
+        if transfer:
+            data, mime_type = transfer
+            return Response(content=data, media_type=mime_type, headers={
+                "Cache-Control": "no-store",
+                "X-Content-Type-Options": "nosniff",
+                "X-Accel-Buffering": "no",
+            })
+
         from ..db import get_database, ChatImagesDAO
         db = get_database()
         await db.init()

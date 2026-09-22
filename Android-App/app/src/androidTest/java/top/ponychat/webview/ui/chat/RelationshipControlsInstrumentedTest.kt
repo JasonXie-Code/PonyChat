@@ -300,7 +300,8 @@ class RelationshipControlsInstrumentedTest {
         var retries = 0
         screen { ChatRelationshipPanel(Character("pony", "碧琪"), prefs, state.value, { retries++ }) }
         awaitText("旧关系说明")
-        onMain { state.value = state.value.copy(isLoadingRelationshipSnapshot = true) }
+        onMain { state.value = state.value.copy(isLoadingRelationshipSnapshot = true,
+            relationshipSnapshot = null) }
         awaitText("加载中")
         assertNull(matching("关系内容加载中…"))
         awaitText("碧")
@@ -325,13 +326,39 @@ class RelationshipControlsInstrumentedTest {
         assertEquals(1, retries)
     }
 
+    @Test fun relationshipRefreshKeepsContentAndUpdatesTextInPlace() {
+        val snapshot = RelationshipSnapshot("pony", "conv", stageLabel = "好朋友", conversationCount = 1,
+            currentMessageCount = 2, totalMessageCount = 2, memoryCount = 0,
+            pageContent = RelationshipPageContent(overview = "旧关系说明", mood = "安心"))
+        val state = mutableStateOf(ChatUiState(relationshipSnapshot = snapshot, hasLoadedRelationshipSnapshot = true))
+        screen { ChatRelationshipPanel(Character("pony", "碧琪"), prefs, state.value, {}) }
+        awaitText("旧关系说明")
+        repeat(3) {
+            onMain { state.value = state.value.copy(isLoadingRelationshipSnapshot = true) }
+            SystemClock.sleep(150)
+            awaitText("旧关系说明")
+            assertNull(matching("加载中"))
+            onMain { state.value = state.value.copy(isLoadingRelationshipSnapshot = false,
+                relationshipSnapshotError = "关系信息加载失败，请下拉重试") }
+            SystemClock.sleep(150)
+            awaitText("旧关系说明")
+            assertNull(matching("加载失败"))
+        }
+        onMain { state.value = state.value.copy(relationshipSnapshotError = null,
+            relationshipSnapshot = snapshot.copy(pageContent = snapshot.pageContent!!.copy(overview = "新的关系说明"))) }
+        awaitText("新的关系说明")
+        assertNull(matching("旧关系说明"))
+        assertNull(matching("加载中"))
+        screenshot("relationship-silent-refresh")
+    }
+
     @Test fun agentSwitchKeepsModelTaskToolRowsInOrder() {
         val foreground = AgentRunStatus(runId = "one", status = "running", activity = "正在调用模型",
             model = "chat-model", recentTools = listOf("read_memory", "web_search"),
             modelCalls = 3, toolCalls = 2, points = 5, elapsedMs = 18000)
         val background = AgentRunStatus(runId = "two", status = "running", activity = "正在整理记忆",
             model = "memory-model", phase = "background_memory", currentTools = listOf("read_history"))
-        screen { AgentStatusContent(AgentStatusSnapshot(foreground, null, 0, listOf(foreground, background)), "fixture") }
+        screen { AgentStatusContent(AgentStatusSnapshot(foreground, null, 0, listOf(foreground, background)), "fixture", "normal") }
         awaitText("最近调用：read_memory、web_search")
         screenshot("agent-recent-tools")
         fun top(label: String): Int {
@@ -347,5 +374,83 @@ class RelationshipControlsInstrumentedTest {
         awaitText("memory-model")
         awaitText("正在调用：read_history")
         screenshot("agent-switch")
+    }
+
+    @Test fun agentMenuOnlyShowsTheCurrentConversationMode() {
+        val modes = listOf("normal" to "普通聊天", "galgame" to "游戏", "galgame_lock" to "锁分")
+        val agents = modes.flatMap { (mode, _) ->
+            listOf("foreground", "background_memory").map { phase ->
+                AgentRunStatus(runId = "$mode-$phase", mode = mode, phase = phase,
+                    status = "running", activity = "$mode activity", model = "$mode-$phase-model")
+            }
+        }
+        val mode = mutableStateOf("normal")
+        val snapshot = mutableStateOf(AgentStatusSnapshot(agents.first(), null, 0, agents))
+        screen { AgentStatusContent(snapshot.value, "same-conversation", mode.value) }
+        modes.forEach { (currentMode, label) ->
+            onMain { mode.value = currentMode }
+            awaitText("$currentMode-foreground-model")
+            click("切换 1/2")
+            awaitText("1. $label · 当前对话 · 运行中")
+            awaitText("2. $label · 后台记忆整理 · 运行中")
+            modes.filter { it.first != currentMode }.forEach { (_, otherLabel) ->
+                assertFalse(nodes().any { it.text?.toString()?.contains("$otherLabel ·") == true })
+            }
+            click("2. $label · 后台记忆整理 · 运行中")
+            awaitText("$currentMode-background_memory-model")
+        }
+        onMain {
+            mode.value = "normal"
+            snapshot.value = AgentStatusSnapshot(agents.last(), null, 0, listOf(agents.last()))
+        }
+        awaitText("暂无这个角色的 Agent 运行记录")
+        assertNull(matching("切换 1/2"))
+        assertNull(matching("galgame_lock-background_memory-model"))
+    }
+
+    @Test fun conversationActivityShowsCommittedPlansAndUnavailableStates() {
+        val foreground = AgentRunStatus(runId = "reply", status = "running", model = "fixture-model")
+        val memory = AgentRunStatus(runId = "memory", phase = "background_memory", status = "running")
+        val plan = ConversationActivity(state = "pending", serverNowMs = 100_000,
+            dueAtMs = 160_000, expiresAtMs = 300_000, proactiveEnabled = true, memoryEnabled = true,
+            consecutiveCount = 1, consecutiveLimit = 5)
+        val snapshot = mutableStateOf(AgentStatusSnapshot(foreground, null, 0,
+            listOf(foreground, memory), conversationActivity = plan))
+        val mode = mutableStateOf("normal")
+        screen { ConversationActivityContent(snapshot.value, mode.value) }
+        awaitText("已安排，稍后补一句")
+        awaitText("约 1 分 0 秒后")
+        awaitText("正在处理回复")
+        awaitText("正在整理")
+        awaitText("1 / 5 轮")
+        screenshot("conversation-activity-pending")
+        onMain { snapshot.value = snapshot.value.copy(elapsedSinceReceivedMs = 61_000) }
+        awaitText("已到计划时间，等待执行")
+        onMain { snapshot.value = snapshot.value.copy(elapsedSinceReceivedMs = 0,
+            conversationActivity = plan.copy(state = "processing")) }
+        awaitText("正在准备续聊")
+        onMain { snapshot.value = snapshot.value.copy(elapsedSinceReceivedMs = 201_000) }
+        awaitText("上次续聊已过期")
+        for ((state, text) in listOf("none" to "暂未安排续聊", "sent" to "上次续聊已发出",
+            "cancelled" to "上次续聊已取消", "failed" to "上次续聊未成功",
+            "limit_reached" to "续聊已暂停，等你回应", "unavailable" to "续聊状态暂不可用")) {
+            onMain { snapshot.value = snapshot.value.copy(elapsedSinceReceivedMs = 0,
+                conversationActivity = plan.copy(state = state)) }
+            awaitText(text)
+            assertNull(matching("约 1 分 0 秒后"))
+        }
+        onMain { snapshot.value = snapshot.value.copy(conversationActivity = plan.copy(state = "disabled",
+            proactiveEnabled = false, memoryEnabled = false)) }
+        awaitText("自动续聊已关闭")
+        awaitText("开启记忆与主动消息后，角色可安排稍后续聊。")
+        onMain { snapshot.value = snapshot.value.copy(conversationActivity = plan,
+            notice = "状态读取超时，正在重试", noticeIsError = true) }
+        awaitText("状态读取超时，正在重试；有显示的数据为上次获取的状态")
+        onMain { mode.value = "galgame_lock" }
+        awaitText("当前模式不安排自动续聊")
+        assertNull(matching("已安排，稍后补一句"))
+        assertNull(matching("正在整理"))
+        onMain { mode.value = "normal"; snapshot.value = AgentStatusSnapshot(null, null, 0) }
+        awaitText("续聊状态暂不可用")
     }
 }

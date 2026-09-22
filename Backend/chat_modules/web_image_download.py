@@ -76,6 +76,14 @@ def normalize_image(raw):
                     raise ImageDownloadError('unsupported_image')
                 if source.width * source.height > MAX_PIXELS:
                     raise ImageDownloadError('image_too_large')
+                animated = getattr(source, 'is_animated', False)
+                fmt = source.format
+                if animated:
+                    if source.width * source.height * source.n_frames > 200_000_000:
+                        raise ImageDownloadError('animation_too_large')
+                    for frame in range(source.n_frames):
+                        source.seek(frame)
+                        source.load()
                 source.seek(0)
                 picture = ImageOps.exif_transpose(source)
                 picture.thumbnail((2560, 2560))
@@ -87,7 +95,13 @@ def normalize_image(raw):
                 data = output.getvalue()
                 if len(data) > MAX_BYTES:
                     raise ImageDownloadError('image_too_large')
-                return {'data': data, 'mime_type': 'image/jpeg',
+                if animated:
+                    if len(raw) > MAX_BYTES:
+                        raise ImageDownloadError('image_too_large')
+                    return {'data': raw, 'mime_type': {'GIF': 'image/gif', 'WEBP': 'image/webp', 'PNG': 'image/png'}[fmt],
+                            'width': source.width, 'height': source.height, 'animated': True,
+                            'preview_data': data, 'preview_mime_type': 'image/jpeg'}
+                return {'data': data, 'mime_type': 'image/jpeg', 'animated': False,
                         'width': canvas.width, 'height': canvas.height}
     except (OSError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning) as exc:
         raise ImageDownloadError('invalid_or_oversized_image') from exc

@@ -68,6 +68,7 @@ import top.ponychat.webview.ui.chat.MemoryScreen
 import top.ponychat.webview.ui.chat.ProactiveTasksScreen
 import top.ponychat.webview.ui.device.DeviceHomeScreen
 import top.ponychat.webview.ui.device.DeviceCharacterPickerScreen
+import top.ponychat.webview.ui.images.BooruSearchScreen
 import top.ponychat.webview.ui.settings.ProfileEditScreen
 import top.ponychat.webview.ui.settings.CompanionSettingsScreen
 import top.ponychat.webview.ui.settings.NetworkSettingsScreen
@@ -97,6 +98,7 @@ object Routes {
     const val NETWORK_SETTINGS = "network_settings"
     const val DEVICE_HOME = "device_home"
     const val DEVICE_CHARACTER_PICKER = "device_character_picker"
+    const val BOORU_SEARCH = "booru_search"
 
 }
 
@@ -487,6 +489,9 @@ fun AppNavigation(
                 onNavigateToHall = {
                     navController.navigate(Routes.CHARACTER_HALL)
                 },
+                onNavigateToBooruSearch = {
+                    navController.navigate(Routes.BOORU_SEARCH)
+                },
                 onNavigateToCreate = {
                     isCreatingCharacter = true
                     editingCharacter = null
@@ -518,6 +523,13 @@ fun AppNavigation(
                     profileCharacter = character
                     navController.navigate(Routes.CHARACTER_PROFILE)
                 }
+            )
+        }
+
+        composable(Routes.BOORU_SEARCH) {
+            BooruSearchScreen(
+                prefs = prefs,
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 
@@ -748,6 +760,7 @@ private suspend fun downloadApkToCache(
     onProgress: (Float) -> Unit,
 ): File = withContext(Dispatchers.IO) {
     val client = OkHttpClient.Builder()
+        .followSslRedirects(false)
         // APK self-update should prefer a plain HTTP/1.1 transfer. Some mobile
         // networks/proxies reset long HTTP/2 streams with INTERNAL_ERROR.
         .protocols(listOf(Protocol.HTTP_1_1))

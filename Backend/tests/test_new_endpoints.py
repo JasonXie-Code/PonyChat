@@ -7,12 +7,15 @@
   python Backend/tests/test_new_endpoints.py
 """
 from __future__ import annotations
-import io, json, sys
+import json, sys
 from pathlib import Path
 
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
 
 _THIS = Path(__file__).resolve()
 _PROJ_ROOT = _THIS.parent.parent.parent

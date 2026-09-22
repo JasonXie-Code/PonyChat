@@ -38,7 +38,12 @@ def build_expression_context(messages, *, speaker_character_id=None) -> dict:
             turns.append(current)
         current["emoji"] = list(dict.fromkeys(current["emoji"] + emoji_symbols(message.get("content", ""))))
         for attachment in message.get("attachments") or []:
-            if not isinstance(attachment, dict) or attachment.get("type") not in {"sticker", "emoji_asset"}:
+            if not isinstance(attachment, dict):
+                continue
+            metadata = attachment.get('metadata') or {}
+            web_sticker = (attachment.get('type') == 'image' and isinstance(metadata, dict)
+                           and metadata.get('source') == 'web_search' and metadata.get('purpose') == 'sticker')
+            if attachment.get("type") not in {"sticker", "emoji_asset"} and not web_sticker:
                 continue
             current["has_sticker"] = True
             asset_id = attachment.get("asset_id")

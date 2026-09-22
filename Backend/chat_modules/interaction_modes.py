@@ -1,6 +1,7 @@
 """Mutually exclusive, Agent-selected conversation-world skills."""
+from .Prompts import INTERACTION_MODES_TEXT
 
-from .Prompts import (ROUTING, INSTANT_MESSAGING, VIRTUAL_ROLEPLAY)
+from .Prompts import (instant_messaging, virtual_roleplay)
 from copy import deepcopy
 
 MODES = ('instant_messaging', 'virtual_roleplay')
@@ -9,8 +10,8 @@ FIELD = 'interaction_mode'
 
 
 CATALOG = {
-    'instant_messaging': ('即时通讯软件式聊天，用户谈现实生活；不自动代表恋爱关系。', INSTANT_MESSAGING),
-    'virtual_roleplay': ('双方参与共同想象场景，场景内可行动、递物和使用角色能力。', VIRTUAL_ROLEPLAY),
+    'instant_messaging': (INTERACTION_MODES_TEXT['CATALOG_1'], instant_messaging),
+    'virtual_roleplay': (INTERACTION_MODES_TEXT['CATALOG_2'], virtual_roleplay),
 }
 
 
@@ -31,7 +32,4 @@ def scope_memory(arguments, mode):
     if mode == 'virtual_roleplay':
         scoped['kind'] = 'current_scene'
         scoped['category'] = 'current_scene'
-        text = str(scoped.get('content') or '')
-        if not text.startswith('【虚拟扮演】'):
-            scoped['content'] = '【虚拟扮演】' + text
     return scoped

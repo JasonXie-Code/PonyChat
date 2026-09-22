@@ -12,12 +12,14 @@ import pytest
 def test_harness_switches_provider_model_and_back(monkeypatch, pooled):
     from Backend.chat_modules.harness_runtime import run_harness_turn
     seen = []
+    patches = []
 
     class Harness:
         def __init__(self, **config):
             self.config = config
             seen.append(config)
             self.patch = json.loads(Path(config['patches'][0]).read_text())
+            patches.append(self.patch)
 
         def start(self):
             pass
@@ -33,12 +35,18 @@ def test_harness_switches_provider_model_and_back(monkeypatch, pooled):
     cfg = json.loads((Path(__file__).parents[1] / 'conf/models/local.json').read_text())['models'][0]
 
     async def scenario():
-        for config in ({'model_name': 'deepseek-flash'}, cfg, {'model_name': 'deepseek-flash'}):
+        for config in ({'model_name': 'deepseek-flash', 'supports_vision': True}, cfg,
+                       {'model_name': 'deepseek-flash', 'supports_vision': True}):
             result = await run_harness_turn('synthetic', config, {})
             assert result['model'] == config['model_name']
     asyncio.run(scenario())
     assert [c['provider'] for c in seen] == ['deepseek-official', 'ponychat-local', 'deepseek-official']
     assert seen[1]['reasoning_effort'] is None
+    for index in (0, 2):
+        official = next(p for p in patches[index] if p.get('id') == 'llm-deepseek')
+        assert official['config']['models'] == [
+            {'id': 'deepseek-flash', 'inputModalities': ['text', 'image']}]
+        assert seen[index]['reasoning_effort'] == 'low'
     from Backend.chat_modules.harness_model import provider_patch
     route = provider_patch(cfg)[0]['insert'][0]['config']['providers']['ponychat-local']
     assert route['models'][0]['contextWindow'] == 131072

@@ -15,15 +15,21 @@ fun ChatViewModel.loadRelationshipSnapshot(force: Boolean = false) {
     val characterId = stateNow.character?.id?.takeIf { it.isNotBlank() } ?: return
     val conversationId = stateNow.conversationId?.takeIf { it.isNotBlank() }
     val existing = stateNow.relationshipSnapshot
+    val retainedSnapshot = existing?.takeIf {
+        !force && it.characterId == characterId && it.conversationId == conversationId &&
+            it.pageContent != null
+    }
     if (!force && existing?.pageContent != null &&
         existing.characterId == characterId && existing.conversationId == conversationId &&
         existing.currentMessageCount == stateNow.messages.size &&
+        stateNow.relationshipSnapshotError == null &&
         !stateNow.isLoadingRelationshipSnapshot
     ) return
     if (stateNow.isLoadingRelationshipSnapshot) return
 
     _state.value = stateNow.copy(
         isLoadingRelationshipSnapshot = true,
+        relationshipSnapshot = if (force) existing?.copy(pageContent = null) else existing,
         hasLoadedRelationshipSnapshot = stateNow.hasLoadedRelationshipSnapshot || existing != null,
         relationshipSnapshotError = null
     )
@@ -76,8 +82,12 @@ fun ChatViewModel.loadRelationshipSnapshot(force: Boolean = false) {
                     conversationId = conversationId, stageKey = stage,
                     stageLabel = relationshipStageCn(stage),
                     currentMessageCount = stateNow.messages.size,
-                    pageContent = body.relationshipPage,
-                    pageUpdatedAtMs = body.relationshipPageUpdatedAtMs
+                    pageContent = body.relationshipPage?.takeIf { !force || error == null }
+                        ?: retainedSnapshot?.pageContent
+                        ?.takeIf { body.generationStatus == "failed" },
+                    pageUpdatedAtMs = if (body.relationshipPage == null && body.generationStatus == "failed")
+                        retainedSnapshot?.pageUpdatedAtMs ?: body.relationshipPageUpdatedAtMs
+                    else body.relationshipPageUpdatedAtMs
                 )
             )
         } catch (error: Exception) {
@@ -86,7 +96,7 @@ fun ChatViewModel.loadRelationshipSnapshot(force: Boolean = false) {
                 _state.value = _state.value.copy(
                     isLoadingRelationshipSnapshot = false,
                     hasLoadedRelationshipSnapshot = true,
-                    relationshipSnapshot = null,
+                    relationshipSnapshot = retainedSnapshot,
                     relationshipSnapshotError = if (error is TimeoutCancellationException)
                         "关系内容仍在整理，请稍后下拉刷新" else error.toUserMessage("关系信息加载失败，请下拉重试")
                 )

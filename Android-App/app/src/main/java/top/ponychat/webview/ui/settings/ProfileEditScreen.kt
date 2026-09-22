@@ -106,7 +106,6 @@ fun ProfileEditScreen(
     var newPassword by remember { mutableStateOf("") }
     var showSecuritySection by remember { mutableStateOf(false) }
     val iconScale = LocalFontScale.current
-    val topBarIconSize = 22.dp * iconScale
     val leadingIconSize = 20.dp * iconScale
     val smallIconSize = 14.dp * iconScale
 
@@ -212,8 +211,7 @@ fun ProfileEditScreen(
         topBar = {
             PonyTopBar(
                 title = "编辑资料",
-                onNavigateBack = { navigateBackWithSave() },
-                iconSize = topBarIconSize
+                onNavigateBack = { navigateBackWithSave() }
             )
         }
     ) { padding ->

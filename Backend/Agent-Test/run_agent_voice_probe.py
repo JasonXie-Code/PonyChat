@@ -1,7 +1,6 @@
 """Legacy voice/language behavior, now decided by the real replying Agent."""
 import asyncio
 import base64
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -11,7 +10,11 @@ import subprocess
 import sys
 import time
 
+# smoke_deployed_harness 已从 Backend/Agent-Test 迁到 scripts/ops，这里显式补上搜索路径。
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "ops"))
+
 import smoke_deployed_harness as smoke
+import verify_emotion_prompt_acceptance as acceptance
 
 
 async def exercise(workspace):
@@ -51,7 +54,11 @@ async def exercise(workspace):
     from Backend.db import CharactersDAO, ConversationsDAO, get_database, get_users_dao
     from Backend.agent_memory.schema import ensure
     from Backend.chat_modules import autonomous_normal
+    from Backend.chat_modules import autonomous_delivery
     from Backend import voice_lab_client
+    # 验收要在“被部署的那份实现”上复核提示词裁剪，而不是仓库里的另一份。
+    prompt_text_limits = acceptance.load_text_limits(workspace)
+    prompt_max_chars = autonomous_delivery.EMOTION_PROMPT_MAX_CHARS
     voice_requests = []
     actual_voice_request = voice_lab_client._voice_request
     async def observed_voice_request(client, method, url, **kwargs):
@@ -96,10 +103,17 @@ async def exercise(workspace):
     conv_id=payload['id']
     actual_turn=autonomous_normal.run_autonomous_turn
     decisions=[]
+    # 交付用的是已校验的 envelope，原始响应只作留档；两者都记下来，验收时以 envelope 为准。
+    def _envelope_voice_reply(result):
+        try:
+            return json.loads(result['envelope']).get('voice_reply')
+        except Exception:
+            return None
     async def turn(*args,**kwargs):
         result=await actual_turn(*args,**kwargs)
         raw=json.loads(result['final_response'])
         decisions.append({"voice_reply":raw.get('voice_reply'),"reply_language":raw.get('reply_language'),
+            "delivery_voice_reply":_envelope_voice_reply(result),
             "llm_api_calls":result['llm_api_calls']})
         return result
     autonomous_normal.run_autonomous_turn=turn
@@ -150,6 +164,11 @@ async def exercise(workspace):
             case['voice_requests'] = voice_requests[trace_start:]
             if local_acceptance and expected_voice:
                 case['passed'] = case['passed'] and any(e['method'] == 'POST' and e['status'] < 400 for e in case['voice_requests']) and any('/audio' in e['url'] and e['status'] == 200 for e in case['voice_requests'])
+            # 提示词边界与末词完整性：交付的 instruct 必须是决策提示词的完整词前缀，
+            # 且与当前裁剪实现对同一份输入的结果一致。只统计 audio/HTTP 会漏掉这类问题。
+            case['prompt_check'] = acceptance.check_case(case, prompt_text_limits, prompt_max_chars,
+                                                         autonomous_delivery.DEFAULT_EMOTION_PROMPT)
+            case['passed'] = case['passed'] and case['prompt_check']['prompt_passed']
             cases.append(case)
             print(json.dumps({k:v for k,v in case.items() if k!='paragraphs'},ensure_ascii=False),flush=True)
     return {'passed':all(c['passed'] for c in cases),'status':'complete','elapsed_seconds':round(time.monotonic()-began,3),
@@ -157,8 +176,12 @@ async def exercise(workspace):
         'voice_base_url':os.environ.get('PONYCHAT_VOICE_LAB_BASE_URL'),
         'voice_engine':os.environ.get('PONYCHAT_VOICE_LAB_DEFAULT_ENGINE'),
         'agent_memory_count':0,'production_chat_opened':False,'public_voice_profile':'ponyvoice:pinkie_pie','cases':cases,
-        'source_hashes':{name:hashlib.sha256((workspace/'Backend/chat_modules'/name).read_bytes()).hexdigest()
-                         for name in ('autonomous_delivery.py','autonomous_direct.py','autonomous_prompt_skills.py')}}
+        'prompt_max_chars':prompt_max_chars,
+        'prompt_boundary_passed':all(c['prompt_check']['prompt_passed'] for c in cases),
+        'prompt_checks':{c['case']:c['prompt_check'] for c in cases},
+        'source_hashes':{name:acceptance.normalized_hash((workspace/'Backend/chat_modules'/name).read_bytes())
+                         for name in ('autonomous_delivery.py','autonomous_direct.py','autonomous_prompt_skills.py',
+                                      'text_limits.py')}}
 
 
 async def cleaned(workspace):

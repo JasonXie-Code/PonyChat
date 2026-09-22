@@ -1,11 +1,7 @@
 """Shared shortcut, spirit-reply and rendering contracts for current callers."""
 
 
-NORMAL_DEAD_SPIRIT_STAGE3_GUARD = """【死亡后 @ 主角色】
-1. 主角色已死亡且用户本轮显式@该角色时，只允许一次灵魂或残响回应，不复活，不改变dead状态。
-2. 生成本轮回应时，只写1个短气泡，先描述灵魂或残响的出现，再接一句保留角色口吻的短台词。
-3. 描写发言主体时，使用第三者视角，明确主体是角色的灵魂或残响；不写普通生者的第一人称，不使用我、我的、我们、咱、咱们。
-4. 呈现给用户时，描写置于全角括号，台词置于括号外；不得描写恢复行动、站起、继续正常聊天、安排现实行动或主动任务。"""
+from .Prompts import AUTONOMOUS_SHORTCUTS_TEXT, lifecycle_spirit_rules
 
 
 def _normalize_description_shortcut_user_message(content: str, *, character_species: str = "") -> str:
@@ -43,7 +39,7 @@ def _description_reply_violation_reason(content: str, *, character_species: str 
         _DESCRIPTION_NONHUMAN_LIMB_RE.search(text)
         and not _description_is_human_species(character_species)
     ):
-        return "最终正文使用了小马等非人类角色不应出现的人类肢体词。"
+        return AUTONOMOUS_SHORTCUTS_TEXT['description_error_2']
     return ""
 
 

@@ -48,7 +48,7 @@ Qwen3TTS 继续由 `C:\PonyChatVoice\TTS` 和 `PonyChat Qwen3TTS Local Stack` �
 
 ## 网络与验收
 
-- App：`http://39.101.74.217:80` → CN Nginx → CN 回环 18500 → 本机 5000。
+- App：`https://39.101.74.217` → CN Nginx → CN 回环 18500 → 本机 5000。
 - 官网、管理台与旧版兼容 API：USA Nginx → USA 回环 5000 → 本机 5000。
 - 官网 `/download/apk` 和 `/releases/`：USA 只作无缓存转发，APK 文件在本机。
 - CosyVoice：USA 回环 18010 → 本机 18010；语音静态网页保留在 USA。
@@ -58,7 +58,7 @@ Qwen3TTS 继续由 `C:\PonyChatVoice\TTS` 和 `PonyChat Qwen3TTS Local Stack` �
 
 ```powershell
 Invoke-RestMethod http://127.0.0.1:5000/api/health
-Invoke-RestMethod http://39.101.74.217:80/api/health
+Invoke-RestMethod https://39.101.74.217/api/health
 Invoke-RestMethod https://www.ponychat.org/api/health
 Get-Content var/local-stack/status.json
 ```

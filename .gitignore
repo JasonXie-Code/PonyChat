@@ -101,3 +101,12 @@ TUN.yaml
 *.tun.yaml
 clash*.yaml
 mihomo*.yaml
+
+# Local runtime, worktrees and private acceptance artifacts
+/tmp/
+Backend/db/*.db
+.workbuddy/
+model-test/
+代码存档/
+docs/research/
+docs/testing/

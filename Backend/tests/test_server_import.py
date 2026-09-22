@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 """通过 SSH 验证 context_memory 模块和 normal_chat_memory 表在服务器上正确部署"""
 from __future__ import annotations
-import io, subprocess, sys
+import subprocess, sys
 from pathlib import Path
 
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
 
 _THIS = Path(__file__).resolve()
 _PROJ_ROOT = _THIS.parent.parent.parent

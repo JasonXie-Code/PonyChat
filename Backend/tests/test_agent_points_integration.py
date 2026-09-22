@@ -77,22 +77,24 @@ def test_normal_partial_attempt_preserves_model_and_tool_usage(failure):
     assert collected[0]['llm_api_calls'] == 2 * attempts and collected[0]['tool_call_count'] == 3 * attempts
 
 
-def test_outer_normal_deadline_retains_child_cancellation_usage(monkeypatch):
-    from test_autonomous_normal import normal, turn
+def test_explicit_normal_cancellation_retains_child_usage():
+    from test_autonomous_normal import turn
     collected = []
-    real_wait_for = asyncio.wait_for
-    async def brief_wait_for(awaitable, timeout):
-        return await real_wait_for(awaitable, timeout=0.02)
-    monkeypatch.setattr(normal.asyncio, 'wait_for', brief_wait_for)
-    async def runner(*args, **kwargs):
-        try:
-            await asyncio.sleep(1)
-        except asyncio.CancelledError as error:
-            error.harness_usage = {'llm_api_calls': 2, 'tool_call_count': 3}
-            raise
-    with pytest.raises(normal.NormalAgentError, match='time budget'):
-        asyncio.run(turn(harness_runner=runner, usage_sink=collected.append))
-    assert collected[0]['llm_api_calls'] == 4 and collected[0]['tool_call_count'] == 6
+    async def scenario():
+        started = asyncio.Event()
+        async def runner(*args, **kwargs):
+            started.set()
+            try:
+                await asyncio.Event().wait()
+            except asyncio.CancelledError as error:
+                error.harness_usage = {'llm_api_calls': 2, 'tool_call_count': 3}
+                raise
+        task = asyncio.create_task(turn(harness_runner=runner, usage_sink=collected.append))
+        await started.wait()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError): await task
+    asyncio.run(scenario())
+    assert collected[0]['llm_api_calls'] == 2 and collected[0]['tool_call_count'] == 3
 
 
 @pytest.mark.parametrize('mode', ['galgame', 'galgame_lock'])
@@ -108,6 +110,7 @@ def test_game_attempts_settle_success_and_partial_failure(ledger, monkeypatch, m
             raise error
         return result
     monkeypatch.setattr(harness, 'run_harness_turn', runner)
+    monkeypatch.setattr(harness.GameAgentSession, 'finish', lambda self, text: text)
     request = SimpleNamespace(_galgame_state={}, _galgame_char_profile='synthetic')
     async def scenario():
         return await harness.run_game_agent({'messages': [{'role': 'user', 'content': 'synthetic'}]}, {},

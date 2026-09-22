@@ -24,7 +24,7 @@ def publish_local(root: Path, apk: Path, report: dict, sha256) -> dict:
             raise RuntimeError("Local publication copy failed verification")
         pending.replace(target)
     release = {key: report[key] for key in ("version_name", "version_code", "sha256", "bytes", "certificate_sha256")}
-    release.update(filename=target.name, download_url="http://39.101.74.217:80/download/apk")
+    release.update(filename=target.name, download_url="https://39.101.74.217/download/apk")
     pending = current.with_suffix(".json.part")
     pending.write_text(json.dumps(release, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     pending.replace(current)

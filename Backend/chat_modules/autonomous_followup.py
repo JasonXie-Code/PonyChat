@@ -1,6 +1,7 @@
 """A per-turn follow-up decision, produced with the reply and committed with it."""
+from .Prompts import AUTONOMOUS_FOLLOWUP_TEXT, FOLLOWUP_LIMITS
 
-from .Prompts import FOLLOWUP_CONTRACT
+from .Prompts import followup_contract
 import re
 from .harness_runtime import HarnessToolValidationError
 
@@ -40,20 +41,20 @@ def finalize_followup(business, data):
     """Validate metadata, not prose; replace the candidate on format retries."""
     decision = data.get('followup_decision')
     if not isinstance(decision, dict) or type(decision.get('enabled')) is not bool:
-        raise ValueError('followup_decision.enabled必须为布尔值；每轮明确判断是否稍后补一句')
+        raise ValueError(AUTONOMOUS_FOLLOWUP_TEXT['finalize_followup_1'])
     reason = decision.get('reason')
-    if not isinstance(reason, str) or not reason.strip() or len(reason) > 400:
-        raise ValueError('followup_decision.reason须为1到400字的具体判断依据')
+    if not isinstance(reason, str) or not reason.strip() or not FOLLOWUP_LIMITS['text_min'] <= len(reason) <= FOLLOWUP_LIMITS['text_max']:
+        raise ValueError(AUTONOMOUS_FOLLOWUP_TEXT['finalize_followup_2'])
     blocked = eligibility(business)
     plan = None
     if decision['enabled'] and not blocked:
         summary, delay = decision.get('summary'), decision.get('target_delay_seconds')
-        if not isinstance(summary, str) or not summary.strip() or len(summary) > 400:
-            raise ValueError('追发须提供1到400字summary，说明独立的新内容')
-        if type(delay) is not int or not 60 <= delay <= 1800:
-            raise ValueError('追发target_delay_seconds须为60到1800的整数')
+        if not isinstance(summary, str) or not summary.strip() or not FOLLOWUP_LIMITS['text_min'] <= len(summary) <= FOLLOWUP_LIMITS['text_max']:
+            raise ValueError(AUTONOMOUS_FOLLOWUP_TEXT['finalize_followup_3'])
+        if type(delay) is not int or not FOLLOWUP_LIMITS['delay_min'] <= delay <= FOLLOWUP_LIMITS['delay_max']:
+            raise ValueError(AUTONOMOUS_FOLLOWUP_TEXT['finalize_followup_4'])
         if not data.get('bubble_count'):
-            raise ValueError('自然沉默不能同时安排一条依赖本轮回复的追发')
+            raise ValueError(AUTONOMOUS_FOLLOWUP_TEXT['finalize_followup_5'])
         from .autonomous_contracts import user_batch
         from .autonomous_schedule import validate_schedule
         source = next((m.get('message_id') for m in reversed(user_batch(business.history)) if m.get('message_id')), '')

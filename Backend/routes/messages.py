@@ -66,6 +66,15 @@ def _json_list(value, default=None):
         return default
 
 
+def _history_image_attachments(content, image_url, attachments):
+    """Expose legacy image references through the attachment contract used by history UI."""
+    result = list(attachments or [])
+    url = str(image_url or '').strip()
+    if url and url not in str(content or '') and not any(a.get('url') == url for a in result):
+        result.append({'type': 'image', 'url': url, 'name': '图片'})
+    return result
+
+
 async def _enrich_search_attachment_metadata(conn, attachments: list[dict]) -> None:
     """Attach sticker descriptions used by the search UI preview."""
     for att in attachments:
@@ -559,7 +568,8 @@ async def get_conversation_messages_paged(
                     [str(m.get("message_id") or "") for m in messages],
                 )
             for item in messages:
-                atts = attachments_by_mid.get(str(item.get("message_id") or ""))
+                atts = _history_image_attachments(item.get("content"), item.get("image_url"),
+                    attachments_by_mid.get(str(item.get("message_id") or "")))
                 if atts:
                     item["attachments"] = atts
                 attach_voice_state(item, voice_states_by_mid.get(str(item.get("message_id") or "")))
@@ -767,7 +777,7 @@ async def search_messages(
             # 结果集
             data_query = f"""
                 SELECT m.message_id, m.sequence_number, m.conversation_id,
-                       m.role, m.content, m.timestamp
+                       m.role, m.content, m.timestamp, m.image_url
                 {join_sql}
                 ORDER BY m.timestamp DESC, m.sequence_number DESC
                 LIMIT ? OFFSET ?
@@ -800,7 +810,8 @@ async def search_messages(
                     "role": r[3],
                     "content": r[4],
                     "timestamp": r[5],
-                    "attachments": attachments_by_conv_mid.get((conv_id, msg_id), []),
+                    "attachments": _history_image_attachments(r[4], r[6],
+                        attachments_by_conv_mid.get((conv_id, msg_id), [])),
                 }
             )
 

@@ -146,7 +146,7 @@ class GalgameDAO:
                             f"🛡️ [防误删] 拒绝用更少消息覆盖 Galgame: {char_id[:8]}... "
                             f"(前端 {len(messages)} 条, 后端 {existing_count} 条)"
                         )
-                        return True  # 返回 True 避免调用方无限重试
+                        return '_agent_expected_state' not in galgame_data
 
                 score = galgame_data.get('score', 40)
                 status = galgame_data.get('status', 'playing')
@@ -288,6 +288,20 @@ class GalgameDAO:
                 await conn.execute("BEGIN IMMEDIATE")
                 tx_started = True
                 try:
+                    guard = galgame_data.get('_agent_expected_state')
+                    if guard is not None:
+                        async with conn.execute(
+                            f"SELECT version, active_session_id FROM {data_table} WHERE character_id=? AND user_id=?",
+                            (char_id, user_id)
+                        ) as cur:
+                            guard_row = await cur.fetchone()
+                        actual = {'version': guard_row[0] if guard_row else None,
+                                  'active_session_id': guard_row[1] if guard_row else None}
+                        if actual != guard:
+                            raise ValueError('Game save changed before Agent commit')
+                    cancel_check = galgame_data.get('_agent_cancel_check')
+                    if callable(cancel_check) and cancel_check():
+                        raise ValueError('Game Agent cancelled before commit')
                     # 确保角色存在
                     stage = "ensure_character"
                     async with conn.execute(
@@ -589,6 +603,8 @@ class GalgameDAO:
                                 )
                     
                     stage = "commit_transaction"
+                    if callable(cancel_check) and cancel_check():
+                        raise ValueError('Game Agent cancelled before commit')
                     await conn.execute("COMMIT")
                     tx_started = False
                 except Exception:

@@ -19,23 +19,73 @@ def test_homepage_keeps_creator_multiline_facts_and_moves_generated_anatomy():
     assert "种族解剖学补充" not in compact
     manual = character_profile_reference_guidance(char)
     assert "没有翅膀" in manual and "四蹄" in manual
-    assert "种族解剖学补充" in build_character_profile_prompt_block(char)
+    assert "【当前角色身体资料】" in build_character_profile_prompt_block(char)
 
 
 def test_saved_preferences_keep_exact_contents_and_existing_default_api():
     value = "主动一点\n允许第三人称"
     settings = {'personal_preferences': {'c': {'normal': value}}}
-    assert personal_preferences_prompt(settings, 'c', 'normal', compact=True).endswith(value)
-    assert '例如' not in personal_preferences_prompt(settings, 'c', 'normal', compact=True)
-    assert '例如' in personal_preferences_prompt(settings, 'c', 'normal')
-    assert personal_preferences_prompt(settings, 'other', 'normal', compact=True) == ''
+    prompt = personal_preferences_prompt(settings, 'c', 'normal')
+    assert prompt.endswith(value)
+    assert '例如' not in prompt
+    assert personal_preferences_prompt(settings, 'other', 'normal') == ''
+
+
+def test_preferences_skill_does_not_repeat_the_injected_block():
+    """偏好块在系统提示词与 preferences 技能里各出现一次，不再在技能目录里重复拼接。"""
+    import importlib
+    import sys
+    import types
+    from pathlib import Path
+
+    package = "compact_preferences_probe"
+    module = types.ModuleType(package)
+    module.__path__ = [str(Path(__file__).resolve().parents[1] / "chat_modules")]
+    sys.modules[package] = module
+    skills = importlib.import_module(package + ".autonomous_prompt_skills")
+    normal = importlib.import_module(package + ".autonomous_normal")
+
+    value = "用户喜欢薄荷茶，怕吵"
+    settings = {'personal_preferences': {'c': {'normal': value}},
+                'sexual_language_style': {'c': {'normal': 'euphemistic'}}}
+    block = personal_preferences_prompt(settings, 'c', 'normal')
+    session = skills.PromptSkills(profile="名称：测试", preferences=block,
+                                  business=SimpleNamespace(guidance=""), normal_module=normal,
+                                  home_profile="名称：测试", reference_guidance="",
+                                  preference_guidance=block)
+    catalog = session.catalog["preferences"][1]
+    assert catalog.count(block) == 1
+    assert value in catalog and 'sexual_language_style: euphemistic' in catalog
+
+
+def test_catalog_still_shows_both_when_guidance_differs():
+    """guidance 与保存值不同时（预留的长短两版设计）两段都要保留。"""
+    import importlib
+    import sys
+    import types
+    from pathlib import Path
+
+    package = "compact_preferences_probe_two"
+    module = types.ModuleType(package)
+    module.__path__ = [str(Path(__file__).resolve().parents[1] / "chat_modules")]
+    sys.modules[package] = module
+    skills = importlib.import_module(package + ".autonomous_prompt_skills")
+    normal = importlib.import_module(package + ".autonomous_normal")
+
+    session = skills.PromptSkills(profile="名称：测试", preferences="【当前偏好配置】\n已保存偏好：\n说话简短",
+                                  business=SimpleNamespace(guidance=""), normal_module=normal,
+                                  home_profile="名称：测试", reference_guidance="",
+                                  preference_guidance="【偏好说明】\n档位说明文本")
+    catalog = session.catalog["preferences"][1]
+    assert "【偏好说明】" in catalog and "当前已保存偏好：" in catalog
+    assert "说话简短" in catalog
 
 
 def test_compact_delivery_preserves_guest_default_and_existing_english_voice(monkeypatch):
     history = [{"role": "assistant", "content": "Stay with me.",
                 "speaker_character_id": "main", "voice_status": "ready"}]
     for speaker, expected in [('main', (True, 'English')), ('guest', (False, 'Chinese'))]:
-        value = agent_delivery_guidance(history, speaker=speaker, main='main', include_rules=False)
+        value = agent_delivery_guidance(history, speaker=speaker, main='main')
         data = json.loads(value.split('\n', 1)[1])
         assert (data['voice_reply'], data['previous_reply_language']) == expected
 

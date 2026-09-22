@@ -12,7 +12,6 @@ from Backend.chat_modules.character_reply_prompt import (
 
 @pytest.mark.parametrize('task', [
     'normal', 'galgame', 'galgame_lock', 'companion',
-    'normal_opening_greeting',
 ])
 def test_visible_character_reply_tasks_receive_no_dash_instruction(task):
     payload = {'messages': [{'role': 'system', 'content': '原规则'},
@@ -25,6 +24,8 @@ def test_visible_character_reply_tasks_receive_no_dash_instruction(task):
     assert '必须用第二人称“你”指用户' in system
     assert '无论当前用户是动作主体、动作对象、心理所想对象还是回忆对象' in system
     assert '（你抱住我的那一刻，我一下安静下来）' in system
+    assert '台词中的角色自称不受本条限制' in system
+    assert '非台词描写仍保持当前角色为“我”、当前用户为“你”' in system
     assert '以用户明确要求为准' in system
 
 

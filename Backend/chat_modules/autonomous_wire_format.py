@@ -1,5 +1,6 @@
 """Lossless transport compaction; never change source state or reply prose."""
 from __future__ import annotations
+from .Prompts import AUTONOMOUS_WIRE_FORMAT_TEXT
 
 from datetime import datetime, timezone
 
@@ -11,7 +12,7 @@ def normalize_used_facts(facts):
     conversion affects only the validated delivery envelope, not that raw log.
     """
     if not isinstance(facts, list):
-        raise ValueError("used_facts必须是字符串数组，可以为空")
+        raise ValueError(AUTONOMOUS_WIRE_FORMAT_TEXT['used_facts_type'])
     result = []
     for fact in facts:
         if isinstance(fact, str):
@@ -21,7 +22,7 @@ def normalize_used_facts(facts):
               and isinstance(fact["content"], str) and fact["content"].strip()):
             result.append(fact["content"])
         else:
-            raise ValueError("used_facts必须是字符串数组，可以为空")
+            raise ValueError(AUTONOMOUS_WIRE_FORMAT_TEXT['used_facts_type'])
     return result
 
 
@@ -63,7 +64,7 @@ def compact_task_data(data):
             del message["timestamp"]
             removed_time = True
     if removed_time:
-        data["message_time_reference"] = "消息未列timestamp时，以message_id查source_message_times的occurred_at；它与原始毫秒时间戳是同一时刻。"
+        data["message_time_reference"] = AUTONOMOUS_WIRE_FORMAT_TEXT['data_message_time_reference_1']
 
     state = data.get("relationship_state")
     if isinstance(state, dict) and state:

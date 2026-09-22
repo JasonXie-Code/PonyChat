@@ -93,7 +93,7 @@ def main():
             else:
                 raise RuntimeError('New backend did not become healthy')
             health = {}
-            for key, base in [('local', 'http://127.0.0.1:5000'), ('cn', 'http://39.101.74.217'),
+            for key, base in [('local', 'http://127.0.0.1:5000'), ('cn', 'https://39.101.74.217'),
                               ('official', 'https://www.ponychat.org')]:
                 response = client.get(base + '/api/health')
                 response.raise_for_status()

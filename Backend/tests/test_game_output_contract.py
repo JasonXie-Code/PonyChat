@@ -33,6 +33,7 @@ def test_contract_is_sent_on_first_continuation_and_retry(monkeypatch, initial, 
     async def noop(*args, **kwargs): pass
     monkeypatch.setattr(harness, "run_harness_turn", run)
     monkeypatch.setattr(harness, "_apply_usage_metering", noop)
+    monkeypatch.setattr(harness.GameAgentSession, 'finish', lambda self, text: text)
     state = {"score": 40, "character_pose": "原来较长的姿态描述不应被服务端截断"}
     original = copy.deepcopy(state)
     request = SimpleNamespace(_galgame_state=state, _galgame_is_initial=initial)

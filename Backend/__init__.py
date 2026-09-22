@@ -23,7 +23,7 @@ from .routes import (
     auth, chat, characters, models_api, admin,
     galgame, system, status, character_hall, invite_codes, proactive, proactive_tasks, memory, quick_messages,
     companion_chat, companion_agent, web_public, messages, assets,
-    data_export, drive, mlp_database, relationship, minigames,
+    data_export, drive, mlp_database, relationship, minigames, derpibooru_search,
 )
 from .websocket import manager
 from .login_control import LOGIN_CONTROL_LOGOUT_REASON, is_app_login_allowed
@@ -70,6 +70,7 @@ app.include_router(data_export.router)
 app.include_router(drive.router)
 app.include_router(mlp_database.router)
 app.include_router(minigames.router)
+app.include_router(derpibooru_search.router)
 
 # 静态资源 /assets：用路由代替 mount，使 default.png 返回 404（客户端用首字符头像，不提供默认图）
 ASSETS_DIR = os.path.join(FRONTEND_ROOT, "assets")

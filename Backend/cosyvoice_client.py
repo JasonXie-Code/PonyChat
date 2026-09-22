@@ -9,6 +9,8 @@ from typing import Any
 
 import httpx
 
+from .chat_modules.text_limits import truncate_prompt_text_to_prefix
+
 
 class CosyVoiceError(Exception):
     def __init__(self, code: str, message: str = ""):
@@ -74,15 +76,25 @@ def trim_cosyvoice_tts_instruction(instruct: str, *, max_units: int = 100) -> st
     clean = re.sub(r"\s+", " ", str(instruct or "")).strip()
     if not clean:
         return ""
-    out: list[str] = []
+    return truncate_prompt_text_to_prefix(clean, _instruction_prefix_length(clean, max_units))
+
+
+def _instruction_prefix_length(clean: str, max_units: int) -> int:
+    """按文档字符单位（中日韩字符记 2，其他记 1）算出不超过预算的最长字符前缀。
+
+    单位预算决定能放多少字符，实际断开位置仍交给 `truncate_prompt_text_to_prefix`
+    按标点或整词边界决定，避免把英文指令切成半个单词。
+    """
+    budget = max(0, int(max_units))
     units = 0
-    for ch in clean:
+    length = 0
+    for index, ch in enumerate(clean):
         cost = 2 if re.match(r"[\u3400-\u9fff]", ch) else 1
-        if units + cost > max_units:
+        if units + cost > budget:
             break
-        out.append(ch)
         units += cost
-    return "".join(out).rstrip(" ,，;；")
+        length = index + 1
+    return length
 
 
 def cosyvoice_tts_instruct_for_api(instruct: str) -> str:

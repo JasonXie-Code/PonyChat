@@ -463,12 +463,17 @@ class ModelManager:
 
     def get_active_model(self) -> Optional[Dict[str, Any]]:
         self.config = self._load_config()
-        models = self.config.get("models", []) or []
+        return self._active_model_from_config(self.config)
+
+    @staticmethod
+    def _active_model_from_config(config):
+        """Resolve from one already loaded snapshot without repeating disk checks."""
+        models = config.get("models", []) or []
 
         def _enabled(m: Optional[Dict[str, Any]]) -> bool:
             return m is not None and m.get("enabled") is not False
 
-        active_id = str(self.config.get("active_model", "") or "").strip()
+        active_id = str(config.get("active_model", "") or "").strip()
         cur = next((x for x in models if x.get("id") == active_id), None)
         if _enabled(cur):
             return cur
@@ -487,18 +492,19 @@ class ModelManager:
         hidden=true 的模型仍可用于内部任务；enabled=false 的模型不可用。
         若找不到，回退到当前活跃模型。
         """
-        self.config = self._load_config()
+        config = self._load_config()
+        self.config = config
         flag = f"for_{task}"
         if task == "chat":
-            active = self.get_active_model()
+            active = self._active_model_from_config(config)
             if active and active.get("for_chat"):
                 return active
-        for model in self.config.get("models", []):
+        for model in config.get("models", []):
             if (model.get(flag)
                     and model.get("enabled") is not False
                     and model.get("api_key", "")):
                 return model
-        return self.get_active_model()
+        return self._active_model_from_config(config)
 
     def get_model_for_capability(
         self,

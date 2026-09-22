@@ -120,7 +120,7 @@ def test_resident_followup_schema_survives_no_tools_and_retry():
             **({'completion_feedback': 'missing summary'} if retry else {})), normal.SYSTEM)
         contract = json.loads(prompt)['followup_contract']
         assert 'summary' in contract and 'target_delay_seconds' in contract
-        assert '60到1800' in contract and 'stage_schedule' in contract
+        assert '60到1800' in contract and 'followup技能' in contract
         assert not s.loaded
 
 
@@ -138,7 +138,10 @@ def test_retry_uses_only_remaining_time(monkeypatch):
         return model_result()
 
     result = run(turn(harness_runner=runner))
-    assert limits == [180.0, 118.0]
+    # The first attempt gets the exploration window, never the whole total. By the
+    # time the retry starts that window is spent, so it delivers from existing
+    # evidence inside the delivery window and extends nothing.
+    assert limits == [normal.NORMAL_EXPLORATION_LIMIT_SECONDS, None]
     assert result['automatic_retries'] == 1
 
 
@@ -149,7 +152,7 @@ def test_normal_stops_tools_at_twelve_and_finishes_from_existing_information():
         budgets.append(options['max_tool_calls'])
         if len(budgets) == 1:
             assert options['stop_on_tool_budget'] is True
-            assert options['tool_timeout_seconds'] == normal.NORMAL_TOOL_TIME_LIMIT_SECONDS
+            assert 0 < options['tool_timeout_seconds'] <= normal.NORMAL_TOOL_TIME_LIMIT_SECONDS
             return model_result(finish='tool_budget_exhausted') | {'tool_call_count': 12}
         assert options['force_no_tools'] is True
         assert json.loads(prompt)['verified_observations'] == []
@@ -161,27 +164,25 @@ def test_normal_stops_tools_at_twelve_and_finishes_from_existing_information():
     assert result['automatic_retries'] == 0
 
 
-def test_three_minute_limit_also_bounds_request_preparation(monkeypatch):
+def test_request_has_no_wall_clock_cutoff_but_can_be_cancelled(monkeypatch):
     from Backend.chat_modules import autonomous_service as service
-    limits, cancelled = [], []
-    real_wait_for = asyncio.wait_for
-
+    cancelled = []
     async def prepare(*args, **kwargs):
         try:
             await asyncio.Event().wait()
         except asyncio.CancelledError:
             cancelled.append(True)
             raise
-
-    async def brief_wait(awaitable, timeout):
-        limits.append(timeout)
-        return await real_wait_for(awaitable, timeout=.01)
-
     monkeypatch.setattr(service, '_prepare_autonomous_request', prepare)
-    monkeypatch.setattr(service.asyncio, 'wait_for', brief_wait)
-    with pytest.raises(asyncio.TimeoutError):
-        asyncio.run(service._bounded_autonomous_request())
-    assert limits == [180.0] and cancelled == [True]
+    async def exercise():
+        task = asyncio.create_task(service._bounded_autonomous_request())
+        await asyncio.sleep(.02)
+        assert not task.done()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+    asyncio.run(exercise())
+    assert cancelled == [True]
 
 
 def test_output_repair_keeps_tools_for_an_unfinished_required_reminder():
@@ -216,6 +217,7 @@ def test_output_repair_keeps_required_character_reference_available():
             return model_result() | {'final_response': 'invalid JSON'}
         assert options['max_tool_calls'] == normal.NORMAL_TOOL_CALL_LIMIT
         await tools['read_character_reference'].callback({'query': '青竹 陆马'})
+        await tools['load_chat_skill'].callback({'name': 'instant_messaging'})
         return model_result()
 
     result = run(turn(harness_runner=current.runner(transport)))

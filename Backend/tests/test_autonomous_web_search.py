@@ -60,14 +60,13 @@ def test_failures_are_explicit_without_fallback(payload, code, status):
     assert len(seen) == 1
 
 
-def test_budget_and_timeout():
+def test_repeated_searches_remain_available_and_timeout_is_preserved():
     tool, seen = search({'results': []})
     async def exercise():
-        for _ in range(3):
-            await tool.search({'query': 'pony'})
-        assert (await tool.search({'query': 'pony'}))['status'] == 'budget_exhausted'
+        for _ in range(16):
+            assert (await tool.search({'query': 'pony'}))['status'] == 'no_results'
     asyncio.run(exercise())
-    assert len(seen) == 3
+    assert len(seen) == 16
     def timeout(request):
         raise httpx.ReadTimeout('private endpoint details')
     tool = web.SearxngSearch(transport=httpx.MockTransport(timeout))
@@ -159,11 +158,12 @@ def test_url_messages_trigger_bounded_web_tool(text, expected):
 
 
 def test_mlp_wiki_policy_requires_prompt_first_and_limits_relationship_history():
-    assert '已有相关内容就直接回答，不调用网络工具' in web.MLP_WIKI_POLICY
-    assert '角色自身的固有设定不受季数限制' in web.MLP_WIKI_POLICY
-    assert '角色当前的关系、共同经历、事件发展和相识状态以《友谊就是魔法》第1至第3季为准' in web.MLP_WIKI_POLICY
-    assert '即使第7季才揭示也可以查证后讲述' in web.MLP_WIKI_POLICY
-    assert '不强加前三季关键词' in web.MLP_WIKI_POLICY
+    from prompt_skills_under_test.Prompts import mlp_reference
+    assert '先使用角色主页、完整角色设定和已提供参考' in mlp_reference
+    assert '固有背景仅指此前已经存在、后来才揭示的事实' in mlp_reference
+    assert '当前关系、共同经历、事件发展和相识状态以《友谊就是魔法》第1至第3季为时间线边界' in mlp_reference
+    assert '后续季度揭示但在当前时间线之前已经存在' in mlp_reference
+    assert '结果不足时减少不确定关键词' in mlp_reference
 
 
 def test_later_revealed_background_survives_search_and_tool_guidance():
@@ -176,7 +176,7 @@ def test_later_revealed_background_survives_search_and_tool_guidance():
     assert seen[0].url.params['q'] == 'site:mlp.huijiwiki.com/wiki/ 苹果嘉儿 父母 爱情故事'
     registered = []
     tool.register(lambda *args: registered.append(args))
-    for guidance in (data['note'], registered[0][1], web.MLP_WIKI_POLICY):
-        assert web.MLP_CANON_SCOPE in guidance
-        assert '不得把后续季新发生的结识' in guidance
+    for guidance in (data['note'], registered[0][1]):
+        assert web.mlp_reference in guidance
+        assert '后续获得或改变的能力、形态、身份、关系、任职及事件仍受时间线限制，不得因其后来成为角色特征就写成当前角色已经拥有或经历' in guidance
         assert '旧角色档案' in guidance

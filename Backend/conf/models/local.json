@@ -7,7 +7,7 @@
       "type": "openai",
       "harness_provider": "local-openai",
       "endpoint": "http://127.0.0.1:8068/v1",
-      "api_key": "",
+      "api_key": "local-no-key",
       "model_name": "qwen3.5-4b-local",
       "description": "本地 Q4_K_M 量化版本，已加载视觉投影；单槽 131072 tokens",
       "enabled": true,
@@ -20,10 +20,7 @@
       "enable_thinking": false,
       "supports_web_search": false,
       "context_length": 131072,
-      "options": {
-        "max_tokens": 8192,
-        "temperature": 0.7
-      }
+      "options": {"max_tokens": 8192, "temperature": 0.7}
     }
   ]
 }

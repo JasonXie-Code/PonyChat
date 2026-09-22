@@ -61,7 +61,9 @@ class AgentStatusPollingTest {
                 Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1)
                     .code(200).message("OK").body(("""{"success":true,"agent":{
                         "run_id":"$conversation","status":"running","activity":"正在调用模型",
-                        "model_calls":$count,"tool_calls":$count,"points":${count * 2},"elapsed_ms":10}}
+                        "model_calls":$count,"tool_calls":$count,"points":${count * 2},"elapsed_ms":10},
+                        "conversation_activity":{"state":"pending","server_now_ms":100000,"due_at_ms":160000,
+                        "proactive_enabled":true,"consecutive_count":$count}}
                     """).toResponseBody("application/json".toMediaType())).build()
             }.build()
             val api = Retrofit.Builder().baseUrl("http://127.0.0.1/").client(client)
@@ -107,6 +109,8 @@ class AgentStatusPollingTest {
             assertTrue("Counters must update without reopening", (probe.latest?.agent?.modelCalls ?: 0) >= 3)
             assertTrue("Responses and clock ticks must not cause request storms: ${requests.get()}", requests.get() in 3..4)
             assertNull(probe.latest?.notice)
+            assertEquals(probe.latest?.agent?.modelCalls, probe.latest?.conversationActivity?.consecutiveCount)
+            assertEquals(160000L, probe.latest?.conversationActivity?.dueAtMs)
             probe.owner.lifecycle.currentState = Lifecycle.State.CREATED
             delay(250)
             val pausedCount = requests.get()
@@ -122,6 +126,7 @@ class AgentStatusPollingTest {
         mounted({ count, _ -> if (count == 2) 5500 else 100 }) { probe, requests ->
             delay(6600)
             assertEquals(1, probe.latest?.agent?.modelCalls)
+            assertEquals(1, probe.latest?.conversationActivity?.consecutiveCount)
             assertTrue(probe.notices.any { it?.contains("超时") == true })
             delay(2200)
             assertTrue((probe.latest?.agent?.modelCalls ?: 0) >= 3)
@@ -136,6 +141,7 @@ class AgentStatusPollingTest {
             probe.scope.value = probe.scope.value.copy(username = "other-synthetic", conversationId = "second")
             delay(900)
             assertEquals("second", probe.latest?.agent?.runId)
+            assertEquals(probe.latest?.agent?.modelCalls, probe.latest?.conversationActivity?.consecutiveCount)
             assertNull(probe.latest?.notice)
         }
     }

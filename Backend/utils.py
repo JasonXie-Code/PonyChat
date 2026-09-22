@@ -962,6 +962,15 @@ async def _get_character_name(character_id: str) -> Optional[str]:
     return None
 
 
+def _write_chat_debug_log(filename, content):
+    """Publish only after close, including when the awaiting caller is cancelled."""
+    from .log_index_changes import changes
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, 'w', encoding='utf-8') as output:
+        output.write(content)
+    changes.publish(filename)
+
+
 async def save_chat_debug_log(
     username: Optional[str],
     character_id: Optional[str],
@@ -988,7 +997,6 @@ async def save_chat_debug_log(
         day_dir = now.strftime("%Y-%m-%d")
         hour_dir = now.strftime("%H")
         logs_dir = os.path.join(_CHAT_LOGS_DIR, day_dir, hour_dir)
-        os.makedirs(logs_dir, exist_ok=True)
         timestamp = now.strftime("%Y%m%d_%H%M%S_%f")[:-3]
         out_data = data
         if stage == "RESPONSE" and mode in ("galgame", "galgame_lock"):
@@ -1040,7 +1048,7 @@ async def save_chat_debug_log(
             log_content["params"] = params
         log_content["data"] = out_data
         js_content = f"const debug_log = {_to_js_literal(log_content, 0)};"
-        await asyncio.to_thread(lambda: open(filename, 'w', encoding='utf-8').write(js_content))
+        await asyncio.to_thread(_write_chat_debug_log, filename, js_content)
     except Exception as e:
         logger.warning(f"保存调试日志失败: {str(e)}")
 

@@ -29,6 +29,7 @@ _NORMAL_MULTI_SPEAKER_RESET_ATTRS = (
     "_normal_terminal_death_reason",
     "_normal_committed_death_message_id",
     "_normal_live_turn",
+    "_normal_reply_batch",
     "_normal_dead_spirit_reply",
     "_normal_auto_handoff",
     "_normal_guest_direct_memory_written",
@@ -52,6 +53,9 @@ def _clone_normal_request_for_multi_speaker(
         if hasattr(child, attr):
             delattr(child, attr)
     child = child.model_copy(deep=True)
+    batch = getattr(request, '_normal_reply_batch', None)
+    if batch is not None:
+        child._normal_reply_batch = batch
     child.reply_character_id = reply_character_id
     child.reply_character_ids = None
     setattr(child, "_normal_multi_speaker_child", True)
@@ -261,7 +265,8 @@ def _normal_message_event_delay_seconds(event: dict[str, Any]) -> float:
         voice_delay = None
     if voice_delay is not None:
         return max(0.0, float(voice_delay))
-    return max(0.3, min(len(content) / 10.0, 8.0)) + random.uniform(1.0, 3.0)
+    from Backend.chat_modules.normal_delivery import normal_text_bubble_delay_seconds
+    return normal_text_bubble_delay_seconds(content)
 
 
 def _annotate_normal_message_event_delay(

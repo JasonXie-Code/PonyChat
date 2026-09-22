@@ -80,6 +80,9 @@ async def handle_normal_nonstream_sse(
                     super().__init__(stage)
                     self.stage = stage
             def _is_normal_generation_current() -> bool:
+                batch = getattr(request, '_normal_reply_batch', None)
+                if batch is not None and not batch.current(request._normal_reply_revision):
+                    return False
                 return is_generation_current(username, character_id, client_id, generation_token)
             def _cancelled_packet(stage: str) -> str:
                 logger.info(
@@ -374,7 +377,8 @@ async def handle_normal_nonstream_sse(
                     voice_delay = None
                 if voice_delay is not None:
                     return voice_delay
-                return max(0.3, min(len(str(current_content or "")) / 10.0, 8.0)) + random.uniform(1.0, 3.0)
+                from .normal_delivery import normal_text_bubble_delay_seconds
+                return normal_text_bubble_delay_seconds(current_content)
             delivery_schedule_base_ms = int(time.time() * 1000)
             next_display_at_server_ms = delivery_schedule_base_ms
             async def _set_message_display_schedule(evt: dict, delay_seconds: float) -> None:
@@ -687,6 +691,11 @@ async def handle_normal_nonstream_sse(
                 except Exception as _order_err:
                     logger.debug("[DeliveryOrder] clear active skipped: %s", _order_err)
             await release_lock()
+    if getattr(request, '_normal_reply_batch', None) is not None and not use_json:
+        # The durable batch owns cancellation/restart and transport independence.
+        # Do not detach a second pump that could deliver a superseded attempt.
+        return StreamingResponse(response_lines(), media_type="text/event-stream",
+                                 headers={"X-Accel-Buffering": "no", "Cache-Control": "no-cache"})
     if use_json:
         out: list[dict] = [] if accepted_already_streamed else [accepted_evt]
         async for packet in response_lines():

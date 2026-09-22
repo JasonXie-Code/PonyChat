@@ -1,12 +1,12 @@
 """Exercise the actual service history merge without importing Backend startup."""
-import importlib.util
+import importlib
 from pathlib import Path
+
+from test_autonomous_normal import PACKAGE
 
 
 path = Path(__file__).parents[1] / "chat_modules/autonomous_service.py"
-spec = importlib.util.spec_from_file_location("autonomous_merge_under_test", path)
-service = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(service)
+service = importlib.import_module(PACKAGE + '.autonomous_service')
 
 
 def row(mid, text, role="user"):

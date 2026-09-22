@@ -6,6 +6,19 @@ data class AgentStatusResponse(
     val success: Boolean = false,
     val agent: AgentRunStatus? = null,
     val agents: List<AgentRunStatus> = emptyList(),
+    @SerializedName("conversation_activity") val conversationActivity: ConversationActivity? = null,
+)
+
+data class ConversationActivity(
+    val state: String = "unavailable",
+    @SerializedName("server_now_ms") val serverNowMs: Long = 0,
+    @SerializedName("due_at_ms") val dueAtMs: Long = 0,
+    @SerializedName("expires_at_ms") val expiresAtMs: Long = 0,
+    @SerializedName("proactive_enabled") val proactiveEnabled: Boolean? = null,
+    @SerializedName("memory_enabled") val memoryEnabled: Boolean? = null,
+    @SerializedName("cancel_if_user_replies") val cancelIfUserReplies: Boolean = true,
+    @SerializedName("consecutive_count") val consecutiveCount: Int = 0,
+    @SerializedName("consecutive_limit") val consecutiveLimit: Int = 0,
 )
 
 data class AgentRunStatus(

@@ -1,5 +1,6 @@
 """Official Harness SDK adapter with scoped, schema-validated chat capabilities."""
 from __future__ import annotations
+from .Prompts import HARNESS_RUNTIME_TEXT
 
 import asyncio
 import hmac
@@ -17,6 +18,10 @@ from .agent_logging import logged_harness, record_event, error_data, reconcile_s
 
 MODEL = "deepseek-flash"
 REASONING_EFFORT = "low"
+#: Delivery composes evidence that exploration already gathered, so it gets its
+#: own generation budget instead of inheriting the exploration policy. None means
+#: the SDK field is omitted; downstream defaults are provider-specific.
+DELIVERY_REASONING_EFFORT: str | None = 'low'
 ToolCallback = Callable[[], Awaitable[Any]]
 
 
@@ -59,7 +64,16 @@ def _closed_schema(schema: Mapping[str, Any], depth: int = 0) -> dict[str, Any]:
         raise ValueError("Unsupported tool schema keyword")
     result = dict(schema)
     kind = result.get("type")
-    if kind not in {"object", "array", "string", "integer", "number", "boolean", "null"}:
+    if isinstance(kind, list):
+        if len(kind) != 2 or "null" not in kind or any(not isinstance(t, str) for t in kind):
+            raise ValueError("Tool schema supports only a single type plus null")
+        base = next((t for t in kind if t != "null"), None)
+        if base is None:
+            raise ValueError("Nullable tool schema requires a non-null type")
+        normalized = _closed_schema({**result, "type": base}, depth)
+        normalized["type"] = kind
+        return normalized
+    if not isinstance(kind, str) or kind not in {"object", "array", "string", "integer", "number", "boolean", "null"}:
         raise ValueError("Tool schema requires one explicit supported type")
     if kind == "object":
         if result.get("additionalProperties", False) is not False:
@@ -95,6 +109,9 @@ def _closed_schema(schema: Mapping[str, Any], depth: int = 0) -> dict[str, Any]:
 
 def _validate_arguments(value: Any, schema: Mapping[str, Any], path: str = "arguments") -> None:
     kind = schema["type"]
+    if isinstance(kind, list):
+        selected = "null" if value is None else next(t for t in kind if t != "null")
+        return _validate_arguments(value, {**schema, "type": selected}, path)
     valid = {"object": isinstance(value, dict), "array": isinstance(value, list),
              "string": isinstance(value, str), "integer": type(value) is int,
              "number": type(value) in (int, float), "boolean": type(value) is bool,
@@ -174,18 +191,19 @@ async def run_harness_turn(
     model_config: Mapping[str, Any],
     tools: Mapping[str, ToolCallback | HarnessTool],
     *,
-    system_prompt: str = "你是一个自然、温暖的对话助手。按需使用提供的聊天工具。",
+    system_prompt: str = HARNESS_RUNTIME_TEXT['run_harness_turn_1'],
     tool_descriptions: Mapping[str, str] | None = None,
-    timeout_seconds: float = 120.0,
+    timeout_seconds: float | None = 120.0,
     max_tokens: int = 8192,
-    reasoning_effort: str = 'low',
+    reasoning_effort: str | None = 'low',
+    delivery_reasoning_effort: str | None = DELIVERY_REASONING_EFFORT,
     max_tool_calls: int | None = 12,
     stop_on_tool_budget: bool = False,
     tool_timeout_seconds: float | None = None,
     force_no_tools: bool = False,
     delivery_only: bool = False,
     delivery_tool_names: tuple[str, ...] = (),
-    delivery_timeout_seconds: float = 80.0,
+    delivery_timeout_seconds: float | None = 80.0,
     tool_budget_state: dict | None = None,
     input_channel=None,
 ) -> dict[str, Any]:
@@ -199,14 +217,16 @@ async def run_harness_turn(
         from deepseek_harness import DeepSeekHarness
     except ImportError as exc:
         raise RuntimeError("Agent mode requires deepseek-harness-sdk==0.1.2rc1") from exc
-    if timeout_seconds <= 0 or delivery_timeout_seconds <= 0 or (tool_timeout_seconds is not None and tool_timeout_seconds <= 0) or (
+    if (timeout_seconds is not None and timeout_seconds <= 0) or (delivery_timeout_seconds is not None and delivery_timeout_seconds <= 0) or (tool_timeout_seconds is not None and tool_timeout_seconds <= 0) or (
             max_tool_calls is not None and (type(max_tool_calls) is not int or max_tool_calls < 0)):
         raise ValueError("Invalid Harness runtime limits")
-    if reasoning_effort not in {'low', 'high'}:
+    if reasoning_effort not in {'low', 'high', None} or delivery_reasoning_effort not in {'low', 'high', None}:
         raise ValueError('Unsupported Harness reasoning effort')
-    # The product runs all Agent stages on Flash low, including legacy callers
-    # that still request high. Apply before selecting or constructing a worker.
-    reasoning_effort = REASONING_EFFORT
+    # The product runs all *exploration* stages on Flash low, including legacy
+    # callers that still request high. Delivery is a separate budget and may
+    # override it, but only through its own parameter, so a caller cannot
+    # silently change the reasoning depth of retrieval.
+    reasoning_effort = delivery_reasoning_effort if (delivery_only or force_no_tools) else REASONING_EFFORT
     if any(not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,63}", name) for name in tools):
         raise ValueError("Invalid chat capability name")
     if force_no_tools:
@@ -237,8 +257,10 @@ async def run_harness_turn(
     tool_budget_reason = None
     shared_budget = tool_budget_state if tool_budget_state is not None else {}
     tool_deadline = shared_budget.get('deadline') if tool_timeout_seconds is not None else None
-    if delivery_only or shared_budget.get('delivery_deadline') is not None:
-        tool_deadline = shared_budget.setdefault('delivery_deadline', time.monotonic() + delivery_timeout_seconds)
+    if delivery_only or shared_budget.get('delivery_started') or shared_budget.get('delivery_deadline') is not None:
+        shared_budget['delivery_started'] = True
+        tool_deadline = (shared_budget.setdefault('delivery_deadline', time.monotonic() + delivery_timeout_seconds)
+                         if delivery_timeout_seconds is not None else None)
 
     def observe(notification):
         value = notification if isinstance(notification, Mapping) else getattr(notification, '__dict__', {})
@@ -304,17 +326,19 @@ async def run_harness_turn(
                 name = path[1:]
                 tool_name = name
                 tool_call_id = secrets.token_hex(8)
-                if shared_budget.get('delivery_deadline') is not None and name not in delivery_tool_names:
+                if shared_budget.get('delivery_started') and name not in delivery_tool_names:
                     status, payload = 409, {'error': 'Exploration is closed; deliver from existing evidence',
                                             'code': 'exploration_closed', 'retryable': False}
                     return
-                if name in delivery_tool_names and shared_budget.get('delivery_deadline') is None:
+                if name in delivery_tool_names and not shared_budget.get('delivery_started'):
                     # Sending begins the bounded delivery phase, even before exploration expires.
-                    tool_deadline = shared_budget.setdefault('delivery_deadline', time.monotonic() + delivery_timeout_seconds)
+                    shared_budget['delivery_started'] = True
+                    tool_deadline = (shared_budget.setdefault('delivery_deadline', time.monotonic() + delivery_timeout_seconds)
+                                     if delivery_timeout_seconds is not None else None)
                     if tool_timeout_task is not None:
                         tool_timeout_task.cancel()
-                    tool_timeout_task = asyncio.create_task(expire_tool_time())
-                if tool_timeout_seconds is not None and tool_deadline is None:
+                    tool_timeout_task = asyncio.create_task(expire_tool_time()) if tool_deadline is not None else None
+                if tool_timeout_seconds is not None and tool_deadline is None and not shared_budget.get('delivery_started'):
                     tool_deadline = time.monotonic() + tool_timeout_seconds
                     shared_budget['deadline'] = tool_deadline
                     tool_timeout_task = asyncio.create_task(expire_tool_time())
@@ -325,13 +349,13 @@ async def run_harness_turn(
                     tool_budget_reason = 'tool_time_budget_exhausted'
                     budget_exhausted.set()
                     return
-                if shared_budget.get('delivery_deadline') is None and max_tool_calls is not None and shared_budget.get('calls', 0) >= max_tool_calls:
+                if not shared_budget.get('delivery_started') and max_tool_calls is not None and shared_budget.get('calls', 0) >= max_tool_calls:
                     status, payload = 409, {"error": "Tool call budget exhausted; do not retry in this turn",
                         "code": "tool_budget_exhausted", "retryable": False}
                     return
                 # Charge every authorized capability attempt, including malformed arguments.
                 call_count += 1
-                counter = 'delivery_calls' if shared_budget.get('delivery_deadline') is not None else 'calls'
+                counter = 'delivery_calls' if shared_budget.get('delivery_started') else 'calls'
                 shared_budget[counter] = shared_budget.get(counter, 0) + 1
                 tool_counted = True
                 try:
@@ -451,7 +475,7 @@ async def run_harness_turn(
                     env={"DSH_SYSTEM_PROMPT": system_prompt, "PONYCHAT_HARNESS_TOKEN": token},
                     # Cold startup on the shared host can exceed 30s under
                     # memory pressure; the enclosing turn deadline still applies.
-                    initialize_timeout_seconds=min(60, timeout_seconds),
+                    initialize_timeout_seconds=min(60, timeout_seconds) if timeout_seconds is not None else 60,
                     request_timeout_seconds=timeout_seconds, shutdown_timeout_seconds=1,
                 )
             run_options = {'on_notification': observe}
@@ -464,7 +488,8 @@ async def run_harness_turn(
                     turn=input_channel, loop=asyncio.get_running_loop(), observe=observe, timeout=timeout_seconds))
             else:
                 worker = asyncio.create_task(asyncio.to_thread(harness.run, prompt, **run_options))
-            remaining = max(.001, timeout_seconds-(time.monotonic()-began)) if lease is not None else timeout_seconds
+            remaining = (max(.001, timeout_seconds-(time.monotonic()-began))
+                         if lease is not None and timeout_seconds is not None else timeout_seconds)
             if stop_on_tool_budget:
                 budget_waiter = asyncio.create_task(budget_exhausted.wait())
                 done, _ = await asyncio.wait((worker, budget_waiter), timeout=remaining,

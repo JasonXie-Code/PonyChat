@@ -52,14 +52,10 @@ class PonyChatApp : Application(), ImageLoaderFactory {
     }
 
     override fun newImageLoader(): ImageLoader {
-        // 复用 NetworkClient 的 trustAllCerts + hostnameVerifier，使 Coil 能正常加载
-        // 局域网 HTTPS 自签名证书下的 /chat_images/ 图片（默认 OkHttpClient 会 SSL 握手失败）
+        // 图片也使用平台证书校验，禁止 HTTPS 重定向降级到 HTTP。
         val coilHttpClient = okhttp3.OkHttpClient.Builder()
-            .sslSocketFactory(
-                NetworkClient.sslContext.socketFactory,
-                NetworkClient.trustAllCerts[0] as javax.net.ssl.X509TrustManager
-            )
-            .hostnameVerifier { _, _ -> true }
+            .followSslRedirects(false)
+            .addInterceptor(NetworkClient.upgradeLegacyBackendInterceptor)
             .build()
 
         return ImageLoader.Builder(this)

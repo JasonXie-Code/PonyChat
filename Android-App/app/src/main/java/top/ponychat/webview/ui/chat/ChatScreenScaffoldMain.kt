@@ -1117,38 +1117,7 @@ internal fun ChatScreenScaffoldMain(
                 }
             }
         }
-        // 懒加载触发：滚动到顶部附近时加载更多历史消息。
-        // prepend 历史消息后恢复加载前的首个可见消息位置，避免用户卡在旧顶部。
-        var historyPrependAnchorId by remember(state.conversationId) { mutableStateOf<String?>(null) }
-        var historyPrependAnchorOffset by remember(state.conversationId) { mutableIntStateOf(0) }
-        var historyPrependObservedLoading by remember(state.conversationId) { mutableStateOf(false) }
-        val firstVisibleItemIndex by remember { derivedStateOf { listState.firstVisibleItemIndex } }
-        LaunchedEffect(firstVisibleItemIndex) {
-            if (firstVisibleItemIndex < 3 && state.hasMoreHistory && !state.mode.startsWith("galgame")) {
-                if (!state.isLoadingMoreHistory) {
-                    val anchorIndex = listState.firstVisibleItemIndex
-                    historyPrependAnchorId = state.messages.getOrNull(anchorIndex)?.stableChatItemKey()
-                    historyPrependAnchorOffset = listState.firstVisibleItemScrollOffset
-                }
-                viewModel.loadMoreHistory()
-            }
-        }
-        LaunchedEffect(state.isLoadingMoreHistory, state.messages.size, historyPrependAnchorId) {
-            if (state.isLoadingMoreHistory) {
-                historyPrependObservedLoading = historyPrependAnchorId != null
-                return@LaunchedEffect
-            }
-            if (!historyPrependObservedLoading) return@LaunchedEffect
-            val anchorId = historyPrependAnchorId ?: return@LaunchedEffect
-            val anchorIndex = state.messages.indexOfFirst {
-                it.id == anchorId || it.messageId == anchorId || it.stableChatItemKey() == anchorId
-            }
-            if (anchorIndex >= 0) {
-                listState.scrollToItem(anchorIndex, historyPrependAnchorOffset)
-            }
-            historyPrependAnchorId = null
-            historyPrependObservedLoading = false
-        }
+        ChatHistoryPaginationEffect(listState, state, viewModel::loadMoreHistory)
         LazyColumn(
             state = listState,
             modifier = Modifier

@@ -30,7 +30,7 @@ def test_finalization_keeps_pixels_and_only_sending_even_without_profile_intro(f
             options['tool_budget_state'].update(calls=12, deadline=time.monotonic()-1)
             return model_result(finish=finish)
         assert set(tools) == {'stage_web_image'}
-        assert 0 < options['timeout_seconds'] <= 80
+        assert options['timeout_seconds'] is None
         assert options['tool_timeout_seconds'] is None and options['max_tool_calls'] is None
         assert any(b.get('data') == 'cGl4ZWxz' for b in prompt)
         data = json.loads(prompt[0]['text'])
@@ -94,7 +94,13 @@ def test_sending_outlives_exploration_and_cannot_reopen_search(monkeypatch, alre
     assert state['delivery_calls'] == 1
 
 
-def test_delivery_json_retry_shares_the_original_eighty_second_deadline(monkeypatch):
+def test_exploration_and_delivery_windows_are_separate(monkeypatch):
+    """Exploration gets its own window; the delivery retry keeps the rest.
+
+    The exploration attempt used to receive the whole user-facing total, so a
+    single slow retrieval step could spend the delivery and recovery time before
+    the Agent ever tried to answer.
+    """
     clock = [100.0]
     monkeypatch.setattr(normal, 'time', types.SimpleNamespace(monotonic=lambda: clock[0]))
     images = importlib.import_module(normal.__package__ + '.autonomous_web_images').WebImageTools(None, username='synthetic')
@@ -113,7 +119,7 @@ def test_delivery_json_retry_shares_the_original_eighty_second_deadline(monkeypa
         return model_result()
 
     run(turn(web_image_tools=images, harness_runner=runner))
-    assert limits == [180.0, 80.0, 50.0]
+    assert limits == [normal.NORMAL_EXPLORATION_LIMIT_SECONDS, None, None]
 
 
 @pytest.mark.parametrize('finish', ['tool_time_budget_exhausted', 'tool_budget_exhausted'])
@@ -140,3 +146,27 @@ def test_no_viewed_image_means_no_image_tool_in_delivery(finish, has_candidate):
     result = run(turn(web_image_tools=images, harness_runner=current.runner(transport)))
     assert len(calls) == 2 and not images.selected
     assert '我坐在这里' in result['envelope']
+
+
+def test_recovery_reuses_staged_image_transfer(monkeypatch):
+    clock = [0.0]
+    monkeypatch.setattr(normal, 'time', types.SimpleNamespace(monotonic=lambda: clock[0]))
+    transfers = []
+    images = importlib.import_module(normal.__package__ + '.autonomous_web_images').WebImageTools(
+        None, username='synthetic', transfer_store=lambda *args: transfers.append(args) or '/transfer/one')
+    images.candidates['web:test'] = {'source_url': 'https://example.org', 'title': 'test'}
+    images.downloaded['web:test'] = {'data': b'pixels', 'mime_type': 'image/png'}
+    calls = []
+
+    async def runner(prompt, config, tools, **options):
+        calls.append(options)
+        await tools['stage_web_image'].callback({'image_ref': 'web:test'})
+        if len(calls) <= 2:
+            clock[0] += 60 if len(calls) == 1 else 1000
+            raise asyncio.TimeoutError()
+        return model_result()
+
+    run(turn(web_image_tools=images, harness_runner=runner))
+    assert len(calls) == 3
+    assert len(transfers) == 1
+    assert list(images.selected) == ['web:test']

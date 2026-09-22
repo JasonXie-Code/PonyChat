@@ -39,6 +39,8 @@ def _mime_to_ext(mime_type: str) -> str:
         return "png"
     if normalized == "image/webp":
         return "webp"
+    if normalized == "image/gif":
+        return "gif"
     return "jpg"
 
 

@@ -8,12 +8,18 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import random
 import time
 from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 DISPLAY_TYPES = frozenset({'assistant_paragraph', 'assistant_asset', 'assistant_message'})
 _sessions: set['NormalDeliverySession'] = set()
+
+
+def normal_text_bubble_delay_seconds(content: str) -> float:
+    """Shared typing interval for normal replies and opening greetings."""
+    return max(0.3, min(len(str(content or "")) / 10.0, 8.0)) + random.uniform(1.0, 3.0)
 
 
 class DeliveryCancelled(RuntimeError):
@@ -52,6 +58,10 @@ class NormalDeliverySession:
         return str(event.get('message_id') or event.get('id') or '')
 
     def check_current(self, request) -> None:
+        batch = getattr(request, '_normal_reply_batch', None)
+        if batch is not None and not batch.current(request._normal_reply_revision):
+            self.cancelled = True
+            raise DeliveryCancelled('superseded_by_new_user_message')
         guard = getattr(request, '_autonomous_generation_is_current', lambda: True)
         if not guard():
             self.cancelled = True
@@ -89,6 +99,17 @@ class NormalDeliverySession:
             await conn.commit()
 
     async def release(self, event: dict, request, *, delay_seconds: float) -> None:
+        source = self.sources.get(self.message_id(event), request)
+        batch = getattr(source, '_normal_reply_batch', None)
+        if batch is not None and not batch.delivered:
+            # Serialize the first visibility change with durable input admission.
+            async with batch.delivery_gate:
+                await self._release(event, request, delay_seconds=delay_seconds)
+                batch.delivered = True
+            return
+        await self._release(event, request, delay_seconds=delay_seconds)
+
+    async def _release(self, event: dict, request, *, delay_seconds: float) -> None:
         """Wait from the last actual send; preparation time counts toward delay."""
         mid = self.message_id(event)
         source = self.sources.get(mid, request)

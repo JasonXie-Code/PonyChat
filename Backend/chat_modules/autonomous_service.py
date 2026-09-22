@@ -1,5 +1,6 @@
 """App integration for autonomous normal turns; delivery stays in the existing channel."""
 from __future__ import annotations
+from .Prompts import AUTONOMOUS_SERVICE_TEXT
 
 from dataclasses import asdict
 import asyncio
@@ -52,13 +53,11 @@ async def prepare_autonomous_request(request, model_config, *, profile, environm
 
 
 async def _bounded_autonomous_request(*args, **kwargs):
-    # Bound preparation as well as the Agent itself. Cancellation still passes
-    # through the existing draft cleanup and partial-usage settlement.
-    return await asyncio.wait_for(_prepare_autonomous_request(*args, **kwargs), timeout=180.0)
+    # Explicit cancellation still performs draft cleanup and usage settlement.
+    return await _prepare_autonomous_request(*args, **kwargs)
 
 
 async def _prepare_autonomous_request(request, model_config, *, profile, environment, image_urls):
-    deadline = time.monotonic() + 180.0
     from .agent_logging import outcome, error_data, snapshot
     from .harness_runtime import MODEL
     selected_model = str(model_config.get('model_name') or MODEL)
@@ -71,8 +70,8 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
     from .character import load_character_from_db, build_character_profile_prompt_block
     from .normal_speaker import effective_speaker_character_id, agent_speaker_context
     from .autonomous_stickers import make_sticker_tools
-    from .autonomous_web_search import MLP_WIKI_POLICY, SearxngSearch
-    from .autonomous_web_images import WebImageTools
+    from .autonomous_web_search import SearxngSearch
+    from .autonomous_web_images import WebImageTools, recent_web_image_source_urls
     from ..agent_memory.calendar_context import build_calendar_context
     from ..agent_memory.relationship import normalize_decision, project as project_relationship, stage_agent_decision
 
@@ -83,13 +82,16 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
     from .personal_preferences import personal_preferences_prompt
     from .autonomous_preferences import PreferenceEdits, value_from
     preference_settings = await SettingsDAO(get_database()).load_settings(request.username) if request.username else {}
-    preferences = personal_preferences_prompt(preference_settings, speaker, 'normal', compact=True)
-    preference_guidance = personal_preferences_prompt(preference_settings, speaker, 'normal')
+    preferences = personal_preferences_prompt(preference_settings, speaker, 'normal')
+    # 同一段偏好文本只算一次：一份进常驻系统提示词，一份进 preferences 技能目录。
+    preference_guidance = preferences
     history = visible_messages(request.messages)
     trusted_rows = []
     if request.username and request.conversation_id:
+        # Include one possible already-persisted current user batch; the Agent
+        # separates it and retains thirty preceding complete exchanges.
         trusted_rows = await read_history(config.DB_PATH, username=request.username,
-            character_id=request.character_id, conversation_id=request.conversation_id, limit=120)
+            character_id=request.character_id, conversation_id=request.conversation_id, round_limit=31)
         history = _merge_trusted_history(visible_messages(trusted_rows), history)
     if speaker != request.character_id:
         from ..agent_memory.participants import group_scene_rows
@@ -97,9 +99,7 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
         shared_ids = {row.get('message_id') for row in history}
         trusted_rows = [row for row in trusted_rows if row.get('message_id') in shared_ids]
     from .autonomous_delivery import agent_delivery_guidance
-    delivery_guidance = agent_delivery_guidance(history, speaker=speaker, main=request.character_id)
-    environment += '\n' + agent_delivery_guidance(history, speaker=speaker,
-        main=request.character_id, include_rules=False)
+    environment += '\n' + agent_delivery_guidance(history, speaker=speaker, main=request.character_id)
     store = None
     if request.username:
         await asyncio.to_thread(configure, config.DB_PATH, request.username, speaker,
@@ -140,9 +140,7 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
                                        username=request.username, character_id=speaker, **arguments)
 
     if store is not None:
-        environment += ('\n群聊见闻属于你实际参加过的经历，回到自己的私聊仍可回忆。'
-                        '用户问刚才群聊、其他窗口或被@之后发生的事时，使用read_group_experience读取获准原文；'
-                        '按speaker归属区分自己和其他角色，不能把未参与或无证据的场景当成自己的经历。')
+        environment += (AUTONOMOUS_SERVICE_TEXT['prepare_autonomous_request_1'])
 
     async def legacy(query='', offset=0):
         from ..agent_memory.legacy import read_legacy
@@ -152,7 +150,7 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
         from .image_context_store import get_last_n_for_injection
         entries = await get_last_n_for_injection(request.username, request.character_id, request.conversation_id)
         request._autonomous_prior_image_used = bool(entries)
-        return {'images':[asdict(entry) for entry in entries], 'note':'历史识图档案，不代表当前场景；以新的原文和图片为准'}
+        return {'images':[asdict(entry) for entry in entries], 'note':AUTONOMOUS_SERVICE_TEXT['prior_images_1']}
 
     from .history_image_tools import HistoryImageTools, IMAGE_SOURCE_RULE
     history_image_tools = HistoryImageTools(config.DB_PATH, username=request.username,
@@ -160,11 +158,12 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
         allowed_message_ids=[row['message_id'] for row in history if row.get('message_id')]
         if speaker != request.character_id else None)
 
-    from .autonomous_images import resolve_harness_image_blocks
+    from .autonomous_images import CURRENT_IMAGE_GUIDANCE, resolve_harness_image_blocks
     current_image_blocks = await resolve_harness_image_blocks(image_urls, config.DB_PATH)
     environment += '\n' + IMAGE_SOURCE_RULE
+    environment += '\n' + CURRENT_IMAGE_GUIDANCE
     if image_urls and not current_image_blocks:
-        environment += '\n本轮用户上传了图片，但图片字节未能进入 Harness；如实说明没看清，不能猜测画面。'
+        environment += AUTONOMOUS_SERVICE_TEXT['prepare_autonomous_request_2']
 
     stickers = make_sticker_tools(username=request.username, character_id=speaker,
                                  profile=profile, recent_messages=history)
@@ -174,25 +173,27 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
     from .normal_nonstream import _normal_stage3_handoff_candidates
     shortcut = ShortcutContract(history, profile, speaker=speaker, main=request.character_id)
     request._normal_shortcut_no_auxiliary = shortcut.description or shortcut.story
-    environment += '\n' + MLP_WIKI_POLICY
     web_search = SearxngSearch()
-    web_images = WebImageTools(web_search, username=request.username) if (request.username and not request._normal_shortcut_no_auxiliary
+    sent_web_image_sources = (await asyncio.to_thread(
+        recent_web_image_source_urls, config.DB_PATH, request.conversation_id)
+        if request.username and request.conversation_id else set())
+    web_images = WebImageTools(web_search, username=request.username,
+        excluded_source_urls=sent_web_image_sources) if (request.username and not request._normal_shortcut_no_auxiliary
         and getattr(request, "_supports_web_image_receipts", False)) else None
     business = BusinessTools(request, history, shortcut, await load_proactive_settings(request.username),
                              _normal_stage3_handoff_candidates(request, current_character_id=speaker))
     if not getattr(request, '_normal_internal_proactive_trigger', False):
         request._autonomous_preference_edits = PreferenceEdits(request.username, speaker, 'normal',
             value_from(preference_settings, speaker, 'normal'), history)
-    environment += '\n' + business.guidance
     if speaker != request.character_id:
         from .normal_speaker import ensure_guest_private_context
         private = await ensure_guest_private_context(request)
         private_messages = visible_messages(private.get('messages', []))[-10:]
-        environment += '\n当前角色自己的最近私聊原文；它是过去背景，不覆盖本轮群聊现场：\n' + json.dumps(private_messages, ensure_ascii=False)
+        environment += AUTONOMOUS_SERVICE_TEXT['prepare_autonomous_request_3'] + json.dumps(private_messages, ensure_ascii=False)
         if store:
             store.allow_visible_sources(m['message_id'] for m in private_messages if m.get('message_id'))
     if getattr(request, '_normal_internal_proactive_trigger', False):
-        environment += '\n服务器内部主动触发，不是用户发来的事实：\n' + str(getattr(request, '_normal_proactive_fact_priority_context', '') or '')
+        environment += AUTONOMOUS_SERVICE_TEXT['prepare_autonomous_request_4'] + str(getattr(request, '_normal_proactive_fact_priority_context', '') or '')
     from .autonomous_transaction import install_memory_transaction
     install_memory_transaction(request, store, business)
     def usage_sink(value):
@@ -203,9 +204,7 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
         scene_state = await asyncio.to_thread(load_scene, store) if store is not None else None
         relationship_context = (await asyncio.to_thread(project_relationship, config.DB_PATH, request.username, speaker)
                                 if request.username and speaker else None)
-        from ..agent_memory.relationship_control import CONTROL_INSTRUCTION, control, effective_decision
-        if (relationship_context or {}).get('relationship_mode') == 'manual':
-            preference_guidance += '\n' + CONTROL_INSTRUCTION
+        from ..agent_memory.relationship_control import control, effective_decision
         current_relationship = normalize_decision(relationship_context)
 
         async def update_relationship(arguments):
@@ -231,11 +230,10 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
         from .autonomous_live_input import install_live_input
         input_channel = install_live_input(request, history, profile, speaker, store, business)
         result = await run_skill_turn(run_autonomous_turn, home_profile=home_profile,
-            deadline=deadline,
             user_background=getattr(request, '_normal_user_background', {}),
             input_channel=input_channel,
             reference_guidance=character_profile_reference_guidance(character or {}),
-            delivery_guidance=delivery_guidance, preference_guidance=preference_guidance,
+            preference_guidance=preference_guidance,
             messages=history, character_profile=reference_profile or profile, environment=environment,
             personal_preferences=preferences,
             model_config=model_config, memory_store=store, history_reader=older, legacy_memory_reader=legacy,
@@ -284,6 +282,7 @@ async def _prepare_autonomous_request(request, model_config, *, profile, environ
     # this generated answer before SSE starts, but its model calls still occurred.
     await settle_autonomous_usage(request, request.username)
     stickers.apply_to_request(request, result['bubble_count'])
+    history_image_tools.apply_to_request(request, result['bubble_count'])
     if web_images:
         web_images.apply_to_request(request, result['bubble_count'])
     request._autonomous_memory_store = store

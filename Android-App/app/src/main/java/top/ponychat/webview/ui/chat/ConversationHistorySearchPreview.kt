@@ -1,6 +1,8 @@
 package top.ponychat.webview.ui.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -26,8 +28,9 @@ import top.ponychat.webview.data.model.MessageAttachment
 import top.ponychat.webview.data.model.SearchMessageResult
 import top.ponychat.webview.ui.theme.Primary
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-internal fun SearchStickerPreviewRow(attachments: List<MessageAttachment>) {
+internal fun SearchStickerPreviewRow(attachments: List<MessageAttachment>, onClick: (String) -> Unit, onLongClick: () -> Unit) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -41,6 +44,7 @@ internal fun SearchStickerPreviewRow(attachments: List<MessageAttachment>) {
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .size(56.dp)
+                        .combinedClickable(onClick = { onClick(stickerUrl) }, onLongClick = onLongClick)
                         .clip(RoundedCornerShape(10.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(0.55f))
                         .padding(3.dp)
@@ -50,8 +54,10 @@ internal fun SearchStickerPreviewRow(attachments: List<MessageAttachment>) {
     }
 }
 
-internal fun SearchMessageResult.searchPreviewText(stickerAttachments: List<MessageAttachment>): String {
-    val raw = content.trim()
+internal fun SearchMessageResult.searchPreviewText(
+    stickerAttachments: List<MessageAttachment>, text: String = content,
+): String {
+    val raw = text.trim()
     if (stickerAttachments.isEmpty()) return raw
     val label = stickerAttachments.firstNotNullOfOrNull { it.stickerDescriptionText() } ?: "表情包"
     return if (raw.isBlank() || raw == "[表情]" || raw.equals("[sticker]", ignoreCase = true)) {

@@ -1,6 +1,10 @@
+> 2026-09-09 运行位置更新：聊天、语音网关、搜索和日志迁至 `P:\PonyChat`；App 5.6.36/376 通过 `39.101.74.217:80` 连接本机，官网转发本机最新 APK。当前部署以 [SERVER.md](SERVER.md) 和迁移验收记录为准，下文旧日期盘点保留历史语境。
+
 # PonyChat 项目介绍
 
-> **最后更新日期**：2026-07-05（同步 GitHub 上传前的代码现状：Android 5.6.13、斗地主/象棋小游戏、CosyVoice 语音部署、密钥环境变量化）
+> **最后更新日期**：2026-08-09（Android 5.6.16、Companion/H618 实机闭环、主站大组件拆分与文档全量复核）
+>
+> 日期化工程快照、验证结果与已知风险见 [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md)。
 
 > **产品标语**：接入最先进的智能网络，开启你的故事
 >
@@ -24,7 +28,7 @@
 | 三 | 聊天陪玩 + 语音 | 进行中 | 普通聊天语音回复已接入 CosyVoice；经典陪玩、ASR/TTS 可用；Android 侧 Omni 实时桥接代码存在，但后端 `/ws/companion/realtime` 尚未挂载；旧 Qwen3TTS / OmniVoice 代码保留为兼容或历史参考，本机 Qwen3TTS 自启已停用，不再作为默认部署依赖 |
 | 四 | 音乐共同欣赏 | 待开始 | MediaSession 监听 + 记忆联动 + 主动消息 |
 | 五 | 视频共同讨论 | 待开始 | 链接解析 + 截图/画面讨论 |
-| 六 | 游戏 AI 真实参与 | 规划中 | 已有 Android 中国象棋与斗地主小游戏雏形；远期再推进真实游戏画面识别、AccessibilityService 操作和第二台设备控制 |
+| 六 | 游戏 AI / 设备执行 | 开发验证 | Android 中国象棋与斗地主可用；Companion 已在 K2B/H618 跑通 Accessibility、Mobile MCP、QQ 私聊和受控设备操作首轮闭环，仍需量产化与完整安全验证 |
 
 ---
 
@@ -33,7 +37,7 @@
 | 模式 | 说明 | 客户端 | 备注 |
 | --- | --- | --- | --- |
 | **对话模式 + 陪玩** | 与小马角色自然对话；包含长期记忆、主动消息、语音回复与轻量陪玩 | 主要 **Android**；Web 仅提供轻量普通聊天 | 主对话统一使用 **DeepSeek V4 Flash**（`model_config.json` 中 `active_model`，所有 `for_chat`/`for_memory`/`for_summarize` 任务均指向该模型）；识图走 **豆包 2.0 Mini**；陪玩固定 **豆包 2.0 Mini**。模型大厅保留多供应商配置，但当前生产实际只走上述两条主线。普通聊天以服务端数据库消息表为权威，Android 只上传最新用户批次，历史按服务端分页加载。 |
-| **游戏 / 锁分（Galgame）** | 好感度导向的 Galgame；锁分含体征与死亡条件等 | **Android** | **游戏模式**全体用户可用；**锁分模式**仅 **developer / admin**（客户端长按进入 + 服务端校验）。分步提示词位于 `Backend/galgame/seq_prompts/`：`step_00` 共用，第 1～9 步为导演至选项，第 10 步为角色短期记忆改写。游戏/锁分会话与普通长期记忆隔离。 |
+| **游戏 / 锁分（Galgame）** | 好感度导向的 Galgame；锁分含体征与死亡条件等 | **Android** | **游戏模式**全体用户可用；**锁分模式**仅 **developer / admin**（客户端长按进入 + 服务端校验）。两种模式均由单一游戏 Agent 生成完整回合，锁分状态也由同一 Agent 输出并经后端校验；游戏/锁分会话与普通长期记忆隔离。 |
 | **剧情模式** | 与角色进入独立剧本，探索结局 | 规划 **Android** 优先 | 先选角色再选剧本；剧本定关键节点，AI 填细节；结局重玩重置，**不回写**长期记忆。 |
 
 **Web 端**：主站负责落地页、下载、轻量网页聊天、MBTI 入口、项目近况与管理后台；不提供与 Android 完全同构的角色长期关系、语音消息、Galgame/锁分和陪玩体验。完整产品形态以 **Android** 为准。
@@ -43,7 +47,7 @@
 ## 平台与权限摘要
 
 - **客户端策略**：**仅 Android** 作为主要体验端；当前不考虑 iOS。
-- **Android 版本线索**：仓库当前 `Android-App/app/build.gradle.kts` 为 `versionName = "5.6.13"`、`versionCode = 353`（以发布包与服务端 `/api/app-version` 为准）。
+- **Android 版本线索**：仓库当前 `Android-App/app/build.gradle.kts` 为 `versionName = "5.6.16"`、`versionCode = 356`（以发布包与服务端 `/api/app/version` 为准）。
 - **角色创建**：用户均可创建角色，默认 **私有**；公开角色走角色大厅与审核/运营流程。
 - **官方角色源**：`System` 账号创建或保存的角色会标记为官方源。用户添加官方角色时走引用机制；官方源 ID 迁移会同步更新用户引用 ID 与相关对话、记忆、Galgame、主动消息、图片上下文等引用表。
 - **游戏与长期记忆**：游戏/锁分会话与普通对话 **隔离**，游戏事件 **不** 混入普通聊天长期记忆。
@@ -63,6 +67,7 @@
 
 - **后端**：FastAPI、SQLite WAL、邀请码 + HMAC Token、WebSocket 多端同步、Job 后台任务、定时备份、记忆提取与注入、主动消息调度、模型大厅、Galgame / 锁分分步、小游戏象棋 API、`memory/mlp_rag`、管理后台 API、素材 BLOB 存储、语音消息状态与短期音频缓存。
 - **Android（Compose）**：角色列表与角色大厅、角色主页、角色编辑、SSE / Job、普通聊天历史分页、语音气泡、上下文摘要、Galgame / 锁分 UI、中国象棋、斗地主、语音输入输出、图片与多模态、会员与配额、智能路由与网络检测、本地缓存、设置与合规弹窗。
+- **Companion（开发验证）**：单 APK 能力握手、系统级 Runtime、Accessibility/通知监听、悬浮控制、Mobile MCP Controller、真人触摸打断和 QQ 私聊回复；K2B/H618 Android 12 已完成首轮实机验证，量产边界见 `Companion/README.md`。
 - **普通聊天历史**：服务端消息表为权威；Android 请求只带最新用户消息批次。`POST /api/messages/hide` 支持按用户、角色、会话与消息 ID 软隐藏单条普通聊天消息并写入删除审计。
 - **语音回复链路**：普通对话导演决定文本/语音；语音进入 `normal_voice_reply` 生成口语化脚本，按句携带 `emotion_prompt`。默认后端部署通过 Server-USA 的 CosyVoiceTTS 网关调用官方 DashScope / 百炼 CosyVoice API；角色参考音频先注册成可复用的 `cosy_voice_id`，后续合成直接复用，故障或配方变化时才用 PonyChat 保存的参考音频重新注册。旧 Qwen3TTS recipe 路径仍在代码中作为兼容层，但不再是默认 systemd 部署。网页端试听可开关手机拾音模拟；Android 收到官方原音后在本地做手机拾音处理。括号旁白可作为文本段展示，emoji 与不适合朗读内容会从 TTS 文本中清理。服务端保存 `voice_status`、`voice_id`、`voice_job_id`、`voice_cache_key`、`tts_text`、`transcript`、`text_fragments`、`voice_sentences` 等状态，并支持缓存取回与 ACK 清理。每条成功生成的语音消息计入今日积分，默认扣 `10` 分；同一回复多条语音按条累计。
 - **角色主页与大厅**：公开档案页展示封面、头像、作者、个性签名、人气数据、相册、16 人格、性格、兴趣和角色档案；封面/相册支持全屏预览与下载。角色主页素材由角色编辑页维护；喜欢数据由后端表真实计数并限制同日重复点赞。
@@ -104,7 +109,7 @@
 - **剧情模式**：见 `docs/design/剧情模式设计.md`；与普通聊天独立，不回写长期记忆。
 - **音乐共同欣赏**：`MusicWatcher` + `POST /api/activity/music`，与记忆、主动消息联动。
 - **视频共同讨论**：轻量版链接解析 + `POST /api/activity/video`；完整版可复用陪玩截图与弹幕 UI。
-- **真机游戏 AI**：棋牌方向以 VLM 读牌、JSON 决策、AccessibilityService 为第一步；动作游戏方向采用慢层策略 + 快层检测的分层架构；第二台设备控制端为远期产品叙事，成本与合规需单独立项。
+- **真机游戏 AI**：Companion 已完成通用设备执行与 QQ 场景首轮实机闭环；棋牌方向可继续接入 VLM 读牌、JSON 决策和验证器，动作游戏方向采用慢层策略 + 快层检测的分层架构。量产成本、权限与合规仍需单独立项。
 - **多平台**：当前不做 iOS；桌面端仅作为远期可能性。
 
 ---
@@ -124,6 +129,7 @@
 | 路径 | 说明 |
 | --- | --- |
 | `Backend/`、`Android-App/` | 后端（FastAPI）与 Android 客户端；普通聊天历史由服务端权威重建，Android 只发最新用户增量，并通过 `/api/messages/hide` 做单条消息软隐藏 |
+| `Companion/` | 自研 Android 设备 Runtime、Mobile MCP Controller、RRO 和测试；H618 部署配置已迁至 `P:\Hardware\H618-K2B`，当前为开发验证线 |
 | `Backend/chat_modules/` | 普通聊天调度、规划、非流式回复、语音回复、语音消息状态、图片上下文等 |
 | `Backend/galgame/` | Galgame/锁分：响应解析、体征级联、重试、历史归一化；`galgame/seq_prompts/` 为分步提示词；`step_10_char_memory_update.py` + `galgame/memory.py` 负责角色短期记忆 |
 | `Backend/memory/` | 上下文摘要、记忆固化/提取、分层调度、MLP RAG（实现于 `memory/mlp_rag.py` 等） |

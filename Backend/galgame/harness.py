@@ -14,6 +14,12 @@ from ..providers.llm_call import _apply_usage_metering, _save_chat_debug_if_requ
 from .constants import EVENT_FLAG_KEYS, LOCK_EVENT_FLAG_KEYS, _DEFAULT_CHAR_MOOD, _DEFAULT_CHAR_VITALS, _DEFAULT_ORGAN_FILL
 from .output_contract import POSE_MAX_CHARS, POSITION_MAX_CHARS, THOUGHTS_VOICE, game_output_contract
 from .lock_state import GAME_CONTINUITY_RULES, LOCK_STATE_RULES, baseline, preview_tool
+from .agent_session import GameAgentSession
+from .agent_skills import WORKFLOW
+
+
+class GameAgentContractError(ValueError):
+    """Recoverable Agent delivery gate failure, retried within the game job."""
 
 
 def _game_agent_system(*, mode: str, character_profile: str) -> str:
@@ -63,10 +69,18 @@ async def run_game_agent(payload: dict, model_config: dict, *, mode: str, reques
     state = getattr(request, "_galgame_state", None)
     if not isinstance(state, dict):
         state = {}
+    session = GameAgentSession(request, state, messages, character_profile, mode)
+    request._game_agent_session = session
     state = {key: value for key, value in state.items() if key != "messages"}
-    tools = {}
+    tools = session.tools()
     if mode == "galgame_lock":
-        tools['preview_lock_state'] = preview_tool(request, state)
+        preview = preview_tool(request, state)
+        async def checked_preview(args):
+            session.require_skills()
+            session.receipt = None
+            return await preview.callback(args)
+        from ..chat_modules.harness_runtime import HarnessTool
+        tools['preview_lock_state'] = HarnessTool(checked_preview, preview.description, preview.parameters)
         state.update(baseline(state))
     prompt_data = {
         "mode": mode,
@@ -76,9 +90,11 @@ async def run_game_agent(payload: dict, model_config: dict, *, mode: str, reques
         "opening": {"location": getattr(request, "_galgame_current_place", ""),
                     "time": getattr(request, "_galgame_opening_time", ""),
                     "season": getattr(request, "_galgame_opening_season", "")},
-        "ordered_messages": [m for m in messages if isinstance(m, dict) and m.get("role") not in ("system", "developer")],
+        "ordered_messages": [m for m in messages if isinstance(m, dict) and m.get("role") not in ("system", "developer")][-12:],
         "output_contract": game_output_contract(mode),
-        "required_tools_before_reply": list(tools),
+        **session.context(),
+        "required_tools_before_reply": ['load_game_skill'] +
+            (['preview_lock_state'] if mode == 'galgame_lock' else []) + ['review_game_turn'],
     }
     if validation_feedback:
         prompt_data["validation_feedback"] = validation_feedback
@@ -94,7 +110,8 @@ async def run_game_agent(payload: dict, model_config: dict, *, mode: str, reques
         + THOUGHTS_VOICE
         + "交付前逐句确认心理栏的代词指向：凡指当前玩家的都用你，凡指角色自己的都用我，真正第三者保留其指向。"
     )
-    system = _game_agent_system(mode=mode, character_profile=character_profile)
+    profile_card = getattr(request, '_galgame_profile_card', '') or character_profile
+    system = _game_agent_system(mode=mode, character_profile=profile_card) + '\n' + WORKFLOW
     scope = chat_debug_request or {}
     preferences = await load_personal_preferences_prompt(scope.get("username"), scope.get("character_id"), mode)
     if preferences:
@@ -108,7 +125,7 @@ async def run_game_agent(payload: dict, model_config: dict, *, mode: str, reques
     try:
         result = await run_harness_turn(prompt, model_config, tools, system_prompt=system,
                                         timeout_seconds=timeout, max_tokens=int(payload.get("max_tokens") or 16384),
-                                        max_tool_calls=4 if tools else 0)
+                                        max_tool_calls=24)
     except BaseException as exc:
         result = getattr(exc, 'harness_usage', {})
         raise
@@ -120,6 +137,12 @@ async def run_game_agent(payload: dict, model_config: dict, *, mode: str, reques
             charge_membership_chat_quota=extras.get("charge_membership_chat_quota")))
     usage = result.get("usage") or {}
     text = str(result.get("final_response") or "")
+    contract_error = None
+    if result.get('finish_reason') == 'completed' and text.strip():
+        try:
+            delivered = session.finish(text)
+        except ValueError as exc:
+            contract_error = GameAgentContractError(str(exc))
     raw = {"engine": "deepseek-harness-sdk", "model": MODEL, "reasoning_effort": "low",
            "choices": [{"message": {"role": "assistant", "content": text},
                         "finish_reason": result.get("finish_reason")}],
@@ -128,9 +151,13 @@ async def run_game_agent(payload: dict, model_config: dict, *, mode: str, reques
            "points": result.get("llm_api_calls", 0) + result.get("tool_call_count", 0)}
     await _save_chat_debug_if_requested(debug if chat_debug_request else None,
         data={**raw, "usage_scope": "summary",
-              "status": "success" if result.get("finish_reason") == "completed" and text.strip() else "error"},
+              "status": "success" if result.get("finish_reason") == "completed" and text.strip() and not contract_error else "error",
+              "validation_error": str(contract_error) if contract_error else None},
         fallback_model_name=MODEL, fallback_mode=mode, stage_override="GALGAME_AGENT_RESPONSE")
     if result.get("finish_reason") != "completed" or not text.strip():
         raise ValueError("Game Agent did not complete: " + str(result.get("finish_reason")))
+    if contract_error:
+        raise contract_error
+    text = delivered
     return LLMResponse(text=text, reasoning="", usage={"input": usage.get("prompt_tokens", 0),
         "output": usage.get("completion_tokens", 0)}, raw_response=raw)

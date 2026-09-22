@@ -56,6 +56,10 @@ class NormalChatAutoFollowInstrumentedTest {
     private val bottomPadding = mutableIntStateOf(0)
     private val effectiveEnd = mutableIntStateOf(Int.MAX_VALUE)
     private var panelHeightPx = 0
+    private var historyRequests = 0
+    private val resumeSnapshot = mutableStateOf<ForegroundResumeAutoFollowSnapshot?>(null)
+    private val resumeTick = mutableIntStateOf(0)
+    private var resumeLayoutDelayMs = 0L
 
     @Before
     fun openActivity() {
@@ -79,7 +83,11 @@ class NormalChatAutoFollowInstrumentedTest {
             panelHeight.intValue = initialPanelHeight
             bottomPadding.intValue = initialPanelHeight
             state.value = ChatUiState(conversationId = "scroll-regression",
-                messages = (0 until 12).map { message("initial-$it") })
+                messages = (0 until 12).map { message("initial-$it") }, hasMoreHistory = false)
+            historyRequests = 0
+            resumeSnapshot.value = null
+            resumeTick.intValue = 0
+            resumeLayoutDelayMs = 0L
         }
         scenario.onActivity { activity ->
             // Avoid API 36.1 emulator task-snapshot GPU readback on ActivityScenario.close().
@@ -112,8 +120,30 @@ class NormalChatAutoFollowInstrumentedTest {
                     initialPresentationSettled = settled.value,
                     scrollToLastAssistantInGalgame = {},
                 )
+                ChatForegroundResumeFollow(
+                    listState = list, state = state.value,
+                    activeCharId = "test", activeMode = "normal", activeConversationId = "scroll-regression",
+                    foregroundResumeAutoFollowSnapshotState = resumeSnapshot,
+                    foregroundResumeAutoFollowTickState = resumeTick,
+                    listTouchActiveState = touching, listAutoFollowSuppressedState = suppressed,
+                    userScrolledUpState = readingHistory, showLoadingOverlay = false,
+                    scrollNaturalBottomPaddingPx = 0, scrollBottomAnchorTolerancePx = 2f,
+                    currentLifecycleEffectiveViewportEndPx = { effectiveEnd.intValue },
+                    isForeground = { true },
+                    awaitImeNotAnimating = { delay(resumeLayoutDelayMs) },
+                    scrollToLastAssistantInGalgame = {},
+                )
+                ChatHistoryPaginationEffect(list, state.value) {
+                    historyRequests++
+                    state.value = state.value.copy(isLoadingMoreHistory = true)
+                }
                 LazyColumn(Modifier.width(300.dp).height(320.dp), state = list,
                     contentPadding = PaddingValues(bottom = bottomPadding.intValue.dp)) {
+                    if (state.value.isLoadingMoreHistory) {
+                        item(key = "__load_more_indicator__") {
+                            Box(Modifier.height(40.dp)) { Text("加载历史") }
+                        }
+                    }
                     items(state.value.messages, key = { it.stableChatItemKey() }) { message ->
                         val height = if (message.id == state.value.messages.last().id) tailHeight.intValue else 80
                         Box(Modifier.height(height.dp)) { Text(message.content) }
@@ -132,13 +162,24 @@ class NormalChatAutoFollowInstrumentedTest {
         // One Activity for the whole matrix: API 36.1 emulator task-snapshot persistence
         // crashes system_server between separately launched instrumentation cases.
         val cases = linkedMapOf<String, () -> Unit>(
+            "resume refresh after history gesture" to ::resumeRefreshMustNotOverrideHistoryGesture,
+            "resume layout wait after history gesture" to ::resumeLayoutWaitMustNotOverrideHistoryGesture,
+            "resume without gesture" to ::resumeWithoutGestureStillFollows,
+            "resume manual bottom while settling" to ::resumeManualReturnWhilePresentationIsSettling,
+            "bottom edge gesture" to ::bottomEdgeGestureRestoresFollowing,
+            "history drag while settling" to ::historyDragWhilePresentationIsSettling,
             "each bubble" to ::followsEveryBubbleInAnOrdinaryReply,
-            "near bottom" to ::followsFromNearBottomAfterASmallDrag,
+            "near bottom reader" to ::smallDragPausesEveryIncomingBubble,
+            "return to bottom" to ::manualReturnToBottomRestoresFollowing,
+            "rapid return to bottom" to ::rapidReturnToBottomRestoresFollowing,
             "touch release" to ::resumesAfterFingerLiftWhenMessageArrivesDuringTouch,
             "bubble growth" to ::repairsBottomAfterLastBubbleGrowsWithoutANewMessage,
             "background refresh" to ::followsBackgroundRefreshFromNearBottom,
             "history reader" to ::incomingMessagesDoNotMoveAReaderOfOlderHistory,
             "history prepend" to ::prependingHistoryPreservesTheVisibleMessage,
+            "moving during history request" to { historyCompletionPreservesCurrentPosition(false) },
+            "failed history request" to { historyCompletionPreservesCurrentPosition(true) },
+            "history response during fling" to ::historyResponseDoesNotCancelScrolling,
             "quick message panel dismissal" to ::quickMessageRemainsVisibleAfterPanelCompensationReverts,
             "quick message from history" to ::quickMessageReturnsFromHistoryAfterPanelDismissal,
             "panel history reader" to ::dismissingPanelWithoutSendingDoesNotPullHistoryToBottom,
@@ -158,6 +199,100 @@ class NormalChatAutoFollowInstrumentedTest {
         assertTrue(failures.joinToString("\n"), failures.isEmpty())
     }
 
+    private fun requestResumeFollow() {
+        resumeSnapshot.value = ForegroundResumeAutoFollowSnapshot(
+            characterId = "test", mode = "normal", conversationId = "scroll-regression",
+            messageCount = state.value.messages.size,
+            lastMessageKey = state.value.messages.last().stableChatItemKey(),
+            wasLastMessageVisible = true, pausedAtMs = 1, resumeRequestedAtMs = 2,
+        )
+        resumeTick.intValue++
+    }
+
+    fun resumeRefreshMustNotOverrideHistoryGesture() {
+        main {
+            state.value = state.value.copy(isBackgroundRefreshing = true)
+            requestResumeFollow()
+        }
+        dragTo(2, settleAfterRelease = false)
+        val anchor = read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
+        main {
+            append("completed-while-backgrounded")
+            state.value = state.value.copy(isBackgroundRefreshing = false)
+        }
+        SystemClock.sleep(700)
+        assertEquals("Delayed resume must preserve history", anchor,
+            read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset })
+        assertTrue(read { readingHistory.value })
+        assertEquals(null, read { resumeSnapshot.value })
+    }
+
+    fun resumeLayoutWaitMustNotOverrideHistoryGesture() {
+        main {
+            resumeLayoutDelayMs = 700
+            requestResumeFollow()
+            append("resume-before-layout")
+        }
+        SystemClock.sleep(100)
+        dragTo(2, settleAfterRelease = false)
+        val anchor = read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
+        SystemClock.sleep(1000)
+        assertEquals("IME/layout wait must recheck reader intent", anchor,
+            read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset })
+    }
+
+    fun resumeWithoutGestureStillFollows() {
+        main {
+            requestResumeFollow()
+            append("resume-no-gesture")
+        }
+        await("resume with no gesture follows") { atBottom() }
+    }
+
+    fun resumeManualReturnWhilePresentationIsSettling() {
+        dragTo(2)
+        scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+        main {
+            settled.value = false
+            state.value = state.value.copy(isBackgroundRefreshing = true)
+            requestResumeFollow()
+            append("first-bubble-while-backgrounded")
+        }
+        scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        dragTo(state.value.messages.lastIndex)
+        main {
+            state.value = state.value.copy(isBackgroundRefreshing = false)
+            settled.value = true
+        }
+        await("manual bottom is measured") { atBottom() }
+        repeat(3) { index ->
+            main { append("later-foreground-bubble-$index") }
+            await("bubble $index follows after manual bottom during resume") { atBottom() }
+        }
+        assertFalse(read { readingHistory.value || suppressed.value })
+    }
+
+    fun bottomEdgeGestureRestoresFollowing() {
+        dragTo(2)
+        scrollTo(state.value.messages.lastIndex)
+        // Resume/layout restoration has already clamped the list to its end.
+        // The user's next forward drag has intent but cannot move the viewport.
+        dragTo(state.value.messages.lastIndex)
+        main { append("after-bottom-edge-drag") }
+        await("a drag at the physical bottom clears stale suppression") { atBottom() }
+        assertFalse(read { readingHistory.value || suppressed.value })
+    }
+
+    fun historyDragWhilePresentationIsSettling() {
+        main { settled.value = false }
+        dragTo(2)
+        val anchor = read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
+        main { settled.value = true; append("do-not-interrupt-resume-reader") }
+        SystemClock.sleep(500)
+        assertEquals(anchor, read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset })
+        assertTrue(read { readingHistory.value })
+    }
+
     fun followsEveryBubbleInAnOrdinaryReply() {
         repeat(4) {
             main { append("bubble-$it") }
@@ -165,11 +300,35 @@ class NormalChatAutoFollowInstrumentedTest {
         }
     }
 
-    fun followsFromNearBottomAfterASmallDrag() {
+    fun smallDragPausesEveryIncomingBubble() {
         dragTo(7) // Rows 7..10 visible: near the bottom, but row 11 is below the viewport.
         assertFalse(read { list.canSeeLastItem() })
-        main { append("near-bottom") }
-        await("near-bottom incoming bubble is visible") { atBottom() }
+        val anchor = read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
+        repeat(4) {
+            main { append("near-bottom-$it") }
+            SystemClock.sleep(350)
+            assertEquals("Bubble $it must not pull a reader back", anchor,
+                read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset })
+        }
+        assertTrue(read { readingHistory.value })
+    }
+
+    fun manualReturnToBottomRestoresFollowing() {
+        dragTo(7)
+        dragTo(11)
+        main { append("returned-to-bottom") }
+        await("manual return restores following") { atBottom() }
+    }
+
+    fun rapidReturnToBottomRestoresFollowing() {
+        dragTo(2, settleAfterRelease = false)
+        dragTo(11, settleAfterRelease = false)
+        main { append("rapid-returned-to-bottom-1") }
+        await("first bubble follows a rapid return") { atBottom() }
+        main { append("rapid-returned-to-bottom-2") }
+        await("later bubble keeps following after a rapid return") { atBottom() }
+        assertFalse(read { readingHistory.value })
+        assertFalse(read { suppressed.value })
     }
 
     fun resumesAfterFingerLiftWhenMessageArrivesDuringTouch() {
@@ -186,6 +345,7 @@ class NormalChatAutoFollowInstrumentedTest {
 
     fun followsBackgroundRefreshFromNearBottom() {
         dragTo(7)
+        val anchor = read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset }
         main { state.value = state.value.copy(isBackgroundRefreshing = true) }
         SystemClock.sleep(100)
         main {
@@ -193,7 +353,8 @@ class NormalChatAutoFollowInstrumentedTest {
             append("background-2")
             state.value = state.value.copy(isBackgroundRefreshing = false)
         }
-        await("background messages follow near-bottom reader") { atBottom() }
+        SystemClock.sleep(500)
+        assertEquals(anchor, read { list.firstVisibleItemIndex to list.firstVisibleItemScrollOffset })
     }
 
     fun incomingMessagesDoNotMoveAReaderOfOlderHistory() {
@@ -214,6 +375,73 @@ class NormalChatAutoFollowInstrumentedTest {
         }
         SystemClock.sleep(600)
         assertEquals(anchor, read { list.layoutInfo.visibleItemsInfo.first().key })
+    }
+
+    private fun beginHistoryRequest() {
+        main { state.value = state.value.copy(hasMoreHistory = true) }
+        dragTo(2)
+        await("history request started") { state.value.isLoadingMoreHistory && historyRequests == 1 }
+        await("loading indicator inserted") { list.layoutInfo.totalItemsCount == state.value.messages.size + 1 }
+    }
+
+    private fun completeHistoryRequest(failed: Boolean = false) {
+        state.value = state.value.copy(
+            messages = if (failed) state.value.messages else
+                (0 until 20).map { message("page-$historyRequests-$it") } + state.value.messages,
+            isLoadingMoreHistory = false,
+            hasMoreHistory = true,
+        )
+    }
+
+    fun historyCompletionPreservesCurrentPosition(failed: Boolean) {
+        beginHistoryRequest()
+        dragTo(1) // Continue towards older messages while the request is outstanding.
+        val anchor = read { list.layoutInfo.visibleItemsInfo.first().key to list.firstVisibleItemScrollOffset }
+        assertEquals(message("initial-0").stableChatItemKey(), anchor.first)
+        main { completeHistoryRequest(failed) }
+        SystemClock.sleep(450)
+        assertEquals("Response must not rewind to the request-time anchor", anchor,
+            read { list.layoutInfo.visibleItemsInfo.first().key to list.firstVisibleItemScrollOffset })
+        assertFalse(read { list.canSeeLastItem() })
+        assertTrue(read { readingHistory.value })
+        assertEquals("Loading-row changes must not request the same page again", 1, read { historyRequests })
+        if (!failed) {
+            // The next page must still be requested when the reader reaches the new top.
+            dragTo(2)
+            await("next history page requested") { historyRequests == 2 && state.value.isLoadingMoreHistory }
+        }
+    }
+
+    fun historyResponseDoesNotCancelScrolling() {
+        beginHistoryRequest()
+        var scrollingStarted = false
+        var scrollingCompleted = false
+        var scrollingCancelled = false
+        main {
+            touching.value = true
+            suppressed.value = true
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    list.scroll {
+                        scrollingStarted = true
+                        repeat(30) {
+                            scrollBy(-2f)
+                            delay(16)
+                        }
+                    }
+                    scrollingCompleted = true
+                } catch (_: kotlinx.coroutines.CancellationException) {
+                    scrollingCancelled = true
+                }
+            }
+        }
+        await("continued scroll started") { scrollingStarted && list.isScrollInProgress }
+        // Finger is lifted, but scrolling continues just like fling inertia.
+        main { touching.value = false; completeHistoryRequest() }
+        await("user scroll completes without pagination cancelling it") { scrollingCompleted || scrollingCancelled }
+        assertFalse("History completion must not call scrollToItem during a fling", read { scrollingCancelled })
+        assertTrue(read { scrollingCompleted })
+        assertFalse(read { list.canSeeLastItem() })
     }
 
     fun quickMessageRemainsVisibleAfterPanelCompensationReverts() {
@@ -263,7 +491,7 @@ class NormalChatAutoFollowInstrumentedTest {
         await("panel padding removed") { list.layoutInfo.afterContentPadding == 0 }
     }
 
-    private fun dragTo(index: Int) {
+    private fun dragTo(index: Int, settleAfterRelease: Boolean = true) {
         main { touching.value = true; suppressed.value = true }
         var finished = false
         main {
@@ -279,7 +507,7 @@ class NormalChatAutoFollowInstrumentedTest {
         }
         await("drag to row $index") { finished }
         main { touching.value = false }
-        SystemClock.sleep(200)
+        if (settleAfterRelease) SystemClock.sleep(200)
     }
 
     private fun scrollTo(index: Int) {

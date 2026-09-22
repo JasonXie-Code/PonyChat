@@ -183,16 +183,6 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
-private data class ForegroundResumeAutoFollowSnapshot(
-    val characterId: String,
-    val mode: String,
-    val conversationId: String,
-    val messageCount: Int,
-    val lastMessageKey: String?,
-    val wasLastMessageVisible: Boolean,
-    val pausedAtMs: Long,
-    val resumeRequestedAtMs: Long = 0L,
-)
 
 @OptIn(
     ExperimentalMaterial3Api::class,
@@ -393,15 +383,6 @@ internal fun ChatScreenContentBody(
     fun currentLifecycleEffectiveViewportEndPx(): Int? =
         listEffectiveViewportEndPxState.intValue
             .takeIf { it in 1 until Int.MAX_VALUE }
-
-    fun messageTailChangedSince(
-        snapshot: ForegroundResumeAutoFollowSnapshot,
-        curState: ChatUiState
-    ): Boolean {
-        val currentLastKey = curState.messages.lastOrNull()?.stableChatItemKey()
-        return curState.messages.size > snapshot.messageCount ||
-            (curState.messages.size == snapshot.messageCount && currentLastKey != snapshot.lastMessageKey)
-    }
 
     DisposableEffect(activeCharId, activeMode, activeConversationId, lifecycleOwnerChat) {
         val obs = LifecycleEventObserver { _, e ->
@@ -675,73 +656,22 @@ internal fun ChatScreenContentBody(
         )
     }
 
-    LaunchedEffect(
-        foregroundResumeAutoFollowTickState.intValue,
-        state.messages.size,
-        state.messages.lastOrNull()?.stableChatItemKey(),
-        state.isLoadingHistory,
-        state.isBackgroundRefreshing,
-        showLoadingOverlay,
-    ) {
-        val snapshot = foregroundResumeAutoFollowSnapshotState.value ?: return@LaunchedEffect
-        if (snapshot.resumeRequestedAtMs <= 0L || !snapshot.wasLastMessageVisible) return@LaunchedEffect
-        if (snapshot.characterId != activeCharId || snapshot.mode != activeMode) {
-            foregroundResumeAutoFollowSnapshotState.value = null
-            return@LaunchedEffect
-        }
-        if (
-            snapshot.conversationId.isNotBlank() &&
-            activeConversationId.isNotBlank() &&
-            snapshot.conversationId != activeConversationId
-        ) {
-            foregroundResumeAutoFollowSnapshotState.value = null
-            return@LaunchedEffect
-        }
-        if (showLoadingOverlay || state.isLoadingHistory || state.isBackgroundRefreshing) {
-            return@LaunchedEffect
-        }
-        if (!messageTailChangedSince(snapshot, state)) {
-            delay(3500L)
-            val latest = latestStateForLifecycle.value
-            val stillPending = foregroundResumeAutoFollowSnapshotState.value
-            if (
-                stillPending == snapshot &&
-                !latest.isLoadingHistory &&
-                !latest.isBackgroundRefreshing &&
-                !messageTailChangedSince(snapshot, latest)
-            ) {
-                foregroundResumeAutoFollowSnapshotState.value = null
-                Log.d("GalScroll", "foreground-resume follow expired without tail change")
-            }
-            return@LaunchedEffect
-        }
-        if (listTouchActiveState.value) {
-            return@LaunchedEffect
-        }
-
-        foregroundResumeAutoFollowSnapshotState.value = null
-        listAutoFollowSuppressedState.value = false
-        userScrolledUpState.value = false
-        awaitImeNotAnimating()
-        if (activeMode.startsWith("galgame")) {
-            scrollToLastAssistantInGalgame(false)
-        } else {
-            chatScrollToBottomAndRepair(
-                listState = listState,
-                lastMessageId = state.messages.lastOrNull()?.stableChatItemKey(),
-                naturalBottomPaddingPx = scrollNaturalBottomPaddingPx,
-                bottomAnchorTolerancePx = scrollBottomAnchorTolerancePx,
-                reason = "foreground-resume-new-message",
-                effectiveViewportEndOffsetPx = currentLifecycleEffectiveViewportEndPx(),
-                expectedItemCount = state.messages.size,
-                shouldSkipRepair = { listTouchActiveState.value },
-            )
-        }
-        Log.d(
-            "GalScroll",
-            "foreground-resume follow consumed mode=$activeMode count=${snapshot.messageCount}->${state.messages.size}"
-        )
-    }
+    ChatForegroundResumeFollow(
+        listState = listState, state = state,
+        activeCharId = activeCharId, activeMode = activeMode, activeConversationId = activeConversationId,
+        foregroundResumeAutoFollowSnapshotState = foregroundResumeAutoFollowSnapshotState,
+        foregroundResumeAutoFollowTickState = foregroundResumeAutoFollowTickState,
+        listTouchActiveState = listTouchActiveState,
+        listAutoFollowSuppressedState = listAutoFollowSuppressedState,
+        userScrolledUpState = userScrolledUpState,
+        showLoadingOverlay = showLoadingOverlay,
+        scrollNaturalBottomPaddingPx = scrollNaturalBottomPaddingPx,
+        scrollBottomAnchorTolerancePx = scrollBottomAnchorTolerancePx,
+        currentLifecycleEffectiveViewportEndPx = { currentLifecycleEffectiveViewportEndPx() },
+        isForeground = { lifecycleOwnerChat.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) },
+        awaitImeNotAnimating = { awaitImeNotAnimating() },
+        scrollToLastAssistantInGalgame = { scrollToLastAssistantInGalgame(it) },
+    )
 
     // ── 陪玩：悬浮窗 + 屏幕截图 ──────────────────────────────────────────────
     val isCompanionActive by CompanionService.isRunning.collectAsState()

@@ -124,9 +124,10 @@ def test_capacity_serializes_and_cancelled_waiter_does_not_leak(monkeypatch):
     asyncio.run(scenario())
 
 
-def test_capacity_allows_ten_and_queues_eleventh(monkeypatch):
+@pytest.mark.parametrize('limit', [10, 20])
+def test_capacity_allows_configured_limit_and_queues_next(monkeypatch, limit):
     from tested_harness.harness_capacity import harness_slot
-    monkeypatch.setenv('PONYCHAT_HARNESS_CONCURRENCY','10')
+    monkeypatch.setenv('PONYCHAT_HARNESS_CONCURRENCY',str(limit))
     async def scenario():
         entered=[]
         release=asyncio.Event()
@@ -134,15 +135,15 @@ def test_capacity_allows_ten_and_queues_eleventh(monkeypatch):
         async def work(index):
             async with harness_slot(2):
                 entered.append(index)
-                if len(entered)==10:ready.set()
+                if len(entered)==limit:ready.set()
                 await release.wait()
-        tasks=[asyncio.create_task(work(i)) for i in range(11)]
+        tasks=[asyncio.create_task(work(i)) for i in range(limit + 1)]
         await asyncio.wait_for(ready.wait(),1)
         await asyncio.sleep(.02)
-        assert len(entered)==10
+        assert len(entered)==limit
         release.set()
         await asyncio.gather(*tasks)
-        assert len(entered)==11
+        assert len(entered)==limit + 1
     asyncio.run(scenario())
 
 
@@ -480,3 +481,28 @@ def test_tool_time_budget_stops_runtime_after_first_tool(monkeypatch, slow_tool)
     assert result['finish_reason'] == 'tool_time_budget_exhausted'
     assert result['tool_call_count'] == 1
     assert closed.is_set()
+
+
+def test_unbounded_delivery_waits_for_model_and_cancels_cleanly(monkeypatch):
+    started, release = threading.Event(), threading.Event()
+    class Harness:
+        def __init__(self, **config):
+            assert config['request_timeout_seconds'] is None
+        def run(self, *args, **kwargs):
+            started.set()
+            release.wait(3)
+            return types.SimpleNamespace(final_response='done', finish_reason='completed', events=[])
+        def close(self):
+            release.set()
+    monkeypatch.setitem(sys.modules, 'deepseek_harness', types.SimpleNamespace(DeepSeekHarness=Harness))
+    async def scenario():
+        task = asyncio.create_task(run_harness_turn('hi', {}, {}, timeout_seconds=None,
+            delivery_only=True, delivery_timeout_seconds=None))
+        for _ in range(100):
+            if started.is_set(): break
+            await asyncio.sleep(.01)
+        assert started.is_set() and not task.done()
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError): await task
+        assert release.is_set()
+    asyncio.run(scenario())

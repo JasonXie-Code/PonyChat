@@ -23,6 +23,7 @@ private data class NormalScrollSnapshot(
     val firstOffset: Int,
     val atBottom: Boolean,
     val nearBottom: Boolean,
+    val canScrollForward: Boolean,
     val touching: Boolean,
     val scrolling: Boolean,
     val suppressed: Boolean,
@@ -53,12 +54,14 @@ internal fun NormalChatAutoFollow(
     fun shouldPause(): Boolean = !latestReady.value || listTouchActiveState.value ||
         listAutoFollowSuppressedState.value || userScrolledUpState.value
 
-    LaunchedEffect(listState, state.character?.id) {
+    LaunchedEffect(listState, state.character?.id, state.conversationId) {
         val scrollScope = this
         var previous: NormalScrollSnapshot? = null
         var followJob: Job? = null
         var manualDrag = false
+        var manualViewportObserved = false
         var pendingFollow = false
+        var initialized = false
         val completedScrolls = mutableIntStateOf(0)
         snapshotFlow {
             val current = latestState.value
@@ -82,6 +85,7 @@ internal fun NormalChatAutoFollow(
                 atBottom = visibleTail != null &&
                     visibleTail.offset + visibleTail.size <= end - inset + bottomAnchorTolerancePx,
                 nearBottom = isNearBottom.value,
+                canScrollForward = listState.canScrollForward,
                 touching = listTouchActiveState.value,
                 scrolling = listState.isScrollInProgress,
                 suppressed = listAutoFollowSuppressedState.value,
@@ -91,30 +95,54 @@ internal fun NormalChatAutoFollow(
         }.collect { signal ->
             val before = previous
             previous = signal
+            // A resume refresh can pause presentation while the user is already
+            // dragging. Remember that intent before the readiness gate; otherwise
+            // suppression survives but the gesture that can release it is lost.
+            if (signal.touching && signal.suppressed && !manualDrag) {
+                manualDrag = true
+                manualViewportObserved = false
+            }
             if (!signal.ready || signal.tailKey == null) {
                 followJob?.cancel()
-                manualDrag = false
                 pendingFollow = false
                 return@collect
             }
-            if (before == null || !before.ready || before.tailKey == null) {
-                userScrolledUpState.value = !signal.nearBottom
+            if (!initialized) {
+                initialized = true
+                userScrolledUpState.value = userScrolledUpState.value || !signal.nearBottom
                 pendingFollow = before?.tailKey == null
             }
 
             // Pointer input marks a drag as suppressed. Track actual viewport movement, not
             // last-item visibility, so incoming content during a held touch cannot change intent.
-            if (signal.touching && signal.suppressed) manualDrag = true
             val viewportMoved = before != null &&
                 (signal.firstKey != before.firstKey || signal.firstOffset != before.firstOffset)
             val viewportResized = before != null &&
                 (signal.viewportEnd != before.viewportEnd || signal.effectiveEnd != before.effectiveEnd ||
                     signal.bottomPadding != before.bottomPadding)
             if (manualDrag && viewportMoved) {
-                userScrolledUpState.value = !signal.nearBottom
+                manualViewportObserved = true
+                // Being within the last two rows does not mean the user wants to
+                // follow. A deliberate drag away from the actual bottom wins
+                // over every later bubble, even while the tail is still visible.
+                // A rapid return gesture can finish before the final tail layout is
+                // measured against the input inset. The scroll boundary has already
+                // settled in that frame, though, so use it as the authoritative
+                // "returned to bottom" signal instead of leaving suppression stuck.
+                val returnedToBottom = signal.atBottom || !signal.canScrollForward
+                userScrolledUpState.value = !returnedToBottom
+                if (returnedToBottom) listAutoFollowSuppressedState.value = false
                 if (userScrolledUpState.value) pendingFollow = false
             }
             if (manualDrag && !signal.touching && !signal.scrolling) {
+                // The final layout may settle after the last offset change, or a
+                // forward drag may already be clamped at the physical bottom.
+                // Neither produces viewportMoved, but both restore live follow.
+                val returnedToBottom = signal.atBottom || !signal.canScrollForward
+                if (!manualViewportObserved || returnedToBottom) {
+                    userScrolledUpState.value = !returnedToBottom
+                    if (!returnedToBottom) pendingFollow = false
+                }
                 manualDrag = false
                 if (!userScrolledUpState.value) listAutoFollowSuppressedState.value = false
             }
@@ -136,7 +164,7 @@ internal fun NormalChatAutoFollow(
                     (!viewportMoved && before?.atBottom == true && !signal.atBottom)))) {
                 pendingFollow = !userScrolledUpState.value
             }
-            if (signal.atBottom) pendingFollow = false
+            if (signal.atBottom || !signal.canScrollForward) pendingFollow = false
             if (shouldPause()) {
                 followJob?.cancel()
                 return@collect

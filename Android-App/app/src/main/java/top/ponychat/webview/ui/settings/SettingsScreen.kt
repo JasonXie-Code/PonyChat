@@ -100,7 +100,6 @@ fun SettingsScreen(
     var messageVibrationEnabled by remember { mutableStateOf(prefs.messageVibrationEnabled) }
     val iconScale = LocalFontScale.current
     val leadingIconSize = 20.dp * iconScale
-    val topBarIconSize = 22.dp * iconScale
     val snackbarHostState = top.ponychat.webview.CustomToast.current
     val scope = rememberCoroutineScope()
 
@@ -141,8 +140,7 @@ fun SettingsScreen(
         topBar = {
             PonyTopBar(
                 title = "设置",
-                onNavigateBack = onNavigateBack,
-                iconSize = topBarIconSize
+                onNavigateBack = onNavigateBack
             ) {
                 if (uiState.isSaving) {
                     CircularProgressIndicator(

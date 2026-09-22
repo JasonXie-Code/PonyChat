@@ -60,3 +60,17 @@ def test_uploaded_photos_and_other_attachment_types_are_not_stickers():
         {'role': 'assistant', 'content': 'hi', 'attachments': [{'type': 'image', 'asset_id': 'photo'}]},
     ])
     assert data['recent_10']['auxiliary_turns'] == 0 and data['recent_sticker_asset_ids'] == []
+
+
+def test_web_sticker_counts_without_treating_reference_images_as_stickers():
+    rows = [
+        {'role': 'assistant', 'attachments': [{'type': 'image', 'metadata': {
+            'source': 'web_search', 'purpose': 'image'}}]},
+        {'role': 'user', 'content': '继续'},
+        {'role': 'assistant', 'attachments': [{'type': 'image', 'metadata': {
+            'source': 'web_search', 'purpose': 'sticker', 'source_url': 'https://derpibooru.org/images/1'}}]},
+    ]
+    data = module.build_expression_context(rows)
+    assert data['recent_10']['sticker_turns'] == 1
+    assert data['previous_turn_used_auxiliary'] is True
+    assert data['recent_sticker_asset_ids'] == []  # Web sources are not platform asset IDs.

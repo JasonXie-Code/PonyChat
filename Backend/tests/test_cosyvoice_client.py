@@ -111,6 +111,26 @@ def test_cosyvoice_instruction_trim_uses_document_character_units():
     units = sum(2 if "\u3400" <= ch <= "\u9fff" else 1 for ch in trimmed)
     assert units <= 100
     assert trimmed.endswith("。")
+    assert trimmed == "温柔，语速偏慢，停顿稍长，语气亲近，尾音轻一点，带一点点害羞，但不要拖太久。"
+
+
+def test_cosyvoice_instruction_trim_stops_at_a_boundary_when_the_budget_runs_out():
+    long_cjk = "温柔，语速偏慢，停顿稍长，语气亲近，尾音轻一点，带一点点害羞，但不要拖太久。" * 3
+    trimmed_cjk = cosyvoice_client.trim_cosyvoice_tts_instruction(long_cjk)
+
+    units = sum(2 if "\u3400" <= ch <= "\u9fff" else 1 for ch in trimmed_cjk)
+    assert 0 < units <= 100
+    assert long_cjk.startswith(trimmed_cjk)
+    assert not long_cjk[len(trimmed_cjk)].isalnum(), trimmed_cjk[-20:]
+
+    long_en = ("Speak slowly and gently in a soft, shy, almost whispering voice, "
+               "warm and a little hesitant, trailing off at the end.") * 2
+    trimmed_en = cosyvoice_client.trim_cosyvoice_tts_instruction(long_en)
+
+    assert 0 < len(trimmed_en) <= 100
+    assert long_en.startswith(trimmed_en)
+    assert not trimmed_en.endswith("trailin")
+    assert not long_en[len(trimmed_en)].isalnum(), trimmed_en[-30:]
 
 
 def test_voice_lab_health_uses_cosyvoice_base_url(monkeypatch):

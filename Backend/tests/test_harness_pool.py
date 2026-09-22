@@ -208,3 +208,18 @@ def test_dead_idle_runtime_is_replaced_before_next_account():
         assert not result['runtime_reused']
         assert len(FakeHarness.instances) == 2 and FakeHarness.instances[0].closed
     asyncio.run(scenario())
+
+
+def test_unbounded_delivery_pool_initializes_without_deadline(monkeypatch):
+    class DeliveryHarness(FakeHarness):
+        def run(self, *args, **kwargs):
+            assert self.config['request_timeout_seconds'] is None
+            return types.SimpleNamespace(final_response='done', finish_reason='completed', events=[])
+    monkeypatch.setitem(sys.modules, 'deepseek_harness', types.SimpleNamespace(DeepSeekHarness=DeliveryHarness))
+    async def scenario():
+        result = await runtime.run_harness_turn('hi', {}, {}, timeout_seconds=None,
+            delivery_only=True, delivery_timeout_seconds=None)
+        assert result['final_response'] == 'done'
+        for current in list(pool._pools.values()):
+            for entry in list(current.entries): await current.retire(entry)
+    asyncio.run(scenario())

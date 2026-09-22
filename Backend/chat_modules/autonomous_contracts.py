@@ -1,4 +1,5 @@
 """Deterministic whole-turn completion constraints; no additional model calls."""
+from .Prompts import AUTONOMOUS_CONTRACTS_TEXT
 import json
 import re
 
@@ -23,16 +24,22 @@ def explicit_search(text):
 def delivery_metadata(raw):
     data = json.loads(raw)
     if not isinstance(data, dict):
-        raise ValueError('最终回复必须是JSON object')
+        raise ValueError(AUTONOMOUS_CONTRACTS_TEXT['delivery_metadata_1'])
     voice, language = data.get('voice_reply'), data.get('reply_language')
     if not isinstance(voice, dict) or type(voice.get('enabled')) is not bool:
-        raise ValueError('必须提供voice_reply.enabled布尔值，明确本轮语音选择')
+        raise ValueError(AUTONOMOUS_CONTRACTS_TEXT['delivery_metadata_2'])
     if not isinstance(voice.get('reason'), str) or not voice['reason'].strip():
-        raise ValueError('voice_reply.reason必须说明本轮指令或语音持续状态依据')
+        raise ValueError(AUTONOMOUS_CONTRACTS_TEXT['delivery_metadata_3'])
     if not isinstance(language, dict) or not isinstance(language.get('language'), str) or not language['language'].strip():
-        raise ValueError('必须提供reply_language.language目标语言')
+        raise ValueError(AUTONOMOUS_CONTRACTS_TEXT['delivery_metadata_4'])
     if not isinstance(language.get('reason'), str) or not language['reason'].strip():
-        raise ValueError('reply_language.reason必须说明语言依据')
+        raise ValueError(AUTONOMOUS_CONTRACTS_TEXT['delivery_metadata_5'])
+    if 'continuation_enabled' in voice and type(voice['continuation_enabled']) is not bool:
+        raise ValueError('Invalid continuation_enabled')
+    if 'continuation_language' in language:
+        from .reply_language_state import language_metadata
+        if language_metadata(language) is None:
+            raise ValueError('Invalid continuation_language')
     _validate_english_body(data, language['language'])
     return voice, language
 
@@ -56,6 +63,4 @@ def _validate_english_body(data, language):
             han = len(re.findall(r'[\u4e00-\u9fff]', text))
             latin = len(re.findall(r'[A-Za-z]', text))
             if han >= 8 and han > latin:
-                raise ValueError('reply_language指定English，但可见正文主要为中文。保持English语言决定，'
-                                 '将台词及描写修正为英语，不能只把language改为Chinese来通过检查；'
-                                 '保留voice_reply和已选图片，不重复工具')
+                raise ValueError(AUTONOMOUS_CONTRACTS_TEXT['validate_english_body_1'])

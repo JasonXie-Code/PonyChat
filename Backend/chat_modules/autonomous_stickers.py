@@ -1,5 +1,6 @@
 """Agent-selected platform stickers staged for the existing message delivery path."""
 from __future__ import annotations
+from .Prompts import AUTONOMOUS_STICKERS_TEXT
 
 import re
 
@@ -35,20 +36,20 @@ class AgentStickerTools:
             self._candidates[item["ref"]] = item
         return {"candidates": [{key: item.get(key) for key in (
             "ref", "name", "intro", "detail", "image_text", "emotions", "custom_tags")}
-            for item in candidates[:12]], "instruction": "选择贴合语境的ref调用stage_sticker；不要编造图片URL或把emoji当图片。"}
+            for item in candidates[:12]], "instruction": AUTONOMOUS_STICKERS_TEXT['search_1']}
 
     async def stage(self, arguments):
         ref = arguments["asset_ref"]
         if not self.searched:
-            raise HarnessToolValidationError("请先search_stickers查看真实候选")
+            raise HarnessToolValidationError(AUTONOMOUS_STICKERS_TEXT['stage_2'])
         if not ref:
             if not arguments.get("reason", "").strip():
-                raise HarnessToolValidationError("没有合适素材时需要说明reason")
+                raise HarnessToolValidationError(AUTONOMOUS_STICKERS_TEXT['stage_5'])
             self._selected.clear()
             self._placements.clear()
-            return {"staged": False, "reason": "本轮未选择合适素材，不能声称已发送图片"}
+            return {"staged": False, "reason": AUTONOMOUS_STICKERS_TEXT['stage_3']}
         if ref not in self._candidates:
-            raise HarnessToolValidationError("只能选择本轮search_stickers实际返回的asset_ref")
+            raise HarnessToolValidationError(AUTONOMOUS_STICKERS_TEXT['stage_4'])
         if ref not in self._selected and len(self._selected) >= 4:
             raise HarnessToolValidationError("每轮最多4张表情包")
         position = arguments.get('after_bubble_index')
@@ -59,20 +60,20 @@ class AgentStickerTools:
         self._selected[ref] = self._attachment_factory(candidate, {"request_id": rid, "query": arguments.get("reason", "")})
         self._placements[ref] = position if position is not None else arguments.get("placement", "after_text")
         return {"staged": True, "asset_ref": ref, "request_id": rid,
-                "delivery": "图片已加入本轮回复草案，最终回复验证和保存成功后随消息发送"}
+                "delivery": AUTONOMOUS_STICKERS_TEXT['stage_1']}
 
     def register(self, capability):
-        capability("search_stickers", "按需检索平台真实表情包素材；输入短关键词和标签，由你选择匹配当前语境的素材。", {
+        capability("search_stickers", AUTONOMOUS_STICKERS_TEXT['register_1'], {
             "type": "object", "properties": {
                 "query": {"type": "string", "maxLength": 300},
                 "tags": {"type": "array", "maxItems": 8, "items": {"type": "string", "maxLength": 40}}},
             "additionalProperties": False}, self.search)
-        capability("stage_sticker", "将已检索的真实表情包加入本轮回复。asset_ref只能取候选ref；无合适候选可传空字符串并解释reason。", {
+        capability("stage_sticker", AUTONOMOUS_STICKERS_TEXT['register_2'], {
             "type": "object", "properties": {
                 "asset_ref": {"type": "string", "maxLength": 200},
                 "reason": {"type": "string", "maxLength": 300},
                 "placement": {"type": "string", "enum": ["before_text", "after_text"]},
-                "after_bubble_index": {"type":"integer","minimum":0,"maximum":6,"description":"插在第几个文字气泡后；0为全部文字之前"}},
+                "after_bubble_index": {"type":"integer","minimum":0,"maximum":6,"description":AUTONOMOUS_STICKERS_TEXT['register_3']}},
             "required": ["asset_ref"], "additionalProperties": False}, self.stage)
 
     def apply_to_request(self, request, bubble_count=1):

@@ -372,7 +372,12 @@ async def lifespan(app: FastAPI):
         import traceback as _tb
         logger.warning(f"📋 [LLMLogIndexer] 堆栈: {_tb.format_exc()}")
 
-    yield
+    from .loop_watchdog import LoopWatchdog
+    loop_watchdog = LoopWatchdog(asyncio.get_running_loop(), logger.warning).start()
+    try:
+        yield
+    finally:
+        loop_watchdog.stop()
 
     request_shutdown("lifespan-shutdown")
     logger.info("🛑 [Shutdown] 已进入快速退出模式：后台调度器只记录状态，不再启动重任务")

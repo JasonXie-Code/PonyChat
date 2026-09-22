@@ -28,16 +28,18 @@ internal fun RelationshipLoadingPanel(
     userDisplayName: String,
     stage: RelationshipStageUi,
     loading: Boolean,
-    message: String?
+    message: String?,
+    modifier: Modifier = Modifier,
+    scrollState: androidx.compose.foundation.ScrollState = rememberScrollState()
 ) {
     val statusStage = stage.copy(label = if (loading) "加载中" else "加载失败")
     val statusMessage = if (loading) "" else
         message ?: "聊一聊之后，这里会记录我们的关系"
     Column(
-        Modifier
+        modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp),

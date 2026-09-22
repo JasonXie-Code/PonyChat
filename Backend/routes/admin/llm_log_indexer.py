@@ -110,8 +110,19 @@ CREATE TABLE IF NOT EXISTS llm_log_index_errors (
 );
 """
 
-# 解析 JS debug_log 的正则。非贪婪捕获，避免把文件末尾分号吞进 JSON。
-_DEBUG_LOG_RE = re.compile(r'const\s+debug_log\s*=\s*(.+?)\s*;?\s*$', re.DOTALL)
+# Match only the declaration. Scanning a multi-MB body with a lazy regex and
+# overlapping whitespace suffixes holds the GIL for seconds, even in to_thread.
+_DEBUG_LOG_PREFIX_RE = re.compile(r'const\s+debug_log\s*=\s*')
+
+
+def _extract_debug_log_literal(content: str) -> Optional[str]:
+    match = _DEBUG_LOG_PREFIX_RE.search(content)
+    if match is None:
+        return None
+    body = content[match.end():].rstrip()
+    if body.endswith(';'):
+        body = body[:-1].rstrip()
+    return body or None
 
 
 def _js_template_to_json(js_text: str) -> str:
@@ -318,12 +329,12 @@ def _parse_log_file(file_path: str) -> List[Dict[str, Any]]:
         logger.debug(f"[LLMLogIndex] 读取跳过 {file_path}: {e}")
         return entries
 
-    m = _DEBUG_LOG_RE.search(content)
-    if not m:
+    literal = _extract_debug_log_literal(content)
+    if literal is None:
         logger.debug(f"[LLMLogIndex] 未匹配 debug_log 格式: {file_path}")
         return entries
 
-    log_data = _loads_debug_log_literal(m.group(1))
+    log_data = _loads_debug_log_literal(literal)
     if log_data is None:
         logger.debug(f"[LLMLogIndex] JSON 解析失败 {file_path}")
         return entries
@@ -417,6 +428,9 @@ class LLMLogIndexer:
         self._running = False
         self._scan_lock = asyncio.Lock()
         self._progress_snapshot = None
+        self._change_cursor = 0
+        self._full_scan_at = float('-inf')
+        self._reconcile_interval = 300  # seconds; external writers are reconciled too
 
     async def init_schema(self) -> None:
         """初始化索引表结构。"""
@@ -512,14 +526,17 @@ class LLMLogIndexer:
             await conn.commit()
         return inserted, errors
 
-    async def _scan_file(self, file_path: str, *, skip_duplicate_check: bool = False) -> Tuple[int, int]:
+    async def _scan_file(self, file_path: str, *, skip_duplicate_check: bool = False, file_stat=None) -> Tuple[int, int]:
         """扫描单个日志文件，增量解析并索引。"""
         try:
-            stat = os.stat(file_path)
+            stat = file_stat if file_stat is not None else await asyncio.to_thread(os.stat, file_path)
             file_size = stat.st_size
             file_mtime = stat.st_mtime
-        except OSError:
+        except FileNotFoundError:
             return 0, 0
+        except OSError as exc:
+            logger.warning('[LLMLogIndex] 文件状态读取失败，将重试: %s: %s', file_path, exc)
+            return 0, 1
 
         indexed_offset, prev_mtime, prev_count = await self._get_progress(file_path)
 
@@ -539,7 +556,7 @@ class LLMLogIndexer:
                 await conn.commit()
 
         # 解析文件
-        entries = _parse_log_file(file_path)
+        entries = await asyncio.to_thread(_parse_log_file, file_path)
         if not entries:
             logger.warning("[LLMLogIndex] 日志解析未完成，将重试: %s", file_path)
             return 0, 1
@@ -627,29 +644,53 @@ class LLMLogIndexer:
         skip_duplicate_check: bool = False,
     ) -> Dict[str, Any]:
         """全量扫描日志目录，返回统计。"""
-        import aiosqlite
-        # Admin scans and periodic scans share one writer. Load progress once
-        # instead of opening thousands of SQLite connections for unchanged files.
         async with self._scan_lock:
-            async with aiosqlite.connect(self.db_path) as conn:
-                query = 'SELECT file_path,indexed_offset,file_mtime,indexed_count,error_count FROM llm_log_index_progress'
-                args = ()
-                if recent_days is not None:
-                    cutoff = (datetime.now().date() - timedelta(days=max(0, recent_days-1))).isoformat()
-                    prefix = os.path.join(self.logs_root, '')
-                    query += ' WHERE file_path >= ? AND file_path < ?'
-                    args = (prefix+cutoff, prefix+'\uffff')
-                async with conn.execute(
-                    query, args
-                ) as cur:
-                    self._progress_snapshot = {
-                        row[0]: (row[1] if not row[4] else -1, row[2], row[3])
-                        for row in await cur.fetchall()
-                    }
+            return await self._scan_with_progress(recent_days, skip_duplicate_check)
+
+    async def _scan_with_progress(self, recent_days, skip_duplicate_check=False):
+        """Caller owns the scan lock, including automatic reconciliation."""
+        import aiosqlite
+        async with aiosqlite.connect(self.db_path) as conn:
+            query = 'SELECT file_path,indexed_offset,file_mtime,indexed_count,error_count FROM llm_log_index_progress'
+            args = ()
+            if recent_days is not None:
+                cutoff = (datetime.now().date() - timedelta(days=max(0, recent_days-1))).isoformat()
+                prefix = os.path.join(self.logs_root, '')
+                query += ' WHERE file_path >= ? AND file_path < ?'
+                args = (prefix+cutoff, prefix+'\uffff')
+            async with conn.execute(
+                query, args
+            ) as cur:
+                self._progress_snapshot = {
+                    row[0]: (row[1] if not row[4] else -1, row[2], row[3])
+                    for row in await cur.fetchall()
+                }
+        try:
+            result = await self._scan_all(recent_days=recent_days, skip_duplicate_check=skip_duplicate_check)
+            if result['success'] and (recent_days is None or recent_days >= 2):
+                self._full_scan_at = time.monotonic()
+            return result
+        finally:
+            self._progress_snapshot = None
+
+    def _changed_files(self, recent_days, progress):
+        """Enumerate and stat off-loop; unchanged files need no async DB work."""
+        changed, skipped = [], 0
+        for file_path in self._iter_log_files(recent_days=recent_days):
             try:
-                return await self._scan_all(recent_days=recent_days, skip_duplicate_check=skip_duplicate_check)
-            finally:
-                self._progress_snapshot = None
+                stat = os.stat(file_path)
+            except FileNotFoundError:
+                skipped += 1
+                continue
+            except OSError:
+                changed.append((file_path, None))  # retry/report through _scan_file
+                continue
+            offset, mtime, _ = progress.get(file_path, (0, 0.0, 0))
+            if offset == stat.st_size and mtime == stat.st_mtime:
+                skipped += 1
+            else:
+                changed.append((file_path, stat))
+        return changed, skipped
 
     async def _scan_all(self, *, recent_days=2, skip_duplicate_check=False):
         start = time.time()
@@ -658,11 +699,13 @@ class LLMLogIndexer:
         files_scanned = 0
         files_skipped = 0
 
-        for file_path in self._iter_log_files(recent_days=recent_days):
+        changed, files_skipped = await asyncio.to_thread(
+            self._changed_files, recent_days, dict(self._progress_snapshot or {}))
+        for file_path, file_stat in changed:
             try:
                 inserted, errs = await self._scan_file(
                     file_path,
-                    skip_duplicate_check=skip_duplicate_check,
+                    skip_duplicate_check=skip_duplicate_check, file_stat=file_stat,
                 )
                 if inserted == 0 and errs == 0:
                     files_skipped += 1
@@ -691,6 +734,46 @@ class LLMLogIndexer:
             logger.info(f"✅ [LLMLogIndex] 全量扫描完成: {result}")
         return result
 
+    async def scan_incremental(self):
+        """Use write notifications; reconcile disk after restart, overflow or age."""
+        from ...log_index_changes import changes
+        async with self._scan_lock:
+            sequence, paths, overflow = changes.since(self._change_cursor)
+            if overflow or time.monotonic() - self._full_scan_at >= self._reconcile_interval:
+                result = await self._scan_with_progress(2)
+                result['scan_mode'] = 'reconcile'
+            else:
+                root = os.path.normcase(os.path.abspath(self.logs_root))
+                selected = []
+                for path in paths:
+                    try:
+                        if os.path.commonpath((root, os.path.normcase(path))) == root and path.endswith('.js'):
+                            selected.append(path)
+                    except ValueError:
+                        continue  # different drive; belongs to another indexer
+                started = time.monotonic()
+                inserted = errors = skipped = 0
+                for path in selected:
+                    try:
+                        count, failures = await self._scan_file(path)
+                        inserted += count
+                        errors += failures
+                        skipped += count == 0 and failures == 0
+                    except Exception as exc:
+                        errors += 1
+                        logger.warning('[LLMLogIndex] 变化文件索引失败，将重试: %s: %s', path, exc)
+                result = {'success': errors == 0, 'status': 'partial' if errors else 'success',
+                          'entries_inserted': inserted, 'errors': errors,
+                          'files_scanned': len(selected) - skipped, 'files_skipped': skipped,
+                          'elapsed_sec': round(time.monotonic() - started, 3), 'scan_mode': 'changes'}
+                if selected:
+                    logger.info('[LLMLogIndex] 变化文件扫描: %s', result)
+            if result['success']:
+                # A write occurring during the scan has a newer sequence and
+                # remains pending. Failed scans retain the old cursor to retry.
+                self._change_cursor = sequence
+            return result
+
     async def start_periodic_scan(self, interval: int = 30) -> None:
         """启动定时增量扫描（后台任务）。"""
         self._scan_interval = interval
@@ -699,7 +782,7 @@ class LLMLogIndexer:
         while self._running:
             try:
                 await asyncio.sleep(interval)
-                await self.scan_all(recent_days=2)
+                await self.scan_incremental()
             except asyncio.CancelledError:
                 break
             except Exception as e:
@@ -715,6 +798,11 @@ class LLMLogIndexer:
         return await self.rebuild_index_fast()
 
     async def rebuild_index_fast(self) -> Dict[str, Any]:
+        """Admin rebuild and automatic scans must never interleave DB writes."""
+        async with self._scan_lock:
+            return await self._rebuild_index_fast_locked()
+
+    async def _rebuild_index_fast_locked(self) -> Dict[str, Any]:
         """高吞吐重建索引：全量解析文件，批量写入 SQLite。"""
         import aiosqlite
 

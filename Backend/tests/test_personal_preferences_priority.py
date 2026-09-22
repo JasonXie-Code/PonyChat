@@ -32,10 +32,9 @@ def test_normal_service_loads_effective_speaker_preferences_before_memory(monkey
         assert username == "alice"
         return saved
 
-    def preferences(settings, character_id, mode, *, compact=False):
+    def preferences(settings, character_id, mode):
         assert settings is saved
         assert (character_id, mode) == ("invited-speaker", "normal")
-        assert compact is True
         raise ScopeReached
 
     monkeypatch.setattr(normal_speaker, "effective_speaker_character_id", lambda request: "invited-speaker")
@@ -67,8 +66,7 @@ def test_normal_preferences_are_system_instructions_even_without_memory(retry):
     assert len(systems) == (2 if retry else 1)
     for system in systems:
         assert preference in system
-        assert system.index(preference) > system.index("根据给定角色身份")
-        assert "按个人偏好改变实际行为" in system
+        assert "按个人偏好改变实际行为" not in system
 
 
 @pytest.mark.parametrize("mode", ["normal", "galgame", "galgame_lock"])
@@ -98,7 +96,8 @@ def test_game_preferences_survive_minimal_agent_payload(monkeypatch, mode, stage
 
     async def runner(prompt, config, tools, **kwargs):
         captured.update(kwargs)
-        assert set(tools) == ({'preview_lock_state'} if mode == 'galgame_lock' else set())
+        assert ('preview_lock_state' in tools) == (mode == 'galgame_lock')
+        assert 'review_game_turn' in tools
         data = json.loads(prompt)
         assert data['is_initial'] == (stage == 'initial')
         assert data['context'] == ['当前阶段格式要求']
@@ -110,6 +109,7 @@ def test_game_preferences_survive_minimal_agent_payload(monkeypatch, mode, stage
         pass
 
     monkeypatch.setattr(harness, "load_personal_preferences_prompt", preferences)
+    monkeypatch.setattr(harness.GameAgentSession, 'finish', lambda self, text: text)
     monkeypatch.setattr(harness, "run_harness_turn", runner)
     monkeypatch.setattr(harness, "_save_chat_debug_if_requested", noop)
     monkeypatch.setattr(harness, "_apply_usage_metering", noop)
@@ -121,4 +121,4 @@ def test_game_preferences_survive_minimal_agent_payload(monkeypatch, mode, stage
         validation_feedback='字段缺失' if stage == 'retry' else '',
         chat_debug_request={"username": "alice", "character_id": "shy", "stage": stage}))
     assert captured["system_prompt"].endswith("优先执行个人偏好：主动邀请。")
-    assert captured["max_tool_calls"] == (4 if mode == 'galgame_lock' else 0)
+    assert captured["max_tool_calls"] == 24

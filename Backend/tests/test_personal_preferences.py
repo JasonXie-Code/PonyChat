@@ -29,7 +29,8 @@ def test_preferences_reach_user_context_for_only_current_account_character_mode(
     assert values[mode] in prompt
     assert all(value not in prompt for key, value in values.items() if key != mode)
     assert "其他角色" not in prompt
-    assert "优先于角色默认风格" in prompt
+    assert "【当前偏好配置】" in prompt
+    assert "优先于角色默认风格" not in prompt
     other = asyncio.run(request_context.build_user_context(request, "bob"))
     assert not any(value in other for value in values.values())
 

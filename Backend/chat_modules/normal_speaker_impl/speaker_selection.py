@@ -9,6 +9,7 @@ is exposed only as the temporary group scene.
 """
 
 from __future__ import annotations
+from .Prompts import SPEAKER_SELECTION_TEXT
 
 from Backend.chat_modules.Prompts import USER_SPEAKER_INTENT_SYSTEM
 
@@ -51,7 +52,7 @@ def _guest_group_memory_priority(item: dict[str, Any]) -> int:
     content = str(item.get("content") or "")
     primary_markers = (
         "我曾在",
-        "主聊天里被用户 @ 临时加入发言",
+        SPEAKER_SELECTION_TEXT['primary_markers_1'],
         "当时可见现场原文摘要",
         "高优先级事实",
     )
@@ -85,12 +86,12 @@ def format_recent_guest_group_memory_block(entries: list[dict[str, Any]]) -> str
     clean_entries.sort(key=lambda item: str(item.get("created_at") or ""), reverse=True)
     clean_entries.sort(key=_guest_group_memory_priority)
     lines = [
-        "【当前角色最近临时群聊见闻｜跨会话可用事实】",
-        "以下内容是当前角色自己被 @ 拉进其他角色主聊天/临时群聊时看到、听到或说过的事；它不是主会话角色的私有记忆。",
-        "下面条目已按证据优先级排列：含“我曾在……主聊天里被用户 @ 临时加入发言”或“当时可见现场原文摘要”的条目是原始近因证据；若它与普通摘要、旧私聊房间或测试房间记忆冲突，优先相信原始近因证据，再由模型判断如何自然回答。",
-        "当用户在私聊里追问刚才聊了什么、群聊里发生了什么、当前角色看到/听到什么、某个方案/同意/拒绝时，优先使用这里的事实简短回答；如果用户只问当前/刚才位置，优先取最新场景锚点里的 position；但若用户明确说“刚才群聊之后/刚才群聊里/被 @ 以后”，且本段见闻原文已经把当前角色放在某个群聊现场位置，这段见闻可作为比旧私聊锚点更新的当前位置证据。用户没有问到时只作为背景，不要强行复述。",
-        "若用户把问题混在一起，例如同时问“你现在在哪里/刚才听见的暗号是什么/另一个角色在哪”，请把它拆开：位置优先看最新 scene_anchor/场景锚点；若 scene_anchor 明显是更早私聊旧地点，而本段临时群聊见闻明确给了当前角色和其他角色位置，则以本段见闻中的群聊位置作为更新证据；暗号、见闻、同意/拒绝等事件事实以本段临时群聊见闻为准；两类事实可以同轮一起回答。",
-        "若用户追问暗号、口令、测试标记或特别词，必须逐字复述本段见闻中出现的完整短语；不要截短成关键词，不要改成角色自己的玩笑、称呼或常识解释，也不要拿其他角色的相似暗号替换。",
+        SPEAKER_SELECTION_TEXT['lines_1'],
+        SPEAKER_SELECTION_TEXT['lines_2'],
+        SPEAKER_SELECTION_TEXT['lines_3'],
+        SPEAKER_SELECTION_TEXT['lines_4'],
+        SPEAKER_SELECTION_TEXT['lines_5'],
+        SPEAKER_SELECTION_TEXT['lines_6'],
     ]
     for item in clean_entries:
         prefix = f"[{item['created_at']}]" if item.get("created_at") else "[最近]"
@@ -141,7 +142,7 @@ async def load_recent_guest_group_memory_block(
         return format_recent_guest_group_memory_block(entries)
     except Exception as exc:
         logger.debug(
-            "[NormalSpeaker] 加载最近临时群聊记忆失败 user=%s char=%s: %s",
+            SPEAKER_SELECTION_TEXT['load_recent_guest_group_memory_block_1'],
             username,
             character_id[:12],
             exc,
@@ -298,21 +299,13 @@ def agent_speaker_context(request: ChatRequest) -> str:
     if not is_guest_speaker(request) and not guests:
         return ""
     if getattr(request, "_normal_auto_handoff", False):
-        cause = "上一位在场角色通过 handoff_reply 把话交给你"
+        cause = SPEAKER_SELECTION_TEXT['cause_1']
     elif is_guest_speaker(request):
         cause = "用户选择你参与当前话题"
     else:
-        cause = "当前继续这个窗口中的共同话题"
+        cause = SPEAKER_SELECTION_TEXT['cause_2']
     return (
-        "【当前临时群聊】\n"
-        f"当前窗口属于「{main_display_name(request)}」({main})；"
-        f"本轮只由「{speaker_display_name(request)}」({speaker}) 发言。{cause}。\n"
-        "使用当前发言角色自己的完整档案、记忆、关系与状态。历史中的 assistant 消息可能来自不同角色，"
-        "按 speaker_character_id/speaker_name 归属，不能把其他角色说过的话、经历或私有记忆当成自己的。\n"
-        "你在同一临时群聊中能看到当前话题；仅 @ 表示请你接住前面的话题参与，不是签到，"
-        "也不是要求当前窗口的主角色模仿你。正文只写你自己的发言和动作。\n"
-        "如果确实要把下一句话交给工具候选中的另一位在场角色，使用 handoff_reply；"
-        "由对方自己的 Agent 继续。用户没有要求其他人接话时可以自然结束，不必总是交接。"
+        SPEAKER_SELECTION_TEXT['agent_speaker_context_1'].format(main_display_name(request), main, speaker_display_name(request), speaker, cause)
     )
 
 
@@ -427,32 +420,24 @@ def format_normal_at_event_context(request: ChatRequest) -> str:
         unresolved_text = "、".join(unresolved_mentions)
         lines.append("unresolved_at_mentions=" + unresolved_text)
         lines.append(
-            "语义：用户 @ 的名字没有解析成当前用户可见/可发言角色；当前主角色负责继续回应用户正文，"
-            "不要让未解析角色入场、发言、行动或收到消息。注意：未解析为可发言角色不等于主角色一定不认识这个名字。"
+            SPEAKER_SELECTION_TEXT['format_normal_at_event_context_2']
         )
         lines.append(
-            "当前 @ 名字硬锚：本轮只能判断并回应 unresolved_at_mentions 里逐字列出的名字（"
+            SPEAKER_SELECTION_TEXT['format_normal_at_event_context_6']
             + unresolved_text
-            + "）。"
-            "即使记忆或设定里有其他熟人、朋友、旁支角色，也不得把那些其他名字替换成本轮 @ 对象；"
-            "若其他名字不是当前用户消息里 @ 的名字，本轮不要转去说明或代答那些其他名字。"
+            + SPEAKER_SELECTION_TEXT['format_normal_at_event_context_4']
         )
         lines.append(
-            "回应方式：先根据完整角色设定、长期记忆、最近上下文和当前场景判断当前主角色是否认识 unresolved_at_mentions 中的名字。"
-            "若主角色认识或有明确印象：自然说明对方不在这里/没在当前现场/没有被叫到；如果适合，可以基于主角色对对方的了解，"
-            "用“可能/大概/我猜/她或许会”谨慎代答或推测对方会怎么看当前话题，但不得伪造对方亲口回答、当前动作或当前经历。"
-            "若主角色不认识或没有任何证据认识：不要编关系、别替对方评价，直接表现疑惑，说自己不认识/没听过这个名字，"
-            "可询问用户对方是谁，或回到用户正文里的话题作当前主角色自己的评价；正文需要点名当前 unresolved_at_mentions 的名字，"
-            "不能跳过当前 @ 名字去回答记忆里的其他人。"
+            SPEAKER_SELECTION_TEXT['format_normal_at_event_context_3']
         )
     elif event.get("mention_only"):
         if event.get("speaker_was_already_present"):
-            lines.append("语义：用户把发言权切给当前角色，要求她基于当前现场评价、推进或抛出问题。")
+            lines.append(SPEAKER_SELECTION_TEXT['format_normal_at_event_context_7'])
         else:
-            lines.append("语义：用户把当前角色拉进/叫到当前现场，让她看到眼前局面后评价、推进或抛出问题。")
+            lines.append(SPEAKER_SELECTION_TEXT['format_normal_at_event_context_8'])
     else:
-        lines.append("语义：用户显式指定当前角色参与本轮临时群聊发言，并按用户正文要求回应。")
-    lines.append("禁止：不要把仅 @ 当成“你在不在/签到”，也不要把未写出的关系确认或承诺确认强加给角色；未解析 @ 不得伪装成已加载可发言角色，也不得把不认识的人编成认识的人；不得用记忆中的其他熟人替换当前用户实际 @ 的名字。")
+        lines.append(SPEAKER_SELECTION_TEXT['format_normal_at_event_context_5'])
+    lines.append(SPEAKER_SELECTION_TEXT['format_normal_at_event_context_1'])
     return "\n".join(lines)
 
 
@@ -601,7 +586,7 @@ async def load_owned_visible_character(username: str | None, character_id: str |
             char["prompt"] = "" if row[4] is None else str(row[4])
         return char
     except Exception as exc:
-        logger.warning("[NormalSpeaker] 加载用户可见角色失败 user=%s char=%s: %s", username, character_id, exc)
+        logger.warning(SPEAKER_SELECTION_TEXT['load_owned_visible_character_1'], username, character_id, exc)
         return None
 
 
@@ -645,7 +630,7 @@ async def load_owned_visible_characters_for_mentions(username: str | None) -> li
             chars.append(char)
         return chars
     except Exception as exc:
-        logger.warning("[NormalSpeaker] 加载 @ 候选角色失败 user=%s: %s", username, exc)
+        logger.warning(SPEAKER_SELECTION_TEXT['load_owned_visible_characters_for_mentions_1'], username, exc)
         return []
 
 
@@ -689,6 +674,10 @@ def _visible_recent_scene_messages(request: ChatRequest, *, include_latest_user:
 
 
 def _latest_visible_user_text(request: ChatRequest) -> str:
+    if getattr(request, '_normal_reply_batch', None) is not None:
+        from .service import _latest_visible_user_batch
+        return '\n'.join(str(m.content or '').strip() for m in
+                         _latest_visible_user_batch(list(request.messages or [])))
     for msg in reversed(getattr(request, "messages", None) or []):
         if getattr(msg, "role", None) == "user" and not getattr(msg, "isHidden", False):
             return str(getattr(msg, "content", "") or "").strip()
@@ -903,19 +892,13 @@ async def run_normal_user_speaker_intent_router(
             {
                 "role": "user",
                 "content": (
-                    "【用户最新一句（最高优先级，先判断句首/句尾是否呼叫候选 name）】\n"
+                    SPEAKER_SELECTION_TEXT['payload_7']
                     + latest[:1200]
-                    + "\n\n【候选角色 JSON（name -> reply_character_id 映射）】\n"
+                    + SPEAKER_SELECTION_TEXT['payload_6']
                     + candidate_text
                     + "\n\n【近期现场】\n"
                     + scene
-                    + "\n\n【输出前自检】\n"
-                    + "如果用户最新一句句首或句尾明显呼叫某个候选 name 或候选 name 的清晰简称/前缀，reply_character_ids 必须只包含这个 name 对应的 reply_character_id。\n"
-                    + "如果用户说“评价我和 X 的观点”，X 通常是被评价对象，不是发言者；但若同句明确说“你们都/大家都/所有人都分别/各自评价”，这是全员分别发言，候选主角色也要纳入判断。\n"
-                    + "如果用户说“你觉得/你认为/你看 X 喜不喜欢/会不会/是什么意思”，X 是被判断对象，不是发言者；没有直接呼叫 X 时输出 none。\n"
-                    + "如果用户只是问“你们/大家/你们几个”的共同事实、共同状态或习惯，例如“你们几个姐妹平时都是分开睡的吧”，不要 parallel；只能 none 或 single，且最多 1 个 reply_character_id。\n"
-                    + "只有用户明确要求分别/各自/每个人/一人一句/都来评价时，reply_character_ids 才应包含多个最近 8 轮可见角色；这类全员指令不要漏掉 role=main 的候选。\n"
-                    + "请只输出 JSON。"
+
                 )[:12000],
             },
         ],
@@ -983,14 +966,7 @@ def guest_mention_only_prompt(request: ChatRequest) -> str:
     speaker_name = speaker_display_name(request)
     main_name = main_display_name(request)
     return (
-        "【仅 @ 入场规则】\n"
-        f"本轮用户消息只有 @ 点名，没有附加正文；这表示用户把「{speaker_name}」拉进「{main_name}」的当前现场发言，"
-        "不是在问“你在不在”，也不是让角色继续停留在自己私聊里的旧地点。\n"
-        "如果近期现场已经有明确地点、姿态、约会/争执/受伤/整理物品等事件，应把「{speaker_name}」理解为刚进入、路过、撞见或被叫到这个当前现场，"
-        "并基于眼前看到的事回应；不要把自己的卧室、家里、旧私聊位置当作本轮当前物理位置。\n"
-        "回复时不要只说“我在”“怎么了”“你找我？”或同义签到句；应根据临时群聊现场、自己私聊记忆和角色身份，"
-        "主动接住上一拍：评价刚才发生的事、回应在场角色/用户的状态，或推动剧情往前走一小步。\n"
-        "如果现场信息非常少，也至少给出带角色态度的具体观察或下一步动作，而不是空泛确认。"
+        SPEAKER_SELECTION_TEXT['guest_mention_only_prompt_1'].format(speaker_name, main_name)
     )
 
 
@@ -1040,12 +1016,7 @@ def guest_scene_context_prompt(request: ChatRequest) -> str:
         body = body[-_GUEST_SCENE_MAX_CHARS:]
     mention_only_block = guest_mention_only_prompt(request)
     return (
-        "【临时群聊现场｜只含近期原文】\n"
-        f"用户把「{speaker_name}」拉进「{main_name}」的聊天现场。本段只描述此刻共同可见的近期对话，"
-        f"不是「{main_name}」的私有长期记忆，也不是「{speaker_name}」自己的私聊历史。\n"
-        f"「{speaker_name}」应以自己的完整记忆和身份接住这个现场；若现场与自己的私聊记忆不同，"
-        "把现场当作当前发生的新上下文；私聊旧位置只能当历史背景，不能覆盖本轮共同现场。\n"
-        "若后续系统材料提供场景锚点/参与者位置表，所有在场角色的位置和姿态都持续有效；沉默角色也保持上次明确状态，除非用户明确移动或换场景。\n"
+        SPEAKER_SELECTION_TEXT['guest_scene_context_prompt_1'].format(speaker_name, main_name, main_name, speaker_name, speaker_name)
         + (mention_only_block + "\n" if mention_only_block else "")
         + body
     )
@@ -1087,7 +1058,7 @@ async def _stable_normal_conversation_id(username: str, character_id: str) -> st
         digest = hashlib.sha1(f"{user_id}:{character_id}".encode("utf-8")).hexdigest()[:16]
         return f"normal_{user_id}_{digest}"
     except Exception as exc:
-        logger.debug("[NormalSpeaker] 计算 stable normal conversation id 失败 user=%s char=%s: %s", username, character_id, exc)
+        logger.debug(SPEAKER_SELECTION_TEXT['stable_normal_conversation_id_1'], username, character_id, exc)
         return ""
 
 
@@ -1127,7 +1098,7 @@ async def ensure_guest_private_context(request: ChatRequest) -> dict[str, Any]:
                     messages.append(msg)
             context["messages"] = messages
     except Exception as exc:
-        logger.debug("[NormalSpeaker] 加载 guest 私有上下文失败 user=%s char=%s: %s", username, speaker_id, exc)
+        logger.debug(SPEAKER_SELECTION_TEXT['ensure_guest_private_context_2'], username, speaker_id, exc)
 
     if not context.get("conversation_id"):
         context["conversation_id"] = await _stable_normal_conversation_id(username, speaker_id)
@@ -1135,7 +1106,7 @@ async def ensure_guest_private_context(request: ChatRequest) -> dict[str, Any]:
     setattr(request, "_normal_speaker_private_context", context)
     setattr(request, "_normal_speaker_private_conversation_id", str(context.get("conversation_id") or "").strip())
     logger.debug(
-        "[NormalSpeaker] guest 私有上下文 user=%s guest=%s conv=%s messages=%s",
+        SPEAKER_SELECTION_TEXT['ensure_guest_private_context_1'],
         username,
         speaker_id[:12],
         str(context.get("conversation_id") or "")[:12],

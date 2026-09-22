@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from ..config import logger
 from ..utils import save_chat_debug_log
 from .handler import _handle_galgame_response
-from .harness import run_game_agent
+from .harness import run_game_agent, GameAgentContractError
 from .metering import game_agent_metering_kwargs, reset_galgame_meter_username, set_galgame_meter_username
 
 
@@ -53,15 +53,22 @@ async def handle_galgame_sse(
                 remaining = GALGAME_JOB_TIMEOUT_SECONDS - (time.time() - job_start_time)
                 if remaining <= 0:
                     raise asyncio.TimeoutError
-                response = await run_game_agent(
-                    payload, active_model or {}, mode=mode, request=request,
-                    timeout=max(1.0, min(180.0, remaining)), validation_feedback=feedback,
-                    previous_output=previous_output,
-                    chat_debug_request={"username": request.username, "character_id": request.character_id,
-                                        "mode": request.mode, "stage": "GALGAME_AGENT_REQUEST",
-                                        **(getattr(request, "_agent_log_params", None) or {})},
-                    **game_agent_metering_kwargs(request),
-                )
+                try:
+                    response = await run_game_agent(
+                        payload, active_model or {}, mode=mode, request=request,
+                        timeout=max(1.0, min(180.0, remaining)), validation_feedback=feedback,
+                        previous_output=previous_output,
+                        chat_debug_request={"username": request.username, "character_id": request.character_id,
+                                            "mode": request.mode, "stage": "GALGAME_AGENT_REQUEST",
+                                            **(getattr(request, "_agent_log_params", None) or {})},
+                        **game_agent_metering_kwargs(request),
+                    )
+                except GameAgentContractError as exc:
+                    feedback = str(exc)
+                    if attempt + 1 >= GALGAME_AGENT_MAX_ATTEMPTS:
+                        raise
+                    logger.warning('[GameAgent] 交付门禁失败，整轮重试: %s', feedback)
+                    continue
                 raw = response.text or ""
                 if is_generation_cancelled(username, character_id, client_id):
                     await emit({"type": "cancelled", "reason": "用户取消生成"})

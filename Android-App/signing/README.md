@@ -1,5 +1,7 @@
 # PonyChat release signing
 
+> 文档状态：2026-08-09 已复核。易变的版本、部署和服务状态在使用前仍需现场验证。
+
 Release APKs must be signed with the same key on every build machine so users can install updates without uninstalling the existing app.
 
 One-time setup:
@@ -18,4 +20,9 @@ These files are intentionally ignored by Git:
 
 - `ponychat-release.jks`
 - `keystore.properties`
+
+The public certificate and its pinned SHA-256 fingerprint are tracked at
+`../../product-signing/ponychat-product-cert.pem` and `../../product-signing/README.md`.
+Companion automatically reuses this local signing configuration so both release APKs have
+the same signature identity.
 

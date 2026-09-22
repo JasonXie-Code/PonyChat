@@ -45,6 +45,35 @@ def test_receipt_requires_owner_auth_and_is_idempotent(monkeypatch):
         assert client.post(endpoint, headers={'X-Chat-Auth': 'alice-token'}).json() == {'deleted': True}
 
 
+def test_temporary_web_image_is_downloadable_before_phone_receipt(monkeypatch):
+    """The asset event URL must resolve from the transfer cache, not SQLite."""
+    package = 'web_image_fetch_test'
+    for name in [package, package + '.routes']:
+        module = ModuleType(name)
+        module.__path__ = []
+        monkeypatch.setitem(sys.modules, name, module)
+    monkeypatch.setitem(sys.modules, package + '.chat_image_transfer', transfer)
+
+    source = Path(__file__).parents[1] / 'routes/system_impl/system_prompt_routes.py'
+    node = next(n for n in ast.parse(source.read_text(encoding='utf-8')).body
+                if isinstance(n, ast.AsyncFunctionDef) and n.name == 'get_chat_image')
+    router = APIRouter()
+    env = {'__package__': package + '.routes', 'router': router, 'Response': __import__('fastapi').Response}
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), 'exec'), env)
+    app = FastAPI()
+    app.include_router(router)
+
+    data = png()
+    filename = transfer.store_web_image_transfer(data, 'image/png', 'alice').rsplit('/', 1)[-1]
+    with TestClient(app) as client:
+        response = client.get('/chat_images/' + filename)
+        assert response.status_code == 200
+        assert response.content == data
+        assert response.headers['content-type'].startswith('image/png')
+        assert response.headers['cache-control'] == 'no-store'
+        assert response.headers['x-accel-buffering'] == 'no'
+
+
 def test_image_engine_config_preserves_existing_search_settings():
     import importlib.util
     path = Path(__file__).parents[2] / 'scripts/ops/configure_searxng_images.py'

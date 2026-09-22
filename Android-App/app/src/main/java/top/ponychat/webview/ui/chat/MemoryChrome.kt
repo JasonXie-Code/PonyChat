@@ -39,6 +39,7 @@ import top.ponychat.webview.data.model.Character
 import top.ponychat.webview.data.prefs.AppPreferences
 import top.ponychat.webview.ui.character.CharacterAvatar
 import top.ponychat.webview.ui.common.PonyTopBar
+import top.ponychat.webview.ui.common.PonyTopBarBackButton
 import top.ponychat.webview.ui.common.adaptivePopupMenuAccentColor
 import top.ponychat.webview.ui.common.adaptivePopupMenuBorder
 import top.ponychat.webview.ui.common.adaptivePopupMenuContainerColor
@@ -58,13 +59,10 @@ internal fun MemoryTopBar(
 ) {
     val layerCfg = LAYER_TABS[selectedLayer]
     PonyTopBar(containerColor = MaterialTheme.colorScheme.background) {
-        IconButton(onClick = onNavigateBack) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "返回",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
+        PonyTopBarBackButton(
+            onClick = onNavigateBack,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
         Spacer(Modifier.width(4.dp))
         Row(
             modifier = Modifier.weight(1f),

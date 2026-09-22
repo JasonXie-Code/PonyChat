@@ -21,6 +21,7 @@ from ..db.message_voice_audio_cache import (
 )
 from ..db.message_voice_states import load_voice_state, normalize_voice_state, upsert_voice_state
 from ..official_characters import OFFICIAL_REFERENCE_SEPARATOR
+from .text_limits import truncate_prompt_text
 from ..character_voice_registration import (
     is_ponychat_voice_profile_id,
     load_character_voice_profile,
@@ -677,7 +678,7 @@ def normalize_voice_sentence_entries(value: Any) -> list[dict[str, str]]:
         out.append(
             {
                 "text": text,
-                "emotion_prompt": re.sub(r"\s+", " ", emotion)[:220],
+                "emotion_prompt": truncate_prompt_text(re.sub(r"\s+", " ", emotion), 220),
             }
         )
     return out

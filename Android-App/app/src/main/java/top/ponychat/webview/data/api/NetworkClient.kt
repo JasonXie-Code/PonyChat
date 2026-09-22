@@ -12,12 +12,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import top.ponychat.webview.BuildConfig
 import top.ponychat.webview.data.prefs.AppPreferences
 import java.io.IOException
-import java.security.SecureRandom
-import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManager
-import javax.net.ssl.X509TrustManager
 
 object NetworkClient {
 
@@ -65,25 +60,22 @@ object NetworkClient {
         chain.proceed(chain.request())
     }
 
-    /** 信任所有证书（仅用于局域网自签名证书）——对公网 URL 仍做正常验证。供 WebSocket/JobPoll 等复用。 */
-    internal val trustAllCerts: Array<TrustManager> = arrayOf(
-        object : X509TrustManager {
-            override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) = Unit
-            override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) = Unit
-            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
-        }
-    )
-
-    internal val sslContext: SSLContext = SSLContext.getInstance("TLS").apply {
-        init(null, trustAllCerts, SecureRandom())
+    /** Upgrade historical backend media URLs before any request reaches the network. */
+    internal val upgradeLegacyBackendInterceptor = Interceptor { chain ->
+        val request = chain.request()
+        val url = request.url
+        val upgraded = if (url.host == "39.101.74.217" && url.scheme == "http" && url.port == 80) {
+            request.newBuilder().url(url.newBuilder().scheme("https").port(443).build()).build()
+        } else request
+        chain.proceed(upgraded)
     }
 
     val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .followSslRedirects(false)
+        .addInterceptor(upgradeLegacyBackendInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(200, TimeUnit.SECONDS)  // 普通 REST 接口超时；总结上下文可能耗时 180s，留 20s 余量
         .writeTimeout(30, TimeUnit.SECONDS)
-        .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-        .hostnameVerifier { _, _ -> true }
         .addInterceptor(debugWeakNetworkInterceptor)
         .addInterceptor(smartRouteInterceptor)
         .addInterceptor { chain ->
@@ -122,11 +114,11 @@ object NetworkClient {
      * 对「无分块 body」而言，为整包下载上限时间。
      */
     val chatJsonResponseHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .followSslRedirects(false)
+        .addInterceptor(upgradeLegacyBackendInterceptor)
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(600, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
-        .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-        .hostnameVerifier { _, _ -> true }
         .addInterceptor(debugWeakNetworkInterceptor)
         .addInterceptor(smartRouteInterceptor)
         .addInterceptor { chain ->
@@ -200,11 +192,11 @@ object NetworkClient {
         readTimeoutMs: Long = 3_500L
     ): ApiService {
         val directClient = OkHttpClient.Builder()
+            .followSslRedirects(false)
+            .addInterceptor(upgradeLegacyBackendInterceptor)
             .connectTimeout(connectTimeoutMs, TimeUnit.MILLISECONDS)
             .readTimeout(readTimeoutMs, TimeUnit.MILLISECONDS)
             .writeTimeout(4_000L, TimeUnit.MILLISECONDS)
-            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-            .hostnameVerifier { _, _ -> true }
             .addInterceptor { chain ->
                 val req = chain.request().newBuilder()
                     .addHeader("Accept", "application/json, text/event-stream")
@@ -215,7 +207,7 @@ object NetworkClient {
         return retrofitFor(baseUrl, directClient)
     }
 
-    /** 创建信任自签名证书的 OkHttpClient（供 WebSocket、JobPoll 等使用，解决局域网 HTTPS 证书问题） */
+    /** 使用系统证书与主机名校验；保留旧方法名兼容语音和 WebSocket 调用方。 */
     fun createTrustAllClient(
         connectTimeoutSec: Long = 30,
         readTimeoutSec: Long = 120,
@@ -223,11 +215,11 @@ object NetworkClient {
         pingIntervalSec: Long = 0
     ): OkHttpClient {
         val builder = OkHttpClient.Builder()
+            .followSslRedirects(false)
+            .addInterceptor(upgradeLegacyBackendInterceptor)
             .connectTimeout(connectTimeoutSec, TimeUnit.SECONDS)
             .readTimeout(readTimeoutSec, TimeUnit.SECONDS)
             .writeTimeout(writeTimeoutSec, TimeUnit.SECONDS)
-            .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
-            .hostnameVerifier { _, _ -> true }
             .addInterceptor(debugWeakNetworkInterceptor)
         if (pingIntervalSec > 0) builder.pingInterval(pingIntervalSec, TimeUnit.SECONDS)
         return builder.build()

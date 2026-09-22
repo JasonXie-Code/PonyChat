@@ -5,8 +5,6 @@ formatting. This runs before paragraph folding so list prefixes stay detectable.
 """
 from __future__ import annotations
 
-from .Prompts import NORMAL_CHAT_EXPRESSION_PROMPT
-
 import re
 
 

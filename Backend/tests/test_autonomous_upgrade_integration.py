@@ -16,6 +16,7 @@ from Backend.db.database import Database, SCHEMA_SQL
 from Backend.db.conversations_dao import ConversationsDAO
 from Backend.utils import ChatRequest, ChatMessage
 from test_autonomous_normal import model_result
+from expression_skill_contract import read_expression_contract
 
 WHEN = '2026-09-06T15:00:00+08:00'
 
@@ -81,6 +82,7 @@ def draft(db):
 
 
 def save(db, req):
+    req._autonomous_pending_reply_message_ids = ('a1',)
     return ConversationsDAO(db).save_conversation('alice','twilight',{'id':'c1','timestamp':2000,'messages':[
         {'role':'user','content':'请记住我喜欢绿茶','message_id':'m1','timestamp':1000,'sequence_number':1},
         {'role':'assistant','content':'记住了','message_id':'a1','timestamp':2000,'sequence_number':2}]},
@@ -142,6 +144,7 @@ def test_actual_prepare_registers_usable_tools_and_writes_memory(database,monkey
     async def runner(prompt,config,tools,**kwargs):
         attempts.append(1)
         captured.update(json.loads(prompt))
+        await tools['load_chat_skill'].callback({'name':'instant_messaging'})
         await tools['read_character_reference'].callback({'query':'独角兽 种族'})
         from Backend.chat_modules.harness_runtime import _closed_schema
         for tool in tools.values():
@@ -150,6 +153,9 @@ def test_actual_prepare_registers_usable_tools_and_writes_memory(database,monkey
             character_intimacy_style='balanced',requested_escalation='none',user_pressure_level='low',
             source_message_ids=['m1'],occurred_at=WHEN))
         await tools['stage_memory'].callback(dict(kind='fact',content='用户喜欢绿茶',source_message_ids=['m1'],occurred_at=WHEN,importance=7))
+        # A compliant turn also completes the serial expression reads for this
+        # ordinary chat scenario before it delivers its envelope.
+        await read_expression_contract(tools)
         assert 'compose_character_reply' not in tools
         return scene_result('记住了')
 
@@ -169,7 +175,9 @@ def test_actual_prepare_registers_usable_tools_and_writes_memory(database,monkey
             JOIN agent_memory_versions v ON v.entry_id=h.entry_id AND v.version=h.version''')}
         assert categories=={'fact','relationship_state'}
         scene=json.loads(conn.execute('SELECT fields_json FROM normal_agent_scene_cards').fetchone()[0])
-        assert len(scene)==6 and all(item['value'] is None for item in scene.values())
+        assert len(scene)==7
+        assert scene['interaction_mode']['value'] == 'instant_messaging'
+        assert all(item['value'] is None for key, item in scene.items() if key != 'interaction_mode')
 
 
 def test_actual_shortcut_entry_has_no_sticker_tools(database,monkeypatch):
@@ -180,6 +188,7 @@ def test_actual_shortcut_entry_has_no_sticker_tools(database,monkeypatch):
 
     async def runner(prompt,config,tools,**kwargs):
         assert 'stage_sticker' not in tools and 'search_stickers' not in tools
+        await tools['load_chat_skill'].callback({'name':'instant_messaging'})
         await tools['read_character_reference'].callback({'query':'独角兽 种族'})
         await tools['update_relationship_state'].callback(dict(relationship_stage='uncertain',
             character_intimacy_style='balanced',requested_escalation='none',user_pressure_level='low',
@@ -191,6 +200,10 @@ def test_actual_shortcut_entry_has_no_sticker_tools(database,monkeypatch):
         data['reply_language']['language'] = 'Chinese'
         for bubble in data['bubbles']:
             bubble['parts'][0]['kind'] = 'thought'
+        # This prompt carries the explicit description shortcut contract, so the
+        # compliant selection is the description path (select_reply_paths rejects a
+        # selection that omits description_reply).
+        await read_expression_contract(tools, paths=('description_reply',))
         return {**result, 'final_response': json.dumps(data, ensure_ascii=False)}
 
     monkeypatch.setattr(harness_runtime,'run_harness_turn',runner)

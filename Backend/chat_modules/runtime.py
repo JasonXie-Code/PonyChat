@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from .reply_language_state import encode_language
+
 import base64
 import json
 import os
@@ -572,7 +574,7 @@ async def run_conversation_persistence(
                     msg_ts = now_ts + i
                     msg_seq = len(char_convs)
                     assistant_msg: dict = {
-                        "role": "assistant", "content": para, "rawContent": para,
+                        "role": "assistant", "content": para, "rawContent": encode_language(para, getattr(request, "_normal_reply_language", None), getattr(request, "_normal_reply_voice", None)),
                         "timestamp": msg_ts, "model": model_name, "message_id": para_id,
                         "sequence_number": msg_seq,
                         "previous_message_id": prev_id,

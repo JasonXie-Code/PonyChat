@@ -52,6 +52,8 @@ internal fun FiltersDropdownRow(
     onSenderChange: (String) -> Unit,
     dateFilter: String,
     onDateChange: (String) -> Unit,
+    contentFilter: String = "all",
+    onContentChange: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val senderOptions = listOf("all" to "全部人", "user" to "我", "character" to "角色")
@@ -70,6 +72,11 @@ internal fun FiltersDropdownRow(
             selected = dateFilter,
             onSelect = onDateChange
         )
+        if (onContentChange != null) {
+            val options = listOf("all" to "全部", "text" to "文本", "image" to "图片")
+            CompactDropdown(options.first { it.first == contentFilter }.second,
+                options, contentFilter, onContentChange)
+        }
     }
 }
 

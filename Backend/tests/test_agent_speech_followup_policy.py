@@ -7,40 +7,44 @@ import pytest
 
 from test_agent_parity import business, decision
 from test_autonomous_normal import model_result, row_message
-from Backend.chat_modules.autonomous_normal import run_autonomous_turn, _current_character_mouth_occupied
+from Backend.chat_modules.autonomous_normal import run_autonomous_turn
 from Backend.chat_modules.autonomous_followup import finalize_followup
 from Backend.chat_modules.autonomous_followup_context import format_followup_context
-from Backend.chat_modules.autonomous_prompt_rules import SPEECH_GUIDANCE
+from Backend.chat_modules.autonomous_prompt_rules import speech
+from Backend.chat_modules.Prompts import reply_deduplication
 
 
-def test_consentual_intimate_mouth_guidance_selects_sounds_by_context_without_banning_repetition():
-    for phrase in ('轻吻、试探', '被亲吻打断', '羞怯、被逗弄', '强烈快感'):
-        assert phrase in SPEECH_GUIDANCE
-    for sound in ('唔嗯', '嗯唔', '呜呜', '哈啊', '嗯啊'):
-        assert sound in SPEECH_GUIDANCE
-    assert '自动选择最贴切的音组' in SPEECH_GUIDANCE
-    assert '可以在持续受限或同一情绪延续时重复' in SPEECH_GUIDANCE
-    assert '不为变化而强行换音' in SPEECH_GUIDANCE
-    assert '双方明确自愿' in SPEECH_GUIDANCE
-
-
-@pytest.mark.parametrize('text', [
-    '我亲上你的嘴，没有立刻松开。',
-    '你点头后，我继续亲着你，故意不急着放开。',
-    '我吻着你，感觉你的呼吸越来越急，也没有马上停下。',
-    '我却还捂住你的嘴不放。',
+@pytest.mark.parametrize('field,value,valid', [
+    ('reason', '', False), ('reason', 'x', True),
+    ('reason', 'x' * 400, True), ('reason', 'x' * 401, False),
+    ('summary', '', False), ('summary', 'x', True),
+    ('summary', 'x' * 400, True), ('summary', 'x' * 401, False),
+    ('target_delay_seconds', 59, False), ('target_delay_seconds', 60, True),
+    ('target_delay_seconds', 1800, True), ('target_delay_seconds', 1801, False),
+    ('target_delay_seconds', True, False), ('target_delay_seconds', 60.0, False),
 ])
-def test_natural_ongoing_user_actions_mark_character_mouth_as_occupied(text):
-    assert _current_character_mouth_occupied({'content': text})
+def test_followup_contract_boundaries_remain_unchanged(field, value, valid):
+    b, data = business(), decision()
+    data['followup_decision'][field] = value
+    if valid:
+        assert finalize_followup(b, data)['enabled']
+    else:
+        with pytest.raises(ValueError):
+            finalize_followup(b, data)
 
 
-@pytest.mark.parametrize('text', [
-    '我刚才亲过你的嘴，现在已经松开了。',
-    '我想亲你的嘴，但还没有靠近。',
-    '如果我亲你的嘴，你会躲开吗？',
-])
-def test_finished_or_planned_actions_do_not_mark_character_mouth_as_occupied(text):
-    assert not _current_character_mouth_occupied(text)
+def test_mouth_guidance_only_constrains_actual_articulation():
+    assert '嘴部仍受限' in speech
+    assert '不在受限状态下说大段清晰台词' in speech
+    # 受限发声的跨轮与本轮模板复核已归 reply_deduplication，speech 只保留指针。
+    assert '受限发声的跨轮及本轮模板复核见reply_deduplication' in speech
+    assert '核对近期连续几轮及本轮的受限回应' in reply_deduplication
+    assert '拟音仍须符合角色当下意愿与已确认边界' in reply_deduplication
+    assert '优先呈现与刺激性质、强度及角色状态相符的直接身体反应和实际声音' in speech
+    assert '根据实际情况选择自然、简短的拟音或呼吸变化' in speech
+    assert '不能只在描写中转述角色发出了某种声音' in speech
+    assert '适合非语言回应时不强行补拟音' in speech
+    assert '不推断同意或关系边界' in speech
 
 
 @pytest.mark.parametrize('parts', [
@@ -56,6 +60,8 @@ def test_mouth_scene_does_not_check_rewrite_or_retry_parts(parts):
     data['bubbles'][0]['parts'] = deepcopy(parts)
     calls = []
     async def runner(*args, **kwargs):
+        payload = json.loads(args[0])
+        assert payload['latest_user_message']['content'] == text
         calls.append(1)
         return model_result() | {'final_response': json.dumps(data, ensure_ascii=False)}
     result = asyncio.run(run_autonomous_turn(messages=[row_message('m1', text)],

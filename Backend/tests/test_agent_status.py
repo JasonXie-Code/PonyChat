@@ -42,13 +42,37 @@ def test_retries_accumulate_and_finished_duration_stops(monkeypatch):
     status.settle_run(key, 'a', {'llm_api_calls': 2, 'tool_call_count': 3})
     now[0] += 10
     status.finish(key, 'error')
-    status.begin(scope())
+    key = status.begin(scope())
     status.settle_run(key, 'b', {'llm_api_calls': 1, 'tool_call_count': 2})
     now[0] += 5
     status.finish(key, 'success')
     now[0] += 20
     result = status.read('alice', 'pony', 'normal')
     assert result['elapsed_ms'] == 15000 and result['points'] == 8
+
+
+def test_supplement_replacement_ignores_late_old_finish_and_events(monkeypatch):
+    now = [1000.0]
+    monkeypatch.setattr(status.time, 'time', lambda: now[0])
+    old = status.begin(scope(trace='shared-batch'))
+    now[0] += 6
+    current = status.begin(scope(trace='shared-batch'))
+    status.event(current, 'new', 'step/start', {'turn': 1, 'step': 1})
+    status.finish(old, 'interrupted')
+    status.event(old, 'old', 'tool/start', {'tool': 'obsolete_tool', 'tool_call_id': 'late'})
+    status.settle_run(old, 'old', {'llm_api_calls': 2, 'tool_call_count': 3})
+    now[0] += 8
+    state = status.read('alice', 'pony', 'normal')
+    assert state['status'] == 'running' and state['finished_at'] is None
+    assert state['activity'] == '正在调用模型' and state['elapsed_ms'] == 14000
+    assert state['current_tools'] == [] and state['points'] == 6
+    assert '_generation' not in state
+    status.finish(current, 'success')
+    status.event(current, 'new', 'step/start', {'turn': 1, 'step': 2})
+    now[0] += 30
+    finished = status.read('alice', 'pony', 'normal')
+    assert finished['elapsed_ms'] == 14000
+    assert finished['activity'] == '本次 Agent 任务已结束'
 
 
 def test_isolation_and_active_foreground_priority():

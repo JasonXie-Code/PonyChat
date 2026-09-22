@@ -1,6 +1,6 @@
 """Default visual identity for pony character image searches."""
 
-from .Prompts import PONY_IMAGE_POLICY
+from .Prompts import image_style
 
 
 EXCLUDED_TAGS = {'anthro', 'human', 'humanized', 'equestria girls', '3d', 'g5', 'photorealistic'}
@@ -8,7 +8,10 @@ EXCLUDED_TAGS = {'anthro', 'human', 'humanized', 'equestria girls', '3d', 'g5', 
 
 def apply_style(arguments):
     result = dict(arguments)
-    if not result.get('derpibooru_tags') or result.get('style') == 'user_requested':
+    if result.get('style') == 'user_requested' or result.get('subject_type') != 'pony':
+        return result
+    result['query'] = str(result.get('query', ''))[:210] + ' MLP G4 pony show accurate 2D vector -human -anthro -3d -g5'
+    if not result.get('derpibooru_tags'):
         return result
     terms = [t.strip() for t in result['derpibooru_tags'].split(',') if t.strip()]
     for tag in ('pony', 'vector', 'show accurate'):
@@ -16,5 +19,4 @@ def apply_style(arguments):
             terms.append(tag)
     result['derpibooru_tags'] = ', '.join(terms)
     result['g4_pony'] = True
-    result['query'] = str(result.get('query', ''))[:210] + ' MLP G4 pony show accurate 2D vector -human -anthro -3d -g5'
     return result

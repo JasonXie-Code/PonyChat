@@ -58,7 +58,7 @@ def test_long_history_keeps_fixed_card_outside_thirty_message_window(db):
         messages=[{'role': 'user' if i % 2 == 0 else 'assistant', 'message_id': str(i),
                    'content': '谈论音乐'} for i in range(81)],
         scene_state=snapshot, character_profile='云杉', environment='', model_config={}, harness_runner=runner))
-    assert len(captured['recent_raw_messages']) == 30
+    assert len(captured['recent_raw_messages']) == 60
     assert captured['current_scene']['fields']['character_position']['value'] == '趴在地毯上'
     assert 'scene_patch' not in json.loads(result['envelope'])  # Internal state never leaks to UI.
     assert put(db, {})['fields'] == snapshot['fields']
@@ -136,8 +136,13 @@ def test_invalid_evidence_and_reply_without_delivery_rejected(db):
     seed(db)
     with pytest.raises(ValueError):
         scene.validate_patch({'reset': False, 'changes': {'location': value('外面', 'invented')}}, {'m1'})
-    with pytest.raises(RuntimeError, match='saved reply'):
-        put(db, {'location': value('外面', '$reply')})
+    # 本轮没有保存任何 assistant 段落时，丢弃依赖 $reply 的字段（保留原值），
+    # 不让整笔回复事务失败；同一补丁里不依赖 $reply 的字段照常提交。
+    put(db, {'location': value('外面', '$reply'),
+             'contact': value('牵着前蹄', 'm1')})
+    fields = scene.load_scene(store(db))['fields']
+    assert fields['location']['value'] == '窗边'
+    assert fields['contact']['value'] == '牵着前蹄'
 
 
 def test_changed_or_cross_conversation_evidence_cannot_be_reused(db):

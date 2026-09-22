@@ -144,6 +144,7 @@ fun CharacterListScreen(
     onCharacterSelected: (Character, String) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToHall: () -> Unit = {},
+    onNavigateToBooruSearch: () -> Unit = {},
     onNavigateToCreate: () -> Unit = {},
     onNavigateToEdit: (Character) -> Unit = {},
     showDeviceHomeAction: Boolean = false,
@@ -294,7 +295,7 @@ fun CharacterListScreen(
                             .clickable { onNavigateToSettings() }
                     ) {
                         UserAvatar(
-                            avatarUrl = prefs.avatar,
+                            avatarUrl = rememberHeaderAvatar(prefs),
                             name = viewModel.nickname.ifBlank { viewModel.username },
                             apiBase = activeApiBase,
                             fallbackApiBase = fallbackApiBase,
@@ -372,9 +373,9 @@ fun CharacterListScreen(
                                 onClick = { showTopMenu = false; showQrScan = true }
                             )
                             DropdownMenuItem(
-                                text = { Text("刷新数据", color = actionMenuContentColor()) },
-                                leadingIcon = { Icon(Icons.Filled.Refresh, contentDescription = null, tint = actionMenuContentColor()) },
-                                onClick = { showTopMenu = false; viewModel.loadMyCharacters() }
+                                text = { Text("呆站找图", color = actionMenuContentColor()) },
+                                leadingIcon = { Icon(Icons.Filled.ImageSearch, contentDescription = null, tint = actionMenuContentColor()) },
+                                onClick = { showTopMenu = false; onNavigateToBooruSearch() }
                             )
                         }
                     }
@@ -439,6 +440,9 @@ fun CharacterListScreen(
         },
     ) { paddingValues ->
         val lazyListState = rememberLazyListState()
+        val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+            viewModel.reorderCharacters(from.key as String, to.key as String)
+        }
         val density = LocalDensity.current
         val pullRefreshMaxHeight = 76.dp
         val pullRefreshMaxPx = with(density) { pullRefreshMaxHeight.toPx() }
@@ -558,6 +562,7 @@ fun CharacterListScreen(
         }
         val pullRefreshConnection = remember(
             lazyListState,
+            reorderableLazyListState,
             pullRefreshTriggerPx,
             pullRefreshMaxPx,
             isPullRefreshing,
@@ -569,6 +574,7 @@ fun CharacterListScreen(
         ) {
             object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                    if (reorderableLazyListState.isAnyItemDragging) return Offset.Zero
                     if (available.y >= 0f || pullRefreshOffsetPx <= 0f) return Offset.Zero
                     val consumedY = applyPullRefreshDelta(available.y)
                     return Offset(0f, consumedY)
@@ -579,7 +585,7 @@ fun CharacterListScreen(
                     available: Offset,
                     source: NestedScrollSource
                 ): Offset {
-                    if (source != NestedScrollSource.UserInput) return Offset.Zero
+                    if (source != NestedScrollSource.UserInput || reorderableLazyListState.isAnyItemDragging) return Offset.Zero
                     val canPull = !state.isLoading &&
                         (lazyListState.isAtRefreshTop() || pullRefreshOffsetPx > 0f)
                     if (!canPull || available.y <= 0f) return Offset.Zero
@@ -604,6 +610,7 @@ fun CharacterListScreen(
         }
         val pullRefreshPointerModifier = Modifier.pointerInput(
             lazyListState,
+            reorderableLazyListState,
             pullRefreshTriggerPx,
             pullRefreshMaxPx,
             isPullRefreshing,
@@ -630,6 +637,9 @@ fun CharacterListScreen(
                             ?: event.changes.firstOrNull { it.pressed }?.also { activePointerId = it.id }
                             ?: break
                         if (!change.pressed) break
+
+                        // 长按头像已进入排序时，将整段手势交给拖拽，避免顶部下拉刷新抢占。
+                        if (reorderableLazyListState.isAnyItemDragging) break
 
                         val delta = change.positionChangeIgnoreConsumed()
                         totalDragY += delta.y
@@ -671,9 +681,6 @@ fun CharacterListScreen(
                 .then(pullRefreshPointerModifier)
         ) {
             val isManualSort = state.characterSort == "manual"
-            val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-                viewModel.reorderCharacters(from.key as String, to.key as String)
-            }
             PullRefreshIndicator(
                 maxHeight = pullRefreshMaxHeight,
                 triggerPx = pullRefreshTriggerPx,
@@ -779,7 +786,13 @@ fun CharacterListScreen(
                     key = character.stableId(),
                     enabled = canDrag
                 ) { isDragging ->
-                    val dragHandleModifier = if (canDrag) Modifier.draggableHandle() else Modifier
+                    // 仅手动排序模式挂长按拖拽手柄：长按头像震动后即可拖动排序。
+                    // 其他排序模式不挂手柄，因此既不触发拖拽也不会震动。
+                    val dragHandleModifier = if (canDrag) {
+                        Modifier.longPressDraggableHandle(
+                            onDragStarted = { vibrateBriefly(context) }
+                        )
+                    } else Modifier
                     CharacterCard(
                         character = character,
                         apiBase = activeApiBase,

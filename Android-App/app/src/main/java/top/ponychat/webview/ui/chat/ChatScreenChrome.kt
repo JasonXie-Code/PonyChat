@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.HourglassEmpty
@@ -49,6 +48,7 @@ import top.ponychat.webview.data.model.Character
 import top.ponychat.webview.data.prefs.AppPreferences
 import top.ponychat.webview.ui.character.CharacterAvatar
 import top.ponychat.webview.ui.common.PonyTopBar
+import top.ponychat.webview.ui.common.PonyTopBarBackButton
 import top.ponychat.webview.ui.theme.ErrorColor
 import top.ponychat.webview.ui.theme.Primary
 import top.ponychat.webview.util.formatErrorForDisplay
@@ -67,19 +67,14 @@ internal fun ChatScreenTopBar(
     onOpenHistory: () -> Unit,
     onOpenDisplaySettings: () -> Unit,
 ) {
+    val navigate = rememberChatNavigation()
     PonyTopBar {
         if (state.isExportMode) {
             IconButton(onClick = onCancelExport) {
                 Icon(Icons.Filled.Close, contentDescription = "取消", tint = MaterialTheme.colorScheme.onSurface)
             }
         } else {
-            IconButton(onClick = onBack) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            PonyTopBarBackButton(onClick = onBack)
         }
         Spacer(Modifier.width(4.dp))
         if (state.isExportMode) {
@@ -138,7 +133,7 @@ internal fun ChatScreenTopBar(
                     )
                 }
             }
-            IconButton(onClick = onOpenDisplaySettings) {
+            IconButton(onClick = { navigate(onOpenDisplaySettings) }) {
                 Icon(
                     Icons.Filled.Settings,
                     contentDescription = "设置",

@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 /** Save and verify on the phone before acknowledging deletion of server bytes. */
 internal object WebImageReceiver {
     private val lock = Mutex()
-    private val transferPath = Regex("/chat_images/tmp_[A-Za-z0-9_-]+\\.jpg")
+    private val transferPath = Regex("/chat_images/tmp_[A-Za-z0-9_-]+\\.(jpg|gif|webp|png)")
     private const val maxBytes = 8L * 1024 * 1024
     private val client by lazy {
         NetworkClient.okHttpClient.newBuilder().cache(null)
@@ -32,11 +32,15 @@ internal object WebImageReceiver {
     internal fun sha256(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
+    internal fun supports(attachment: MessageAttachment): Boolean =
+        attachment.type == "image" &&
+            attachment.metadata?.get("source") in setOf("web_search", "history_repeat")
+
     suspend fun receive(prefs: AppPreferences, attachment: MessageAttachment,
                         httpClient: OkHttpClient = client): MessageAttachment {
-        if (attachment.type != "image" || attachment.metadata?.get("source") != "web_search") return attachment
+        if (!supports(attachment)) return attachment
         val url = attachment.url?.takeIf { transferPath.matches(it) } ?: return attachment
-        val digest = (attachment.metadata["sha256"] as? String)
+        val digest = (attachment.metadata?.get("sha256") as? String)
             ?.takeIf { it.matches(Regex("[a-f0-9]{64}")) } ?: return attachment
         val username = prefs.username.takeIf { it.isNotBlank() } ?: return attachment
         return withContext(Dispatchers.IO) {
@@ -45,7 +49,8 @@ internal object WebImageReceiver {
                     val context = prefs.applicationContext
                     val directory = File(context.filesDir, "chat_images").also { it.mkdirs() }
                     val key = sha256("$username\n$url".toByteArray())
-                    val file = File(directory, "web_$key.jpg")
+                    val extension = url.substringAfterLast('.')
+                    val file = File(directory, "web_$key.$extension")
                     if (!file.isFile || file.length() > maxBytes || sha256(file.readBytes()) != digest) {
                         val request = Request.Builder().url(prefs.effectiveApiBase().trimEnd('/') + url).get().build()
                         httpClient.newCall(request).execute().use { response ->

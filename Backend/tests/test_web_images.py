@@ -4,6 +4,7 @@ import base64
 import importlib
 import importlib.util
 import json
+import sqlite3
 from io import BytesIO
 from pathlib import Path
 import sys
@@ -48,7 +49,22 @@ def search_tool():
         'results': [{'title': '红色图片', 'url': 'https://example.com/source', 'img_src': 'https://images.example.com/red.png'}]})))
 
 
-def test_search_category_image_fields_dedup_and_shared_budget():
+def test_downloads_continue_beyond_old_call_and_candidate_limits():
+    tool = images.WebImageTools(search_tool(), username='alice', downloader=downloader())
+
+    async def exercise():
+        for i in range(8):
+            ref = str(i)
+            tool.candidates[ref] = {'image_url': f'https://images.example.com/{i}.png',
+                                    'source_url': f'https://example.com/{i}', 'title': ref}
+            result = await tool.read({'image_ref': ref})
+            assert result['content'][1]['type'] == 'image'
+        assert len(tool.downloaded) == tool.download_calls == 8
+
+    asyncio.run(exercise())
+
+
+def test_search_category_image_fields_dedup_without_shared_call_limit():
     requests = []
     def handle(req):
         requests.append(req)
@@ -59,23 +75,54 @@ def test_search_category_image_fields_dedup_and_shared_budget():
             {'url': 'https://example.com/no-image'}]})
     tool = search_module.SearxngSearch(transport=httpx.MockTransport(handle))
     async def run():
-        result = await tool.search_images({'query': '红色图片'})
+        result = await tool.search_images({'query': '红色图片', 'subject_type': 'other'})
         assert len(result['results']) == 1
         assert result['results'][0]['source_url'] == 'https://example.com/page'
         await tool.search({'query': 'page'})
         await tool.search_images({'query': 'other'})
-        assert (await tool.search_images({'query': 'limit'}))['status'] == 'budget_exhausted'
+        assert (await tool.search_images({'query': 'limit'}))['status'] == 'success'
     asyncio.run(run())
-    assert [r.url.params['categories'] for r in requests] == ['images', 'general', 'images']
+    assert [r.url.params['categories'] for r in requests] == ['images', 'general', 'images', 'images']
+
+
+def test_web_image_search_excludes_sources_already_sent_in_the_conversation():
+    def handle(req):
+        return httpx.Response(200, json={'results': [
+            {'title': 'already sent', 'url': 'https://derpibooru.org/images/old',
+             'img_src': 'https://cdn.example.com/old.png'},
+            {'title': 'new candidate', 'url': 'https://derpibooru.org/images/new',
+             'img_src': 'https://cdn.example.com/new.png'},
+        ]})
+    provider = search_module.SearxngSearch(transport=httpx.MockTransport(handle))
+    tool = images.WebImageTools(provider, username='test',
+        excluded_source_urls={'https://derpibooru.org/images/old'})
+    result = asyncio.run(tool.search({'query': 'pinkie pie', 'subject_type': 'pony'}))
+    assert [row['source_url'] for row in result['results']] == ['https://derpibooru.org/images/new']
+    assert '已排除本会话此前发送过的1个同来源候选' in result['note']
+
+
+def test_recent_web_image_sources_read_only_web_search_attachments(tmp_path):
+    db_path = tmp_path / 'chat.db'
+    with sqlite3.connect(db_path) as conn:
+        conn.execute('CREATE TABLE message_attachments (conversation_id TEXT, metadata_json TEXT)')
+        conn.executemany('INSERT INTO message_attachments VALUES (?, ?)', [
+            ('conversation-a', json.dumps({'source': 'web_search', 'source_url': 'https://derpibooru.org/images/old'})),
+            ('conversation-a', json.dumps({'source': 'upload', 'source_url': 'https://example.com/user'})),
+            ('conversation-b', json.dumps({'source': 'web_search', 'source_url': 'https://derpibooru.org/images/other'})),
+            ('conversation-a', '{bad json'),
+        ])
+    assert images.recent_web_image_source_urls(db_path, 'conversation-a') == {
+        'https://derpibooru.org/images/old'}
 
 
 def test_approximate_match_policy_reaches_search_results_and_tool_schema():
     tool = images.WebImageTools(search_tool(), username='test')
     registered = {}
     tool.register(lambda name, description, schema, callback: registered.update({name: description}))
-    result = asyncio.run(tool.search({'query': '图片'}))
+    result = asyncio.run(tool.search({'query': '图片', 'subject_type': 'other'}))
     for text in (result['note'], registered['search_images']):
-        assert '选1至2张最接近的' in text
+        assert '从已成功下载并查看的候选中选择最接近的素材' in text
+        assert '未指定时默认1至2张' in text
         assert '用户明确强调的必需条件' in text
         assert '不编造已发送' in text
 
@@ -148,7 +195,7 @@ def test_agent_search_inspect_stage_and_phone_receipt_remove_only_owned_bytes():
                                       transfer_store=transfer.store_web_image_transfer)
     async def run_agent(prompt, config, tools, **kwargs):
         assert json.loads(prompt)['web_images_available'] is True
-        result = await tools['search_images'].callback({'query': '红色图片'})
+        result = await tools['search_images'].callback({'query': '红色图片', 'subject_type': 'other'})
         ref = result['results'][0]['image_ref']
         with pytest.raises(images.HarnessToolValidationError):
             await tools['stage_web_image'].callback({'image_ref': ref})
@@ -165,6 +212,39 @@ def test_agent_search_inspect_stage_and_phone_receipt_remove_only_owned_bytes():
     filename = attachment['url'].split('/')[-1]
     assert transfer.load_chat_image_transfer(filename)
     assert not transfer.discard_web_image_transfer(filename, 'bob')
+    assert transfer.load_chat_image_transfer(filename)
+    assert transfer.discard_web_image_transfer(filename, 'alice')
+    assert transfer.load_chat_image_transfer(filename) is None
+
+
+def test_web_sticker_uses_real_image_pipeline_without_platform_catalog():
+    image_tools = images.WebImageTools(search_tool(), username='alice', downloader=downloader(),
+                                      transfer_store=transfer.store_web_image_transfer)
+    async def run_agent(prompt, config, tools, **kwargs):
+        assert json.loads(prompt)['available_sticker_sources'] == ['derpibooru']
+        assert 'search_stickers' not in tools
+        result = await tools['search_images'].callback({'query': '反应表情包', 'subject_type': 'pony'})
+        ref = result['results'][0]['image_ref']
+        with pytest.raises(images.HarnessToolValidationError):
+            await tools['stage_web_image'].callback({'image_ref': ref, 'purpose': 'sticker'})
+        await tools['read_web_image'].callback({'image_ref': ref})
+        with pytest.raises(images.HarnessToolValidationError, match='purpose'):
+            await image_tools.stage({'image_ref': ref, 'purpose': 'unknown'})
+        assert not image_tools.transfers
+        staged = await tools['stage_web_image'].callback({
+            'image_ref': ref, 'purpose': 'sticker', 'match_kind': 'exact', 'after_bubble_index': 0})
+        assert staged['purpose'] == 'sticker'
+        return model_result('这个表情正合适。')
+    result = asyncio.run(turn(messages=[{'role': 'user', 'content': '发张表情包'}],
+        web_image_tools=image_tools, harness_runner=run_agent))
+    request = SimpleNamespace()
+    image_tools.apply_to_request(request, result['bubble_count'])
+    attachment = request._assistant_asset_attachments[0]
+    assert attachment['type'] == 'image'
+    assert attachment['metadata']['purpose'] == 'sticker'
+    assert request._assistant_reply_sequence[0]['type'] == 'asset'
+    assert not image_tools.purposes
+    filename = attachment['url'].rsplit('/', 1)[-1]
     assert transfer.load_chat_image_transfer(filename)
     assert transfer.discard_web_image_transfer(filename, 'alice')
     assert transfer.load_chat_image_transfer(filename) is None
@@ -190,7 +270,7 @@ def test_failed_download_or_fabricated_ref_cannot_be_staged():
     async def run():
         with pytest.raises(images.HarnessToolValidationError):
             await tool.read({'image_ref': 'https://example.com/fake'})
-        ref = (await tool.search({'query': 'picture'}))['results'][0]['image_ref']
+        ref = (await tool.search({'query': 'picture', 'subject_type': 'other'}))['results'][0]['image_ref']
         assert (await tool.read({'image_ref': ref}))['status'] == 'unavailable'
         with pytest.raises(images.HarnessToolValidationError):
             await tool.stage({'image_ref': ref})
@@ -211,7 +291,7 @@ def test_cancelled_agent_discards_staged_server_image():
         transfer_store=transfer.store_web_image_transfer, transfer_discard=transfer.discard_web_image_transfer)
     names = []
     async def cancelled(prompt, config, tools, **kwargs):
-        ref = (await tools['search_images'].callback({'query': 'red'}))['results'][0]['image_ref']
+        ref = (await tools['search_images'].callback({'query': 'red', 'subject_type': 'other'}))['results'][0]['image_ref']
         await tools['read_web_image'].callback({'image_ref': ref})
         await tools['stage_web_image'].callback({'image_ref': ref})
         names.extend(url.split('/')[-1] for url in image_tools.transfers.values())

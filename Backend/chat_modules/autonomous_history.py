@@ -6,10 +6,11 @@ import json
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+from .history_rounds import read_recent_round_rows
 
 
 async def read_history(db_path, *, username, character_id, conversation_id,
-                       before_sequence=None, before_message_id=None, limit=20):
+                       before_sequence=None, before_message_id=None, limit=20, round_limit=None):
     """Return chronological visible messages, bound to server-supplied ownership.
 
     Prefer before_message_id for paging: sequence_number is nullable and is not
@@ -23,6 +24,9 @@ async def read_history(db_path, *, username, character_id, conversation_id,
     # Server bootstrap may load a longer window; the Agent paging tool remains
     # capped at 40 by its schema.
     limit = max(1, min(int(limit), 120))
+    # Internal bootstrap option; the Agent's paging tool still counts messages.
+    if round_limit is not None and (type(round_limit) is not int or not 1 <= round_limit <= 100):
+        raise ValueError('round_limit must be an integer from 1 to 100')
     if before_message_id is not None and (not isinstance(before_message_id, str)
                                           or not before_message_id or len(before_message_id) > 256):
         raise ValueError("before_message_id must be a bounded raw message ID")
@@ -45,6 +49,8 @@ async def read_history(db_path, *, username, character_id, conversation_id,
             for field in ("speaker_name", "speaker_character_id", "quoted_message_json"):
                 if field in columns:
                     select.append("m." + field)
+            if "raw_content" in columns:
+                select.append("m.raw_content")
             conditions = ["u.username=?", "c.character_id=?", "c.id=?", "COALESCE(c.is_hidden,0)=0",
                           "m.role IN ('user','assistant')"]
             args = [username, character_id, conversation_id]
@@ -68,13 +74,25 @@ async def read_history(db_path, *, username, character_id, conversation_id,
             elif before_sequence is not None:
                 conditions.append("m.sequence_number < ?")
                 args.append(int(before_sequence))
-            args.append(limit)
-            rows = conn.execute(
+            sql = (
                 "SELECT " + ",".join(select) + joins + " WHERE " + " AND ".join(conditions)
-                + " ORDER BY COALESCE(m.timestamp,0) DESC, COALESCE(m.sequence_number,0) DESC, m.rowid DESC LIMIT ?", args).fetchall()
+                + " ORDER BY COALESCE(m.timestamp,0) DESC, COALESCE(m.sequence_number,0) DESC, m.rowid DESC")
+            if round_limit is None:
+                rows = conn.execute(sql + ' LIMIT ?', args + [limit]).fetchall()
+            else:
+                with closing(conn.execute(sql, args)) as cursor:
+                    rows = read_recent_round_rows(cursor, round_limit)
             result = []
             for row in reversed(rows):
                 item = dict(row)
+                from .reply_language_state import decode_language, decode_voice
+                raw_delivery = item.pop("raw_content", None)
+                meta = decode_language(raw_delivery)
+                voice = decode_voice(raw_delivery)
+                if voice and item["role"] == "assistant":
+                    item["voice_reply"] = voice
+                if meta and item["role"] == "assistant":
+                    item["reply_language"] = meta
                 quoted = item.pop("quoted_message_json", None)
                 if quoted:
                     try:
@@ -89,8 +107,10 @@ async def read_history(db_path, *, username, character_id, conversation_id,
             if result and conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_attachments'").fetchone():
                 by_id = {item["message_id"]: item for item in result}
                 placeholders = ",".join("?" for _ in by_id)
+                columns = {row[1] for row in conn.execute('PRAGMA table_info(message_attachments)')}
+                metadata_column = ',metadata_json' if 'metadata_json' in columns else ''
                 attachments = conn.execute(
-                    "SELECT message_id,type,asset_id,name FROM message_attachments "
+                    f"SELECT message_id,type,asset_id,name{metadata_column} FROM message_attachments "
                     f"WHERE conversation_id=? AND message_id IN ({placeholders}) "
                     "AND type IN ('sticker','emoji_asset','image') ORDER BY rowid",
                     [conversation_id, *by_id],
@@ -98,6 +118,14 @@ async def read_history(db_path, *, username, character_id, conversation_id,
                 for attachment in attachments:
                     data = dict(attachment)
                     mid = data.pop("message_id")
+                    raw_metadata = data.pop('metadata_json', None)
+                    if raw_metadata:
+                        try:
+                            metadata = json.loads(raw_metadata)
+                            if isinstance(metadata, dict):
+                                data['metadata'] = metadata
+                        except (ValueError, TypeError):
+                            pass
                     by_id[mid].setdefault("attachments", []).append(data)
             if result and conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='message_voice_states'").fetchone():
                 by_id = {item["message_id"]: item for item in result}

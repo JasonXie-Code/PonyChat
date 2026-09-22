@@ -99,8 +99,9 @@ class AppPreferences(context: Context) {
         /** 版本更新弹窗最后一次弹出的日期（格式：YYYY-MM-DD），用于每日最多弹一次的限流 */
         private const val KEY_UPDATE_DIALOG_LAST_DATE = "update_dialog_last_date"
 
-        const val DEFAULT_WAN_URL = "http://39.101.74.217:80"
+        const val DEFAULT_WAN_URL = "https://39.101.74.217"
         private val LEGACY_PRODUCTION_URLS = setOf(
+            "http://39.101.74.217:80", "http://39.101.74.217",
             "https://www.ponychat.org", "https://ponychat.org",
             "http://www.ponychat.org", "http://ponychat.org",
         )
@@ -653,7 +654,7 @@ class AppPreferences(context: Context) {
 
     /** 正式连接固定使用国内 IP；保留显式调试地址，淘汰旧生产域名。 */
     fun effectiveApiBase(): String {
-        if (debugMode) {
+        if (top.ponychat.webview.BuildConfig.DEBUG && debugMode) {
             val override = normalizeApiBaseUrl(activeApiBase)
             if (override.isNotBlank() && override != DEFAULT_WAN_URL && override !in LEGACY_PRODUCTION_URLS) return override
         }

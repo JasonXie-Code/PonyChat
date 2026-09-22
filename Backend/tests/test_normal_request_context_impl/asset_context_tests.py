@@ -239,7 +239,7 @@ def test_collect_message_images_reads_non_sticker_image_attachments():
     assert collect_message_images(request.messages[-1]) == [image_url]
 
 
-def test_user_sticker_message_becomes_text_semantics_not_image_request():
+def test_user_sticker_metadata_is_primary_with_auxiliary_vision():
     request = ChatRequest(
         username="tester",
         character_id="char_a",
@@ -273,13 +273,13 @@ def test_user_sticker_message_becomes_text_semantics_not_image_request():
     )
 
     content = messages[-1]["content"]
-    assert "【用户发送表情包｜文字语义转写】" in content
+    assert "【用户发送表情包｜主要语义说明】" in content
     assert "含义概括：期待地盯着对方，想让对方继续说下去" in content
     assert "贴纸原字：快说快说" in content
     assert "语义细节：紫色小马星星眼托腮，语气很期待" in content
-    assert "无需声明能力限制或素材不可访问" in content
-    for forbidden in ("图片", "看图", "图中文字", "画面参考"):
-        assert forbidden not in content
+    assert "识图只作辅助" in content
+    assert "两者冲突时优先按标签和说明回应" in content
+    assert "不要假装亲眼看过" in content
 
 
 def test_chat_request_accepts_camel_case_current_image_fields():
@@ -1230,3 +1230,17 @@ def test_image_only_sticker_is_available_to_agent_vision():
             ChatMessage(role="user", content="", message_id="image-only", attachments=[
                 {"type": kind, "url": url}])])
         assert get_last_user_image_urls(request) == [url]
+
+
+def test_id_only_stickers_join_current_image_batch_without_old_or_hidden_images():
+    for kind in ("sticker", "emoji_asset"):
+        request = ChatRequest(username="tester", character_id="char_a", mode="normal", messages=[
+            ChatMessage(role="user", content="", attachments=[{"type": kind, "asset_id": "old"}]),
+            ChatMessage(role="assistant", content="收到"),
+            ChatMessage(role="user", content="", attachments=[{"type": kind, "asset_id": "public"}]),
+            ChatMessage(role="user", content="", isHidden=True,
+                        attachments=[{"type": kind, "asset_id": "hidden"}]),
+            ChatMessage(role="user", content="你看", attachments=[{"type": kind, "user_sticker_id": "saved"}]),
+        ])
+        assert get_last_user_image_urls(request) == [
+            "/api/admin/assets/public/file", "/api/assets/stickers/saved/file"]

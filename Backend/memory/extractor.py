@@ -30,13 +30,44 @@ ALL = object()
 # 单次提取最多写入的记忆条数
 MAX_MEMORIES_PER_EXTRACT = 10
 
+# 单条记忆碎片的正文上限（中文字符数）。碎片只承载事实与关键细节，
+# 超出时按标点边界收束，避免长句被后续对话当作表达范本。
+MAX_FRAGMENT_CHARS = 40
+
+# 允许在收束时回退到的标点，按优先级从强到弱
+_FRAGMENT_TRIM_MARKS = ("。", "；", "！", "？", "…", "，", "、")
+
+
+def limit_fragment_content(content: str, limit: int = MAX_FRAGMENT_CHARS) -> str:
+    """把一条记忆碎片正文收束到 limit 字以内。
+
+    优先在标点边界收束；没有可用边界时按字数硬截。函数是提示词之外的
+    兜底，正常情况下模型已按 15~40 字的约束生成。
+    """
+    text = str(content or "").strip()
+    if len(text) <= limit:
+        return text
+    head = text[:limit]
+    best = ""
+    for mark in _FRAGMENT_TRIM_MARKS:
+        idx = head.rfind(mark)
+        if idx > 0:
+            candidate = head[:idx].rstrip()
+            # 标点边界不能把内容砍掉太多，否则宁可硬截
+            if len(candidate) >= max(1, limit // 2) and len(candidate) > len(best):
+                best = candidate
+    return best or head.rstrip()
+
 
 _EXTRACT_SYSTEM_PROMPT = """你是一个记忆提取助手。从下面的对话片段中，提取值得长期记住的信息。
 只提取明确、具体、有价值的内容，不要提取模糊或无意义的信息。
 
 输出格式：JSON 数组，每条记忆包含：
 - type: "preference"（用户偏好）/ "episode"（发生的事件）/ "relationship"（关系重要节点）/ "activity"（共同活动记录）
-- content: 简洁但具体的记忆描述（15~80字），用第一人称"我"代指角色，写成角色自己的记忆视角
+- content: 简洁但具体的记忆描述（15~40字，最多不超过40字），用第一人称"我"代指角色，写成角色自己的记忆视角
+  · 碎片只保留事实、主体和关键细节：谁、做了什么、在哪里、什么时候；删掉修饰、铺陈、情绪渲染和重复交代
+  · 内容多时拆成多条短碎片，不要把几件事压成一句长句；每条都必须能独立读懂
+  · 超过40字的写法不合格，必须压缩后再输出
 - importance: 1~10（10最重要）
 
 【多角色实名规则】：
@@ -416,6 +447,17 @@ async def do_extract(
             )
             importance = int(item.get("importance", 5))
             if not content or mem_type not in allowed_types:
+                continue
+            limited = limit_fragment_content(content)
+            if limited != content:
+                logger.info(
+                    "🧠 [MemoryExtractor] 碎片超长已收束到%d字: %s -> %s",
+                    MAX_FRAGMENT_CHARS,
+                    content[:80],
+                    limited,
+                )
+                content = limited
+            if not content:
                 continue
             if _skip_unsupported_induced_memory(mem_type, content, dialogue_text):
                 logger.info(

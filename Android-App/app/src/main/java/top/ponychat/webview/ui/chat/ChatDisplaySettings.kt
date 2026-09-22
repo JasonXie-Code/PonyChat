@@ -246,7 +246,6 @@ fun ChatDisplaySettingsScreen(
     val systemFontScale = LocalConfiguration.current.fontScale
     val effectiveScale = systemFontScale * fontSize
     val settingIconSize = 20.dp * effectiveScale
-    val settingTopBarIconSize = 22.dp * effectiveScale
     CompositionLocalProvider(
         LocalDensity provides Density(density.density, effectiveScale),
         LocalFontScale provides effectiveScale
@@ -256,8 +255,7 @@ fun ChatDisplaySettingsScreen(
             topBar = {
                 PonyTopBar(
                     title = "对话设置",
-                    onNavigateBack = onDismiss,
-                    iconSize = settingTopBarIconSize
+                    onNavigateBack = onDismiss
                 )
             }
         ) { paddingValues ->

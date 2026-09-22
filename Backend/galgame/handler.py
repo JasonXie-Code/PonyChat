@@ -704,6 +704,8 @@ async def _handle_galgame_response(
             _tp_stripped = str(_tp_val).strip("「」（）() ").strip().lower() if _tp_val is not None else ""
             if _tp_val is None or _tp_stripped in ("null", "none", "无", "暂无", "nan", ""):
                 _norm_scene["third_party_dialogue"] = ""
+        from .agent_context import seal_notes
+        seal_notes(normalized_game_data)
         normalized_raw_content = json.dumps(normalized_game_data, ensure_ascii=False)
 
         # 构造对话 HTML
@@ -742,6 +744,14 @@ async def _handle_galgame_response(
 
         async with galgame_locker.acquire(request.username, request.character_id):
             fresh_state = await load_galgame_state_async(request.username, request.character_id, game_type=game_type)
+            from .agent_context import state_guard
+            from ..chat_modules.state import is_generation_cancelled
+            guard = getattr(request, '_game_state_guard', None)
+            commit_guard = state_guard(fresh_state)
+            if (guard is not None and commit_guard != guard) or is_generation_cancelled(
+                    request.username, request.character_id, x_client_id):
+                return {'status': 'error', 'error': '存档已改变或回合已取消，请基于当前存档重试',
+                        'retry_code': 'stale_game_generation'}
             if "messages" not in fresh_state:
                 fresh_state["messages"] = []
 
@@ -840,8 +850,14 @@ async def _handle_galgame_response(
                 if actual_character_gender:
                     _save_payload["character_gender"] = actual_character_gender
             galgame_saved = await save_galgame_state_async(
-                request.username, request.character_id, _save_payload, game_type=game_type
+                request.username, request.character_id, {**_save_payload,
+                    '_agent_expected_state': commit_guard,
+                    '_agent_cancel_check': lambda: is_generation_cancelled(
+                        request.username, request.character_id, x_client_id)}, game_type=game_type
             )
+
+            if not galgame_saved:
+                return {'status': 'error', 'error': '游戏回合未保存，状态或版本已改变，请重试', 'db_saved': False}
 
             if galgame_saved:
                 try:

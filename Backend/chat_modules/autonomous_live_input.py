@@ -6,10 +6,9 @@ def install_live_input(request, history, profile, speaker, store, business):
     turn = getattr(request, '_normal_live_turn', None)
     if turn is None:
         return None
-    from .autonomous_normal import visible_messages, _source_message_times, _current_character_mouth_occupied
+    from .autonomous_normal import visible_messages, _source_message_times
     from .autonomous_contracts import user_batch
     from .autonomous_shortcuts import ShortcutContract
-    from .autonomous_speech import MOUTH_RULE
     turn.snapshot_loaded(history)
 
     async def prepare(rows):
@@ -34,16 +33,14 @@ def install_live_input(request, history, profile, speaker, store, business):
         refreshed = type(business)(request, history, shortcut, business.settings, business.candidates)
         # Retain completed tools/staged work. Rebind current intent and delivery
         # constraints only; no second Agent, planning pass or fresh memory store.
-        for field in ('history', 'shortcut', 'text', 'reminder_expected', 'death_expected', 'guidance'):
+        for field in ('history', 'shortcut', 'text', 'reminder_expected', 'death_expected',
+                      'schedule_guidance', 'lifecycle_guidance', 'handoff_guidance'):
             setattr(business, field, getattr(refreshed, field))
         request._normal_shortcut_no_auxiliary = shortcut.description or shortcut.story
         batch = user_batch(history)
         update = {'current_user_batch': batch, 'latest_user_message': batch[-1],
             'supplemental_user_messages': rows, 'source_message_times': _source_message_times(batch),
-            'description_shortcut_contract': shortcut.guidance if shortcut.description else '',
-            'first_bubble_speech_contract': MOUTH_RULE,
-            'first_bubble_mouth_occupied': _current_character_mouth_occupied(batch[-1]),
-            'business_guidance': business.guidance}
+            'description_shortcut_contract': shortcut.guidance if shortcut.description else ''}
         urls = get_last_user_image_urls(request)
         blocks = await resolve_harness_image_blocks(urls, config.DB_PATH) if urls else []
         if blocks:

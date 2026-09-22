@@ -8,6 +8,9 @@ from Backend.chat_modules.service_impl.android_normal_accept import maybe_early_
 
 
 def normal_generation_current_for_request(request, username, character_id, client_id) -> bool:
+    batch = getattr(request, '_normal_reply_batch', None)
+    if batch is not None and not batch.current(request._normal_reply_revision):
+        return False
     if (request.mode or "normal") != "normal" or request.is_summary_request:
         return True
     return is_generation_current(

@@ -39,6 +39,10 @@ async def build_galgame_messages(
     )
     _char_obj = load_character_from_db(request.username, request.character_id)
     request._galgame_char_name = (_char_obj.get("name") or "").strip() if _char_obj else ""
+    request._galgame_profile_card = '\n'.join(
+        f'{label}：{_char_obj[key]}' for key, label in (
+            ('name', '姓名'), ('profileSpecies', '物种'), ('profileGender', '性别'),
+            ('profileAge', '年龄'), ('profileIntro', '简介')) if _char_obj and _char_obj.get(key))
     game_type = "galgame_lock" if request.mode == "galgame_lock" else "galgame"
     await wait_for_pending_char_memory(request.username, request.character_id, game_type)
     state = await load_galgame_state_async(request.username, request.character_id, game_type=game_type)
@@ -50,7 +54,8 @@ async def build_galgame_messages(
 
     # 剧情记忆与状态交给单一游戏 Agent 统一读取，不再使用 context_summary 截断消息链。
 
-    db_msgs = [m for m in state.get("messages", []) if not m.get("isHidden", False)]
+    from .agent_context import visible
+    db_msgs = visible(state.get("messages", []))
     if db_msgs:
         current_user_content = None
         for rm in reversed(request.messages):
@@ -86,6 +91,8 @@ async def build_galgame_messages(
     combined_profile = char_raw_prompt.strip()
     request._galgame_char_memory = state.get("char_memory") if isinstance(state.get("char_memory"), dict) else {"entries": []}
     request._galgame_state = state
+    from .agent_context import state_guard
+    request._game_state_guard = state_guard(state)
     # 用 DB 中的 AI 轮次数判断是否首轮，避免隐藏初始消息被过滤后导致 user_count 误判
     _prior_ai_turns = getattr(request, '_galgame_ai_turns_count', None)
     is_initial = (_prior_ai_turns == 0) if (_prior_ai_turns is not None) else (len([m for m in dialogue_only if m.get("role") == "user"]) <= 1)

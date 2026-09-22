@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import top.ponychat.webview.data.api.ApiService
 import top.ponychat.webview.data.model.AgentRunStatus
+import top.ponychat.webview.data.model.ConversationActivity
 
 internal data class AgentStatusScope(
     val username: String,
@@ -28,6 +29,8 @@ internal data class AgentStatusSnapshot(
     val elapsedMs: Long,
     val agents: List<AgentRunStatus> = emptyList(),
     val elapsedSinceReceivedMs: Long = 0L,
+    val conversationActivity: ConversationActivity? = null,
+    val noticeIsError: Boolean = false,
 )
 
 /** One request loop per visible conversation; recomposition must not restart it. */
@@ -40,6 +43,8 @@ internal fun rememberAgentStatus(
     var agent by remember(scope) { mutableStateOf<AgentRunStatus?>(null) }
     var agents by remember(scope) { mutableStateOf<List<AgentRunStatus>>(emptyList()) }
     var notice by remember(scope) { mutableStateOf<String?>("正在读取运行状态…") }
+    var noticeIsError by remember(scope) { mutableStateOf(false) }
+    var activity by remember(scope) { mutableStateOf<ConversationActivity?>(null) }
     var receivedAt by remember(scope) { mutableLongStateOf(0L) }
     var now by remember(scope) { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     // Retrofit 2.11 service proxies have non-reflexive equals(). Using api as
@@ -66,10 +71,13 @@ internal fun rememberAgentStatus(
                     if (response.isSuccessful && body?.success == true) {
                         agent = body.agent
                         agents = body.agents.ifEmpty { listOfNotNull(body.agent) }
+                        activity = body.conversationActivity
                         receivedAt = SystemClock.elapsedRealtime()
                         now = receivedAt
                         notice = null
+                        noticeIsError = false
                     } else {
+                        noticeIsError = true
                         notice = when (response.code()) {
                             401 -> "登录已失效，请重新登录"
                             404 -> "服务器尚未支持 Agent 状态展示"
@@ -77,10 +85,12 @@ internal fun rememberAgentStatus(
                         }
                     }
                 } catch (_: TimeoutCancellationException) {
+                    noticeIsError = true
                     notice = "状态读取超时，正在重试"
                 } catch (e: CancellationException) {
                     throw e
                 } catch (_: Exception) {
+                    noticeIsError = true
                     notice = "暂时无法连接服务器，正在重试"
                 }
                 delay(if (agents.any { it.status == "running" }) 1000 else 3000)
@@ -90,5 +100,5 @@ internal fun rememberAgentStatus(
     val running = agent?.status == "running" && notice == null
     val elapsed = (agent?.elapsedMs ?: 0L) + if (running) (now - receivedAt).coerceAtLeast(0L) else 0L
     return AgentStatusSnapshot(agent, notice, elapsed, agents,
-        if (notice == null) (now - receivedAt).coerceAtLeast(0L) else 0L)
+        if (notice == null) (now - receivedAt).coerceAtLeast(0L) else 0L, activity, noticeIsError)
 }

@@ -604,13 +604,13 @@ def test_dead_main_character_at_uses_spirit_reply_policy():
 
 
 def test_dead_spirit_reply_format_is_prompt_driven_not_sanitized():
-    from Backend.chat_modules.normal_nonstream import NORMAL_DEAD_SPIRIT_STAGE3_GUARD
+    from Backend.chat_modules.normal_nonstream import lifecycle_spirit_rules
 
-    assert "用户本轮显式@" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
-    assert "灵魂或残响回应" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
-    assert "不复活，不改变dead状态" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
-    assert "主动任务" in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
-    assert "合格示例" not in NORMAL_DEAD_SPIRIT_STAGE3_GUARD
+    assert "用户本轮显式@" in lifecycle_spirit_rules
+    assert "灵魂或残响回应" in lifecycle_spirit_rules
+    assert "不复活，不改变dead状态" in lifecycle_spirit_rules
+    assert "主动任务" in lifecycle_spirit_rules
+    assert "合格示例" not in lifecycle_spirit_rules
 
 
 def test_quoted_assistant_message_selects_reply_character_when_no_at():
@@ -743,7 +743,7 @@ def test_user_speaker_intent_direct_name_selects_recent_character(monkeypatch):
     assert '"reply_character_id": "char_c"' in prompt
     assert '"name": "云宝"' in prompt
     assert "我想听云宝评价一下" in prompt
-    assert "最近 8 条可见角色回复" in prompt
+    assert "最近8条可见角色回复" in prompt
     assert captured["debug"]["stage"] == "NORMAL_STEP_1_SPEAKER_INTENT_REQUEST"
 
 
@@ -790,20 +790,18 @@ def test_user_speaker_intent_named_opinion_prompt_prioritizes_latest_user_text(m
     )
 
     assert ids == ["char_b"]
-    assert "用户最新一句（最高优先级" in captured["prompt"]
+    assert "【用户最新一句】" in captured["prompt"]
     assert "我想听碧琪评价一下我和柔柔的观点" in captured["prompt"]
-    assert "只能选碧琪，不能选紫悦" in captured["prompt"]
+    assert "只选该候选" in captured["prompt"]
     assert "我和柔柔" in captured["prompt"]
-    assert "柔柔是被评价对象" in captured["prompt"]
-    assert "句首/句尾" in captured["prompt"]
+    assert "通常是被谈论或被判断对象" in captured["prompt"]
+    assert "句首或句尾" in captured["prompt"]
     assert "清晰简称/前缀" in captured["prompt"]
-    assert "你来说说你的看法吧碧琪" in captured["prompt"]
-    assert "玉琪派" in captured["prompt"]
-    assert "多个最近 8 轮可见角色" in captured["prompt"]
+    assert "候选仅来自最近8条可见角色回复及主角色" in captured["prompt"]
+    assert "输出前自检" not in captured["prompt"]
     assert "共同事实" in captured["prompt"]
-    assert "你们几个姐妹平时都是分开睡的吧" in captured["prompt"]
+    assert "共同状态、习惯或安排" in captured["prompt"]
     assert "不要 parallel" in captured["prompt"]
-    assert "你觉得玉琪喜欢我吗" in captured["prompt"]
     assert "被判断对象" in captured["prompt"]
 
 
@@ -921,9 +919,9 @@ def test_user_speaker_intent_group_summon_can_select_recent_visible_roles(monkey
     )
 
     assert ids == ["char_a", "char_b", "char_c"]
-    assert "你们都+分别评价" in captured["prompt"]
-    assert "不能因为“我和柔柔”" in captured["prompt"]
-    assert "不要漏掉 role=main" in captured["prompt"]
+    assert "全员指令包含候选主角色" in captured["prompt"]
+    assert "某候选同时是被评价对象，也不因此排除" in captured["prompt"]
+    assert "按自然展示顺序列出对应候选" in captured["prompt"]
 
 
 def test_user_speaker_intent_group_state_question_is_not_parallel(monkeypatch):
@@ -969,8 +967,8 @@ def test_user_speaker_intent_group_state_question_is_not_parallel(monkeypatch):
 
     assert ids == ["char_b"]
     assert "共同事实" in captured["prompt"]
-    assert "最多 1 个 reply_character_id" in captured["prompt"]
-    assert "你们几个姐妹平时都是分开睡的吧" in captured["prompt"]
+    assert "最多返回一个ID" in captured["prompt"]
+    assert "共同状态、习惯或安排" in captured["prompt"]
 
 
 def test_user_speaker_intent_opinion_about_named_role_stays_with_main(monkeypatch):
@@ -1017,7 +1015,7 @@ def test_user_speaker_intent_opinion_about_named_role_stays_with_main(monkeypatc
     assert ids == []
     assert "你觉得玉琪喜欢我吗" in captured["prompt"]
     assert "被判断对象" in captured["prompt"]
-    assert "没有直接呼叫 X 时输出 none" in captured["prompt"]
+    assert "没有直接呼叫或明确让X回答时，mode=\"none\"" in captured["prompt"]
 
 
 def test_multi_speaker_error_event_uses_string_message():

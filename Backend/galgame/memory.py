@@ -732,6 +732,8 @@ async def _run_char_memory_update_locked(username: str, character_id: str, game_
         char_name = (_char_obj.get("name") or "").strip() if _char_obj else ""
 
         state = await load_galgame_state_async(username, character_id, game_type=game_type)
+        from .agent_context import state_guard
+        guard = state_guard(state)
         msgs = [m for m in (state.get("messages") or []) if not m.get("isHidden") and not m.get("is_hidden")]
         if len(msgs) < 1:
             return
@@ -754,6 +756,9 @@ async def _run_char_memory_update_locked(username: str, character_id: str, game_
 
         prev_cm = state.get("char_memory") if isinstance(state.get("char_memory"), dict) else {"entries": []}
         prev_entries = prev_cm.get("entries") if isinstance(prev_cm.get("entries"), list) else []
+        source_reply_id = last_ai.get('message_id')
+        if source_reply_id and any(e.get('source_reply_id') == source_reply_id for e in prev_entries if isinstance(e, dict)):
+            return
 
         director_note = ""
         rel = str(state.get("relationship_stage") or "")
@@ -843,6 +848,7 @@ async def _run_char_memory_update_locked(username: str, character_id: str, game_
         new_obj["relationship"] = str(rel or "")[:100]
         new_obj["emotional_note"] = str(mood or "")[:60]
         new_obj.pop("open_threads", None)
+        new_obj['source_reply_id'] = source_reply_id
 
         entries = [e for e in prev_entries if isinstance(e, dict)]
         entries.append(new_obj)
@@ -866,7 +872,8 @@ async def _run_char_memory_update_locked(username: str, character_id: str, game_
         else:
             state["char_memory"] = {"entries": entries, "updated_at": int(time.time() * 1000)}
 
-        ok = await save_galgame_state_async(username, character_id, state, game_type=game_type)
+        ok = await save_galgame_state_async(username, character_id,
+            {**state, '_agent_expected_state': guard}, game_type=game_type)
         if ok:
             logger.info(
                 "🧠 [CharMemory] 已写入 %s 条 | user=%s char=%s",

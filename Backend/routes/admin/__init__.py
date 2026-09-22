@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from . import stats, users, conversations, models, system, characters as admin_characters, web_chars_routes, assets_routes, normal_policy, llm_logs
+from . import stats, users, conversations, models, system, characters as admin_characters, web_chars_routes, assets_routes, llm_logs
 
 router = APIRouter()
 
@@ -38,7 +38,6 @@ router.include_router(system.router)
 router.include_router(admin_characters.router)
 router.include_router(web_chars_routes.router)
 router.include_router(assets_routes.router)
-router.include_router(normal_policy.router)
 router.include_router(llm_logs.router)
 
 # 管理后台 HTML 由官网 Vue（/admin）提供；保留 API 路由

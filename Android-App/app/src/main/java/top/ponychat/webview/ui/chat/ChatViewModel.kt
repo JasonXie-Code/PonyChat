@@ -201,6 +201,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     internal var lastNormalGenerationStartSeq: Int? = null
     internal var replyRecoveryPollJob: Job? = null
     internal var normalAcceptedRecoveryJob: Job? = null
+    internal var normalTransportRetryJob: Job? = null
     internal val normalGenerationUserIds = mutableListOf<String>()
     internal val normalUploadingUserMessageIds = mutableSetOf<String>()
     internal val unconfirmedNormalUserKeys = mutableSetOf<String>()

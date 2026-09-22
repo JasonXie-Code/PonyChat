@@ -473,19 +473,9 @@ fun MessageBubble(
                 val stickerUrl = att.url ?: att.assetId?.let { "/api/admin/assets/$it/file" }
                     ?: att.userStickerId?.let { "/api/assets/stickers/$it/file" }
                 if (!stickerUrl.isNullOrBlank()) {
-                    val context = LocalContext.current
-                    var displayUrl by remember(stickerUrl) {
-                        mutableStateOf(localUrlForRemoteChatImage(context, stickerUrl) ?: stickerUrl)
-                    }
-                    LaunchedEffect(stickerUrl) {
-                        if (att.type == "image" && att.metadata?.get("source") == "web_search") {
-                            top.ponychat.webview.data.repo.WebImageReceiver.receive(
-                                top.ponychat.webview.data.prefs.AppPreferences(context), att)
-                            displayUrl = localUrlForRemoteChatImage(context, stickerUrl) ?: stickerUrl
-                        }
-                    }
+                    ReceiveChatImageEffect(att)
                     ChatMediaThumb(
-                        model = displayUrl,
+                        model = stickerUrl,
                         // Resolve the original reference at click time: receipt can
                         // finish while the thumbnail still holds its previous URL.
                         previewUrl = stickerUrl,

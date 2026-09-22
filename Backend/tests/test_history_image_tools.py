@@ -6,6 +6,7 @@ from io import BytesIO
 from pathlib import Path
 import sqlite3
 import sys
+from types import SimpleNamespace
 import types
 
 import pytest
@@ -156,6 +157,62 @@ def test_read_checks_confirmed_image_count_and_current_visibility(tools, monkeyp
     with sqlite3.connect(tools.db_path) as conn:
         conn.execute("UPDATE messages SET is_hidden=1 WHERE message_id='old'")
     assert asyncio.run(tools.read_image({'message_id': 'old'}))['status'] == 'not_found'
+
+
+@pytest.mark.parametrize("role", ["user", "assistant"])
+def test_explicit_repeat_can_stage_the_same_prior_image(tools, monkeypatch, role):
+    with sqlite3.connect(tools.db_path) as conn:
+        conn.execute("UPDATE messages SET role=? WHERE message_id='old'", (role,))
+    async def phone(username, request):
+        if request['action'] == 'list':
+            return {'status': 'ok', 'images': [{'message_id': 'old', 'image_count': 1}], 'has_more': False}
+        assert request == {'action': 'read', 'character_id': 'pony', 'conversation_id': 'ours',
+                           'message_id': 'old', 'image_index': 1}
+        return {'image': 'data:image/png;base64,' + image_data()}
+    monkeypatch.setattr(module, 'request_from_phone', phone)
+    asyncio.run(tools.list_images({}))
+    staged = asyncio.run(tools.resend_image({'message_id': 'old', 'after_bubble_index': 0}))
+    assert staged['staged'] is True
+    request = SimpleNamespace()
+    tools.apply_to_request(request, 1)
+    attachment = request._assistant_asset_attachments[0]
+    assert attachment['metadata']['source'] == 'history_repeat'
+    assert attachment['metadata']['source_message_id'] == 'old'
+
+    assert attachment['metadata']['source_role'] == role
+
+
+def test_repeat_tool_requires_catalog_confirmation(tools):
+    registered = {}
+    tools.register(lambda name, description, schema, callback: registered.update({name: callback}))
+    assert 'resend_history_image' in registered
+    with pytest.raises(ValueError, match='目录|定位|图片'):
+        asyncio.run(tools.resend_image({'message_id': 'old'}))
+
+
+@pytest.mark.parametrize('role', ['user', 'assistant'])
+@pytest.mark.parametrize('message_id', ['hidden', 'deleted', 'foreign', 'wrong_character', 'hidden_conv'])
+def test_repeat_rejects_inaccessible_images(tools, message_id, role):
+    with sqlite3.connect(tools.db_path) as conn:
+        conn.execute("UPDATE messages SET role=?", (role,))
+    with pytest.raises(ValueError, match='只能重发当前账号'):
+        asyncio.run(tools.resend_image({'message_id': message_id}))
+    assert tools.repeated == []
+
+
+@pytest.mark.parametrize('original', [None, 'data:image/png;base64,bm90IGFuIGltYWdl'])
+def test_repeat_unavailable_or_invalid_original_never_stages(tools, monkeypatch, original):
+    with sqlite3.connect(tools.db_path) as conn:
+        conn.execute("UPDATE messages SET role='assistant' WHERE message_id='old'")
+    async def phone(username, request):
+        if request['action'] == 'list':
+            return {'status': 'ok', 'images': [{'message_id': 'old', 'image_count': 1}], 'has_more': False}
+        return {'image': original}
+    monkeypatch.setattr(module, 'request_from_phone', phone)
+    asyncio.run(tools.list_images({}))
+    result = asyncio.run(tools.resend_image({'message_id': 'old'}))
+    assert result['status'] == 'unavailable'
+    assert not result.get('staged') and tools.repeated == []
 
 
 def test_transfer_authenticates_socket_and_account_and_cleans_up(monkeypatch):

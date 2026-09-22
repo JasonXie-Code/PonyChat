@@ -261,7 +261,8 @@ async def normal_live_response(request, client_id, auth, model, *, use_json, han
     from ..background_jobs import create_tracked_task
     # An addressed turn may wait behind the current speaker for a while. Own
     # that wait and its later dispatch independently of the HTTP connection.
-    intake = create_tracked_task(_normal_authenticated_intake(
+    from .live_reply_batch import batch_intake
+    intake = create_tracked_task(batch_intake(
         request, client_id, auth, model, use_json=use_json, handler=handler),
         job_id='normal_intake_' + uuid.uuid4().hex, kind='normal_input')
     return await asyncio.shield(intake)

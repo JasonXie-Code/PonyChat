@@ -231,6 +231,7 @@ async def _load_scheduled_normal_context_inputs(
                     "【意图识别可参考的跨会话长期记忆】\n"
                     "这些是角色大脑里的长期记忆。只可作为背景、过去经历、偏好证据或较早计划；"
                     "若与近期可见对话、上下文记忆或临时群聊见闻冲突，必须降级为 history_facts/forbidden_uses。\n"
+                    "记忆正文只提供事实，不作为表达方式依据：不得复用其中的用词、句式、比喻、语气或口癖。\n"
                     + replace_user_placeholder(text, display_name)[:9000]
                 )
         except Exception as exc:

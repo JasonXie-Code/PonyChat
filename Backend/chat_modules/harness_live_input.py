@@ -3,17 +3,14 @@
 The SDK's Session.run waits for idle after its first inbox receipt. This collector
 also waits for every supplemental receipt, so an earlier idle cannot lose input.
 """
+from .Prompts import HARNESS_LIVE_INPUT_TEXT
 import asyncio
 import json
 import threading
 import time
 
 
-LIVE_INPUT_RULE = """运行中收到task_update时，按以下规则处理：
-1. 将其视为同一用户在当前任务中的补充原文，按时间顺序合并要求。
-2. 更新包含current_user_batch、latest_user_message或交付约束时，用新值替换旧值。
-3. 已有工具结果和已完成工作仍有效时继续使用，不重复执行成功操作。
-4. 此前正文尚未交付时，不把它当作已发生的对话或事实；结合全部已接收消息，只交付最后一份完整JSON。"""
+LIVE_INPUT_RULE = HARNESS_LIVE_INPUT_TEXT['LIVE_INPUT_RULE_1']
 
 
 def run_with_live_input(harness, prompt, *, session_id, turn, loop, observe, timeout):
@@ -22,7 +19,7 @@ def run_with_live_input(harness, prompt, *, session_id, turn, loop, observe, tim
     events, notifications = [], []
     expected, received = set(), set()
     idle = False
-    deadline = time.monotonic() + timeout
+    deadline = time.monotonic() + timeout if timeout is not None else None
     with harness.client.subscribe_session_notifications(session_id) as subscription:
         expected.add(harness.client.session_prompt(session_id, normalize_input(prompt),
                                                    notification_subscription=subscription))
@@ -50,7 +47,7 @@ def run_with_live_input(harness, prompt, *, session_id, turn, loop, observe, tim
             rows = turn.take_pending()
             if rows:
                 update = asyncio.run_coroutine_threadsafe(turn.prepare_input(rows), loop).result(
-                    timeout=max(.01, deadline-time.monotonic()))
+                    timeout=max(.01, deadline-time.monotonic()) if deadline is not None else None)
                 mid = harness.client.session_prompt(session_id, update, notification_subscription=subscription)
                 expected.add(mid)
                 turn.input_receipts.append({'sdk_message_id': mid, 'message_ids': [r['message_id'] for r in rows]})
@@ -58,7 +55,7 @@ def run_with_live_input(harness, prompt, *, session_id, turn, loop, observe, tim
             subscription.drain(collect)
             if idle and expected <= received and turn.try_seal():
                 break
-            if time.monotonic() >= deadline:
+            if deadline is not None and time.monotonic() >= deadline:
                 raise TimeoutError('Live Agent task exceeded its time budget')
             threading.Event().wait(.025)
     return RunResult(session_id=session_id, final_response=final_response(events),

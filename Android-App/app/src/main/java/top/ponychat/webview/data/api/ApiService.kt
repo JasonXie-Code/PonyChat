@@ -8,6 +8,9 @@ import top.ponychat.webview.data.model.*
 
 interface ApiService {
 
+    @POST("api/derpibooru/search")
+    suspend fun searchBooru(@Body request: BooruSearchRequest): Response<BooruSearchResponse>
+
     @GET("api/agent/status")
     suspend fun getAgentStatus(
         @Query("character_id") characterId: String,

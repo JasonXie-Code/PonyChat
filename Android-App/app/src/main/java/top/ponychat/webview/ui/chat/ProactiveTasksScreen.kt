@@ -46,6 +46,7 @@ import top.ponychat.webview.data.model.ProactiveTaskRequest
 import top.ponychat.webview.data.prefs.AppPreferences
 import top.ponychat.webview.ui.character.CharacterAvatar
 import top.ponychat.webview.ui.common.PonyTopBar
+import top.ponychat.webview.ui.common.PonyTopBarBackButton
 import top.ponychat.webview.ui.common.focusAwareBringIntoView
 import top.ponychat.webview.ui.theme.Primary
 import top.ponychat.webview.ui.theme.PrimaryLight
@@ -172,9 +173,7 @@ fun ProactiveTasksScreen(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             PonyTopBar {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                }
+                PonyTopBarBackButton(onClick = onNavigateBack)
                 Spacer(Modifier.width(4.dp))
                 Row(
                     modifier = Modifier.weight(1f),

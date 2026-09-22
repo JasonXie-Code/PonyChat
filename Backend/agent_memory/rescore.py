@@ -30,7 +30,7 @@ def snapshot(conn, username, entry_id):
         # Derived references need their own full provenance review, not a guessed score.
         if ref.startswith('memory:'):
             return None, 'derived_source_requires_review'
-        raw = conn.execute(evidence.RAW_SELECT + ' AND COALESCE(NULLIF(m.message_id,\'\'),m.id)=?',
+        raw = conn.execute(evidence.RAW_SELECT + evidence.RAW_REF_FILTER,
                            (username, row['character_id'], ref)).fetchone()
         if not raw:
             return None, 'source_unavailable'

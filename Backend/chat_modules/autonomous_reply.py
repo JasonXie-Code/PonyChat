@@ -1,5 +1,6 @@
 """Validate the Agent's normal-chat envelope and render through legacy parts."""
 from __future__ import annotations
+from .Prompts import AUTONOMOUS_REPLY_TEXT
 
 from .Prompts import OUTPUT_CONTRACT
 
@@ -15,32 +16,32 @@ from .autonomous_wire_format import normalize_used_facts
 
 def reply_envelope(raw: str) -> tuple[str, int]:
     if not raw or len(raw) > 16000 or re.search(r"<｜|<\||<(?:think|analysis|tool_call)\b", raw, re.I):
-        raise ValueError("最终回复为空、过长或含内部标记")
+        raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_1'])
     try:
         data = json.loads(raw)
     except (ValueError, TypeError) as exc:
-        raise ValueError("最终回复必须是包含bubble_count和bubbles的JSON object") from exc
+        raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_5']) from exc
     if not isinstance(data, dict):
-        raise ValueError("最终回复必须是JSON object")
+        raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_2'])
     bubbles, count = data.get("bubbles"), data.get("bubble_count")
     if type(count) is not int or not 0 <= count <= 6 or not isinstance(bubbles, list) or len(bubbles) != count:
-        raise ValueError("bubble_count必须是0到6的整数并与bubbles长度一致")
+        raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_3'])
     if count == 0 and not (data.get('delivery_mode') == 'assets_only' or
                           isinstance(data.get('no_reply_reason'), str) and data['no_reply_reason'].strip()):
-        raise ValueError('零文字气泡必须说明no_reply_reason或delivery_mode=assets_only')
+        raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_4'])
     clean = []
     for pos, bubble in enumerate(bubbles, 1):
         if not isinstance(bubble, dict) or type(bubble.get("index")) is not int or bubble["index"] != pos:
-            raise ValueError("bubble.index必须从1开始连续编号")
+            raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_6'])
         if bubble.get("type") != "text" or not isinstance(bubble.get("purpose"), str) or not bubble["purpose"].strip():
-            raise ValueError("bubble需要type=text和非空purpose")
+            raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_7'])
         parts = bubble.get("parts")
         if not isinstance(parts, list) or not 1 <= len(parts) <= 32:
-            raise ValueError("bubble.parts必须是非空数组，最多32个片段")
+            raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_8'])
         normalized = []
         for part in parts:
             if not isinstance(part, dict) or not isinstance(part.get("text"), str):
-                raise ValueError("每个part需要kind和字符串text")
+                raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_11'])
             # Validate the model's original boundaries before cleanup can alter them.
             _, _, error = _normal_stage3_render_parts_bubble({"parts": [part]}, pos)
             if error:
@@ -58,17 +59,17 @@ def reply_envelope(raw: str) -> tuple[str, int]:
     if observation is not None:
         if not isinstance(observation, dict) or set(observation) - {
                 'image_summary', 'visible_text', 'identified_entities', 'uncertainty', 'error'}:
-            raise ValueError('image_observation字段不合法')
+            raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_9'])
         strings = {}
         for key in ('image_summary', 'visible_text', 'uncertainty', 'error'):
             value = observation.get(key, '')
             if not isinstance(value, str):
-                raise ValueError('image_observation文本字段必须是字符串')
+                raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_12'])
             strings[key] = value.strip()[:4000]
         entities = observation.get('identified_entities', [])
         if not isinstance(entities, list) or len(entities) > 30 or any(
                 not isinstance(value, str) or not value.strip() for value in entities):
-            raise ValueError('image_observation.identified_entities必须是字符串数组')
+            raise ValueError(AUTONOMOUS_REPLY_TEXT['reply_envelope_10'])
         extra['image_observation'] = {**strings, 'identified_entities': [v.strip()[:200] for v in entities]}
     return json.dumps({"bubble_count": count, "bubbles": clean, "used_facts": facts[:32], **extra}, ensure_ascii=False), count
 

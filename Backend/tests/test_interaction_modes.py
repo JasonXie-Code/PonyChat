@@ -10,11 +10,12 @@ def test_world_manuals_are_lazy_exclusive_and_do_not_set_relationship():
     raw = payload(relationship_state={'relationship_stage': 'new_contact'}, current_scene={
         'fields': {'interaction_mode': {'value': 'virtual_roleplay'}}})
     p, system = s.transform(raw, normal.SYSTEM)
-    assert modes.INSTANT_MESSAGING not in system and modes.VIRTUAL_ROLEPLAY not in system
+    assert modes.instant_messaging not in system and modes.virtual_roleplay not in system
     assert json.loads(p)['interaction_context']['previous_mode'] == 'virtual_roleplay'
     for name in modes.MODES:
         result = asyncio.run(s.load({'name': name}))
-        assert result['instructions'].startswith(modes.CATALOG[name][1])
+        assert result['instructions'] == s.skill_instructions(name)
+        assert modes.CATALOG[name][1] in result['instructions']
         assert s.loaded.intersection(modes.MODES) == {name}
     p, _ = s.transform(raw, normal.SYSTEM)
     assert json.loads(p)['relationship_state'] == {'relationship_stage': 'new_contact'}
@@ -33,7 +34,7 @@ def test_missing_mode_requires_repair_and_selected_mode_survives_toolless_retry(
 
 
 def test_world_selection_is_attached_to_scene_transaction_not_visible_reply():
-    result = {'envelope': 'visible', 'scene_patch': {'reset': False, 'changes': {}}}
+    result = {'envelope': 'visible', 'input_message_ids': ['u1'], 'scene_patch': {'reset': False, 'changes': {}}}
     modes.attach_mode(result, 'virtual_roleplay')
     assert result['envelope'] == 'visible'
     assert result['scene_patch']['changes']['interaction_mode'] == {
@@ -82,5 +83,5 @@ def test_virtual_memory_tool_is_scoped_and_real_memory_is_unchanged():
     asyncio.run(s.runner(base)(payload(), {}, {'stage_memory': tool}, system_prompt=normal.SYSTEM))
     assert seen[0]['kind'] == 'current_scene'
     assert seen[0]['category'] == 'current_scene'
-    assert seen[0]['content'].startswith('【虚拟扮演】')
+    assert seen[0]['content'] == value['content']
     assert seen[1] == value and value['kind'] == 'fact'

@@ -29,18 +29,19 @@ fun ChatScreen(
     onNavigateToHistory: () -> Unit = {},
     onThemeChanged: (Boolean) -> Unit = {}
 ) {
+    val navigate = rememberChatNavigation()
     ChatScreenContent(
         viewModel = viewModel,
         character = character,
         allCharacters = allCharacters,
         prefs = prefs,
-        onNavigateBack = onNavigateBack,
-        onNavigateToEditCharacter = onNavigateToEditCharacter,
-        onNavigateToCharacterProfile = onNavigateToCharacterProfile,
+        onNavigateBack = { navigate(onNavigateBack) },
+        onNavigateToEditCharacter = { navigate(onNavigateToEditCharacter) },
+        onNavigateToCharacterProfile = { target -> navigate { onNavigateToCharacterProfile(target) } },
         characterHome = characterHome,
-        onNavigateToSettings = onNavigateToSettings,
-        onNavigateToProactiveTasks = onNavigateToProactiveTasks,
-        onNavigateToHistory = onNavigateToHistory,
+        onNavigateToSettings = { navigate(onNavigateToSettings) },
+        onNavigateToProactiveTasks = { navigate(onNavigateToProactiveTasks) },
+        onNavigateToHistory = { navigate(onNavigateToHistory) },
         onThemeChanged = onThemeChanged
     )
 }

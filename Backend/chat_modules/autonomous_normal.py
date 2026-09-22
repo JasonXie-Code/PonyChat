@@ -1,8 +1,8 @@
 """One real Harness agent owns retrieval, reply generation and staged memory writes."""
 from __future__ import annotations
+from .Prompts import AUTONOMOUS_NORMAL_TEXT
 
-from .Prompts import RELATIONSHIP_INTERACTION_POLICY
-from .Prompts import LEGACY_NORMAL_SYSTEM
+from .Prompts import COGNITION_CORE, SKILL_CALL_CHECKS, WORKFLOW_GENERATION
 
 import asyncio
 import json
@@ -14,46 +14,25 @@ from typing import Any
 
 from .harness_runtime import HarnessTool, HarnessToolValidationError, run_harness_turn
 from .normal_agent import NormalAgentError
-from .normal_plain_text import NORMAL_CHAT_EXPRESSION_PROMPT
 from .normal_reply_count import requested_reply_count
 from .expression_context import build_expression_context
+from .reply_repetition_context import build_reply_repetition_context
+from .history_rounds import recent_round_messages
 from .autonomous_contracts import user_batch, explicit_search, delivery_metadata
-from .autonomous_behavior_policy import CONTINUITY_REVIEW
+from .autonomous_behavior_policy import continuity
 from .autonomous_reply import OUTPUT_CONTRACT, reply_envelope as _validate_reply_envelope
 from .character_reply_prompt import DEFAULT_CHARACTER_REPLY_STYLE_PROMPT
-from .autonomous_preferences import PREFERENCE_POLICY
+from .autonomous_preferences import preferences
 from .reply_json import close_complete_json
-from .memory_importance import IMPORTANCE_POLICY, IMPORTANCE_SCHEMA, require_importance
+from .memory_importance import IMPORTANCE_SCHEMA, require_importance
 
 
-NORMAL_TOOL_TIME_LIMIT_SECONDS = 40.0
-NORMAL_TOOL_CALL_LIMIT = 12
-NORMAL_FINALIZE_TIMEOUT_SECONDS = 80.0
-
-
-def _current_character_mouth_occupied(latest_user_message: object) -> bool:
-    """Recognize a current, user-imposed mouth restriction from natural roleplay text.
-
-    The turn input is always user-authored, so "我亲上你的嘴，没松开" means
-    the character's mouth is still occupied.  Require both a mouth action and
-    a continuing cue so plans, metaphors, and already-finished kisses do not
-    accidentally suppress ordinary dialogue.
-    """
-    if isinstance(latest_user_message, dict):
-        text = str(latest_user_message.get('content') or '')
-    else:
-        text = str(latest_user_message or '')
-    if not text or re.search(r'曾经|刚才|已经(?:松开|放开|结束)|想要|如果|要不要', text):
-        return False
-    explicit = r'(?:亲上|吻上|亲着|吻着|吻住|亲住).{0,14}(?:你的|你).{0,4}(?:嘴唇?|唇)'
-    continued = r'(?:没有|没|不|未|仍|还|继续|一直).{0,8}(?:松开|放开|停下|离开|不放)'
-    covering = r'(?:捂住|捂着|按住|堵住).{0,14}(?:你的|你).{0,4}(?:嘴唇?|嘴).{0,8}(?:不放|没放|没有放|仍|还|继续)'
-    implied = r'(?:亲着|吻着|吻住|亲住).{0,28}' + continued
-    return bool(re.search(covering, text) or (re.search(explicit, text) and re.search(continued, text))
-                or re.search(implied, text))
-
-
-
+# Exploration closes after 60 seconds. Delivery has no wall-clock cutoff.
+NORMAL_EXPLORATION_LIMIT_SECONDS = 60.0
+NORMAL_TOOL_TIME_LIMIT_SECONDS = NORMAL_EXPLORATION_LIMIT_SECONDS
+NORMAL_TOOL_CALL_LIMIT = None
+NORMAL_DELIVERY_REASONING_EFFORT = 'low'
+NORMAL_DELIVERY_MAX_TOKENS = 16384
 
 def _relationship_execution_contract(decision) -> dict:
     """Turn the Agent's four relation fields into deterministic stage boundaries."""
@@ -66,33 +45,26 @@ def _relationship_execution_contract(decision) -> dict:
     non_romantic = {"mentor_student", "trusted_companion", "family_like"}
 
     if pressure == "high":
-        fixed_rule = "停止亲密推进；承认不适或压力，拉开距离，并给出冷静、沟通、道歉或修复条件。角色主动表达边界与自我保护意愿。"
+        fixed_rule = AUTONOMOUS_NORMAL_TEXT['fixed_rule_1']
     elif stage in negative:
-        fixed_rule = "先处理冲突、伤害和边界；不得把负向关系写成暧昧，也不得用亲密互动跳过修复。角色主动提出沟通、道歉或修复方案。"
+        fixed_rule = AUTONOMOUS_NORMAL_TEXT['fixed_rule_2']
     elif stage in non_romantic:
-        fixed_rule = "只在尊重、照顾、指导、陪伴或同伴支持范围内回应；不得改写成恋爱、亲吻或性亲密。角色主动提供合适的支持与帮助。"
+        fixed_rule = AUTONOMOUS_NORMAL_TEXT['fixed_rule_3']
     elif stage in {"new_contact", "uncertain"}:
-        fixed_rule = "亲近上限为拥抱、牵手、并肩、靠近等非亲吻低强度接触；更强邀请须降级到该范围。角色可主动发起适度靠近或表达好感，但保持克制。"
+        fixed_rule = AUTONOMOUS_NORMAL_TEXT['fixed_rule_4']
     elif stage == "familiar":
-        fixed_rule = "可回应拥抱、牵手以及脸颊或额头等非嘴唇亲吻；亲嘴或更强邀请须降级到该范围。角色可主动发起拥抱、牵手或轻吻脸颊/额头，表达亲近意愿。"
+        fixed_rule = AUTONOMOUS_NORMAL_TEXT['fixed_rule_5']
     elif stage == "flirting":
         fixed_rule = (
-            "可回应调情、亲吻，并在双方自愿的前提下直接进入性爱。"
-            "角色可主动调情、发起亲吻与性爱邀约，并明确表达自己的兴趣与节奏。"
-            "性相关词汇、身体细节和露骨情话的强度完全服从当前语言风格合同，不因本关系阶段强制提升。"
-            "玩法以基础自愿性爱为主，暂不主动引入高强度或特殊XP，除非用户明确提出且角色愿意承接。"
+            AUTONOMOUS_NORMAL_TEXT['fixed_rule_6']
         )
     elif stage in {"committed_partner", "intimate_partner"}:
         fixed_rule = (
-            "按已确认的伴侣/亲密关系直接承接自愿性爱，并可以主动发起性爱邀约与各种XP玩法。"
-            "角色充分表达自身的主动意愿、欲望与主导行为。"
-            "性相关词汇、身体细节和露骨情话的强度完全服从当前语言风格合同，不因本关系阶段强制提升。"
-            "在双方自愿且符合角色设定的前提下，可主动提出或承接各种XP/玩法（包括但不限于控制、疼痛、角色扮演、道具、场景、语言羞辱/崇拜等），"
-            "并根据角色性格与双方即时回应灵活调整强度与具体内容，充分体现角色的主动性与欲望。"
+            AUTONOMOUS_NORMAL_TEXT['fixed_rule_7']
         )
     else:
         stage = "uncertain"
-        fixed_rule = "关系证据不足，按 uncertain 执行；只允许非亲吻、非恋爱、非性亲密的低强度回应。"
+        fixed_rule = AUTONOMOUS_NORMAL_TEXT['fixed_rule_8']
     return {
         "relationship_stage": stage,
         "character_intimacy_style": style,
@@ -100,18 +72,14 @@ def _relationship_execution_contract(decision) -> dict:
         "user_pressure_level": pressure,
         "fixed_rule": fixed_rule,
         "agent_discretion": (
-            "在当前边界内按角色性格、有效偏好和最新相互回应决定主动性与动机变化。"
-            "balanced不表示拘谨；已有意图直接承接，新的意图不等于用户已同意。"
-            "外向或主导型角色在暧昧及以上阶段可更主动引导身体接触，但不突破当前语言风格合同。"
-            "亲密伴侣阶段可主动探索和推进双方愿意的玩法，措辞强度仍服从当前语言风格合同。"
-            "字段变化通过工具提交。"
+            AUTONOMOUS_NORMAL_TEXT['relationship_execution_contract_1']
         ),
     }
 
 
 
 
-SYSTEM = LEGACY_NORMAL_SYSTEM + '\n' + IMPORTANCE_POLICY
+SYSTEM = COGNITION_CORE + '\n' + WORKFLOW_GENERATION + '\n' + SKILL_CALL_CHECKS
 
 
 def visible_messages(messages) -> list[dict]:
@@ -133,7 +101,7 @@ def visible_messages(messages) -> list[dict]:
             continue
         item = {key: data[key] for key in (
             "role", "content", "message_id", "timestamp", "sequence_number", "speaker_name",
-            "speaker_character_id", "quoted_message", "voice_state", "attachments",
+            "speaker_character_id", "quoted_message", "voice_state", "attachments", "reply_language", "voice_reply",
         ) if data.get(key) is not None}
         mid = str(item["message_id"]) if item.get("message_id") is not None else None
         if mid:
@@ -181,10 +149,57 @@ def _source_message_times(messages) -> dict[str, dict[str, str]]:
                     continue
                 parsed = datetime.fromtimestamp(number / 1000 if number >= 1e11 else number, tz=timezone.utc)
             result[str(mid)] = {"occurred_at": parsed.astimezone(timezone.utc).isoformat(),
-                                "meaning": "来源消息的记录时间；并非消息提到的所有历史事件的发生时间"}
+                                "meaning": AUTONOMOUS_NORMAL_TEXT['result_str_mid_1']}
         except (TypeError, ValueError, OverflowError, OSError):
             continue
     return result
+
+
+_DEGRADED_KEEP_KEYS = (
+    # Task and current request.
+    "character_profile", "environment", "participants", "server_time", "memory_enabled",
+    "latest_user_message", "current_user_batch", "source_message_times",
+    "interaction_context", "reply_constraints", "required_bubble_count",
+    # Necessary facts and the operations already executed.
+    "verified_observations", "previous_attempt", "character_reference_evidence",
+    "current_scene", "relationship_state", "relationship_execution_contract",
+    "relationship_context", "calendar_memory", "followup_contract", "followup_availability",
+    "expression_context", "reply_repetition_context", "image_observation",
+    # Contracts that decide the delivery shape.
+    "delivery_contract", "voice_reply", "reply_language", "visible_punctuation_policy",
+    "available_skills", "interaction_mode",
+)
+
+
+def _degraded_prompt_data(prompt_data: dict, rounds: int = 6) -> dict:
+    """Build the controlled degraded retry input.
+
+    Deterministic and allowlist-based on purpose. It keeps the task, the staged
+    facts, the saved preferences and every already-executed operation, and only
+    shrinks two things: the transcript is cut to whole recent rounds (so a reply
+    still has its antecedent instead of a dangling three-message tail), and the
+    per-turn skill manuals are reduced. Nothing here re-runs a tool.
+    """
+    keep = {key: prompt_data[key] for key in _DEGRADED_KEEP_KEYS if key in prompt_data}
+    window = prompt_data.get("recent_raw_messages") or []
+    keep["recent_raw_messages"] = recent_round_messages(window, rounds) if window else []
+    previous = prompt_data.get("previous_attempt")
+    if isinstance(previous, dict):
+        keep["previous_attempt"] = {
+            "reply": previous.get("reply") or "",
+            # Already-executed operations are retained verbatim so the retry
+            # cannot repeat a staged write or a sent asset.
+            "tool_attempts": list(previous.get("tool_attempts") or []),
+        }
+    keep["degraded_recovery"] = {
+        "attempt": 1,
+        "maximum": 1,
+        "reason": AUTONOMOUS_NORMAL_TEXT['degraded_recovery_1'],
+        "kept": AUTONOMOUS_NORMAL_TEXT['degraded_recovery_2'],
+    }
+    keep["completion_feedback"] = AUTONOMOUS_NORMAL_TEXT['degraded_recovery_3']
+    keep["required_tools_before_reply"] = []
+    return keep
 
 
 async def _run_autonomous_turn(*, messages, character_profile, environment, model_config,
@@ -194,18 +209,24 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                               calendar_memory=None, relationship_context=None, relationship_updater=None,
                               source_reader=None, prior_image_reader=None, history_image_tools=None, web_image_tools=None, group_history_reader=None,
                               business_tools=None, usage_sink=None, input_channel=None,
-                              personal_preferences="", harness_runner=run_harness_turn, deadline=None):
-    deadline = deadline if deadline is not None else time.monotonic() + 180.0
+                              personal_preferences="", harness_runner=run_harness_turn, deadline=None, internal_task=None):
+    # Legacy deadline arguments do not terminate an active model response.
+    exploration_deadline = time.monotonic() + NORMAL_EXPLORATION_LIMIT_SECONDS
     recent = visible_messages(messages)
     latest_index = next((i for i in range(len(recent)-1, -1, -1) if recent[i]["role"] == "user"), None)
-    if latest_index is None:
+    if internal_task is not None and internal_task != 'new_contact_opening':
+        raise ValueError("Unknown internal Agent task")
+    if internal_task and recent:
+        raise ValueError("New-contact opening requires an empty conversation")
+    if latest_index is None and not internal_task:
         raise NormalAgentError("Autonomous chat requires a visible user message")
-    latest = recent[latest_index]
-    # Thirty visible context messages, with the current user input kept separate.
-    window = (recent[:latest_index] + recent[latest_index+1:])[-30:]
+    latest = recent[latest_index] if latest_index is not None else {}
     batch = user_batch(recent)
+    # Thirty complete exchanges; the current user batch is supplied separately.
+    batch_start = latest_index - len(batch) + 1 if latest_index is not None else 0
+    window = recent_round_messages(recent[:batch_start] + recent[latest_index+1:], 30) if latest_index is not None else []
     batch_text = "\n".join(str(m.get("content") or "") for m in batch)
-    source_times = _source_message_times(window + [latest])
+    source_times = _source_message_times(window + batch)
     tools = {}
     trace = []
     observations = []
@@ -240,7 +261,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                 repeated = _relationship_execution_contract(arguments)
                 repeated = {key: repeated[key] for key in current_relationship_state}
                 if repeated != relationship_state_update:
-                    raise HarnessToolValidationError("关系字段已经提交，本轮不能再改成另一组值")
+                    raise HarnessToolValidationError(AUTONOMOUS_NORMAL_TEXT['update_relationship_1'])
                 return {"relationship_state": relationship_state_update, "changed": False,
                         "staged": False, "duplicate_ignored": True,
                         "relationship_execution_contract": _relationship_execution_contract(relationship_state_update)}
@@ -251,7 +272,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
             return {**update, "relationship_state": relationship_state_update,
                     "relationship_execution_contract": contract}
         capability("update_relationship_state",
-            "当本轮原始证据表明关系阶段、亲密风格、请求推进程度或压力水平需要变化时，更新四个关系字段；没有变化时无需调用。返回的代码执行合同约束最终回复。", {
+            AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_1'], {
                 "type": "object", "properties": {
                     "relationship_stage": {"type": "string", "enum": ["new_contact", "uncertain", "familiar",
                         "mentor_student", "trusted_companion", "family_like", "flirting", "committed_partner",
@@ -285,7 +306,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
             return {"messages": rows, "next_before_message_id": rows[0].get("message_id") if rows else None,
                     "next_before_sequence": rows[0].get("sequence_number") if rows else None,
                     "source_message_times": page_times}
-        capability("read_history", "按需读取本会话更早的原始聊天；优先用next_before_message_id翻页，不传游标自动继续向前。", {
+        capability("read_history", AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_2'], {
             "type": "object", "properties": {"before_sequence": {"type": "integer", "minimum": 0},
                 "before_message_id": {"type": "string", "minLength": 1, "maxLength": 256},
                 "limit": {"type": "integer", "minimum": 1, "maximum": 40}}, "additionalProperties": False}, history)
@@ -304,7 +325,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
             return {'messages': rows, 'next_before_message_id': rows[0]['message_id'] if rows else None,
                     'source_message_times': _source_message_times(rows)}
         capability('read_group_experience',
-            '回忆你实际参加过的其他角色临时群聊，直接读取获准见闻原文；返回私聊后仍可用。可按关键词查找或用游标翻页。', {
+            AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_3'], {
             'type': 'object', 'properties': {'query': {'type': 'string', 'maxLength': 200},
                 'before_message_id': {'type': 'string', 'minLength': 1, 'maxLength': 256},
                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 40}},
@@ -316,7 +337,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
             if memory_store is not None:
                 memory_store.allow_visible_sources(m['message_id'] for m in rows if m.get('message_id'))
             return {'messages': rows, 'source_message_times': _source_message_times(rows)}
-        capability('read_original_messages', '按ID核验原始聊天。仅限当前用户与角色已获准看到的原文，不能凭记忆摘要授权。', {
+        capability('read_original_messages', AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_4'], {
             'type':'object','properties':{'message_ids':{'type':'array','minItems':1,'maxItems':40,
             'items':{'type':'string','maxLength':256}}},'required':['message_ids'],'additionalProperties':False}, originals)
     if history_image_tools:
@@ -324,7 +345,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
     if prior_image_reader:
         async def prior_images(arguments):
             return await prior_image_reader()
-        capability('read_prior_images', '读取本会话先前实际识图和OCR档案，区分原图信息与不确定推测。',
+        capability('read_prior_images', AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_5'],
                    {'type':'object','properties':{},'additionalProperties':False}, prior_images)
     if business_tools:
         business_tools.register(capability)
@@ -332,7 +353,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
         if legacy_memory_reader:
             async def legacy_material(arguments):
                 return await legacy_memory_reader(**arguments)
-            capability('read_legacy_memory', '按关键词和offset分页读取旧记忆/旧场景线索，不能直接作为新证据。', {
+            capability('read_legacy_memory', AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_9'], {
                 'type':'object','properties':{'query':{'type':'string','maxLength':300},
                     'offset':{'type':'integer','minimum':0}},'additionalProperties':False}, legacy_material)
         async def request_review(arguments):
@@ -345,16 +366,16 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                 raise HarnessToolValidationError('Provide a valid category and period, e.g. annual / 2025') from None
             memory_store.review_requested = True
             memory_store.review_target = target
-            return {"staged": True, "note": "回复成功保存后安排后台整理，当前尚未完成"}
-        capability("request_memory_review", "安排聊天后的记忆复核与摘要整理。", {
+            return {"staged": True, "note": AUTONOMOUS_NORMAL_TEXT['request_review_1']}
+        capability("request_memory_review", AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_6'], {
             "type": "object", "properties": {'category':{'type':'string','enum':['daily','weekly','monthly','annual']},
                 'period':{'type':'string','maxLength':10}}, "additionalProperties": False}, request_review)
         async def search(arguments):
             matches = await memory_store.search(**arguments)
             legacy = await legacy_memory_reader(arguments.get("query", "")) if legacy_memory_reader else ""
             return {"memories": matches, "legacy_memory": legacy,
-                    "note": "旧记忆仅为历史材料，不能覆盖当前明确动作；新草案要引用原始消息。"}
-        capability("search_memory", "查找此用户与当前角色的长期记忆/约定/偏好或本会话当前状态。", {
+                    "note": AUTONOMOUS_NORMAL_TEXT['search_1']}
+        capability("search_memory", AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_7'], {
             "type": "object", "properties": {"query": {"type": "string", "maxLength": 300},
                 "kind": {"type": "string", "enum": ["fact", "current_scene"]},
                 "limit": {"type": "integer", "minimum": 1, "maximum": 12}}, "additionalProperties": False}, search)
@@ -366,7 +387,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                 # These are the store's fixed public field/evidence validations;
                 # operational/database exceptions remain private runtime errors.
                 raise HarnessToolValidationError(str(exc)) from exc
-        capability("stage_memory", "暂存有原始消息依据的记忆；source_message_ids必须逐字使用当前原文中的message_id或已读取原文的ID，不能编造。写入细则可读memory说明。成功交付后落库，更新需要entry_id和expected_version。", {
+        capability("stage_memory", AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_8'], {
             "type": "object", "properties": {
                 "kind": {"type": "string", "enum": ["fact", "current_scene"]},
                 "category": {"type": "string", "enum": ["fact", "preference", "commitment", "episode", "activity", "relationship", "understanding", "current_scene"]},
@@ -376,8 +397,8 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                 "importance": dict(IMPORTANCE_SCHEMA),
                 "source_message_ids": {"type": "array", "minItems": 1, "maxItems": 20,
                     "items": {"type": "string", "minLength": 1, "maxLength": 200}},
-                "occurred_at": {"type": "string", "minLength": 1, "maxLength": 80,
-                    "description": "ISO 8601时间，必须含时区，例如2026-09-06T06:12:17.617000+00:00。新事实优先使用source_message_times对应来源的occurred_at；仅日期2026-09-06会被拒绝，不能猜测历史事件的具体时分。"},
+                "occurred_at": {"type": ["string", "null"], "minLength": 1, "maxLength": 80,
+                    "description": AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_10']},
                 "entry_id": {"type": "string", "minLength": 1, "maxLength": 100},
                 "expected_version": {"type": "integer", "minimum": 0}},
             "required": ["kind", "content", "source_message_ids", "occurred_at", "importance"], "additionalProperties": False}, stage)
@@ -398,27 +419,28 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
         "server_time": datetime.now(timezone.utc).isoformat(), "memory_enabled": memory_store is not None,
         "current_images_available": bool(current_image_blocks), "stickers_available": sticker_tools is not None,
         "web_images_available": web_image_tools is not None,
+        "available_sticker_sources": (["platform"] if sticker_tools is not None else [])
+                                     + (["derpibooru"] if web_image_tools is not None else []),
         "web_search_available": web_search_tools is not None, "calendar_memory": calendar_memory,
         "relationship_context": relationship_context,
         "relationship_state": current_relationship_state,
         "relationship_execution_contract": _relationship_execution_contract(current_relationship_state),
         "source_message_times": source_times,
         "expression_context": build_expression_context(recent[:latest_index], speaker_character_id=speaker_character_id),
+        "reply_repetition_context": build_reply_repetition_context(recent[:latest_index], speaker_character_id=speaker_character_id),
         "reply_constraints": {"required_bubble_count": expected_count, "paragraph_unit": "one_bubble"}}
+    if internal_task:
+        from .Prompts import NEW_CONTACT_OPENING_TASK
+        prompt_data['internal_task'] = {'type': internal_task, 'instructions': NEW_CONTACT_OPENING_TASK}
     if scene_state is not None:
-        from .Prompts import SCENE_STATE_CONTRACT
-        prompt_data['scene_contract'] = SCENE_STATE_CONTRACT
         prompt_data['current_scene'] = scene_state
     if business_tools and hasattr(business_tools, 'finalize_delivery'):
-        from .autonomous_followup import FOLLOWUP_CONTRACT, eligibility
-        prompt_data['followup_contract'] = FOLLOWUP_CONTRACT
+        from .autonomous_followup import followup_contract, eligibility
+        prompt_data['followup_contract'] = followup_contract
         prompt_data['followup_availability'] = {'enabled': not bool(eligibility(business_tools)),
                                                'reason': eligibility(business_tools)}
         if business_tools.shortcut.description:
             prompt_data['description_shortcut_contract'] = business_tools.shortcut.guidance
-        from .autonomous_speech import MOUTH_RULE
-        prompt_data['first_bubble_speech_contract'] = MOUTH_RULE
-        prompt_data['first_bubble_mouth_occupied'] = _current_character_mouth_occupied(latest)
     required_memory_ids = {str(m.get('message_id')) for m in batch if memory_store is not None
         and memory_store.has_allowed_source(str(m.get('message_id') or ''))
         and _explicit_memory_request(str(m.get('content') or ''))}
@@ -433,6 +455,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
     repairing_output = False
     tools_exhausted = False
     tool_budget_state = {}
+    delivery_reasons: list[str] = []
 
     if input_channel is not None:
         prepare_input = input_channel.prepare_input
@@ -452,25 +475,53 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
             return [{'type': 'text', 'text': json.dumps({'task_update': True, **update}, ensure_ascii=False)}, *blocks]
         input_channel.prepare_input = supplemental_input
 
+    def enter_delivery(reason: str, reply: str = "") -> None:
+        """Close exploration once, from either the runtime or our own timer.
+
+        Both expiry paths must produce the same delivery context: staged evidence
+        ("necessary facts"), the staged relationship contract, the operations
+        already executed, and a phase-tagged reason. Nothing gathered so far is
+        dropped, so the delivery pass never has to re-run a tool.
+        """
+        nonlocal tools_exhausted, repairing_output, require_search
+        if tools_exhausted:
+            return
+        tools_exhausted = True
+        repairing_output = True
+        require_search = False
+        delivery_reasons.append(reason)
+        if relationship_state_update is not None:
+            prompt_data['relationship_state'] = relationship_state_update
+            prompt_data['relationship_execution_contract'] = _relationship_execution_contract(relationship_state_update)
+        prompt_data["verified_observations"] = list(observations)
+        prompt_data["previous_attempt"] = {
+            "reply": reply, "tool_attempts": list(trace),
+        }
+        prompt_data["completion_feedback"] = (
+            AUTONOMOUS_NORMAL_TEXT['prompt_data_completion_feedback_5']
+            + (AUTONOMOUS_NORMAL_TEXT['prompt_data_completion_feedback_6']
+               if web_image_tools is not None and web_image_tools.delivery_context() else
+               AUTONOMOUS_NORMAL_TEXT['prompt_data_completion_feedback_7']) +
+            AUTONOMOUS_NORMAL_TEXT['prompt_data_completion_feedback_3'])
+
     try:
         for recovery_attempt in range(2):
             try:
                 for attempt in range(4):
-                    if tool_budget_state.get('delivery_deadline') is not None:
-                        tools_exhausted = True
-                        deadline = min(deadline, tool_budget_state['delivery_deadline'])
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
-                        raise asyncio.TimeoutError("Autonomous Harness exceeded its total time budget")
+                    now = time.monotonic()
+                    if tool_budget_state.get('delivery_started') or tool_budget_state.get('delivery_deadline') is not None:
+                        enter_delivery('exploration_closed')
+                    elif not tools_exhausted and now >= exploration_deadline:
+                        enter_delivery('exploration_deadline_exceeded')
                     pending_tools = ([] if tools_exhausted or not require_search or any(
                         e['tool'] in {'web_search', 'search_images'} and e['success'] for e in trace)
-                        else ['web_search 或 search_images（二选一）' if web_image_tools else 'web_search'])
+                        else [AUTONOMOUS_NORMAL_TEXT['pending_tools_1'] if web_image_tools else 'web_search'])
                     if not tools_exhausted and getattr(business_tools, 'reminder_expected', False) and not any(
                             p['kind'] == 'agreed' for p in business_tools.schedules):
                         pending_tools.append('stage_schedule')
                     prompt_data['required_tools_before_reply'] = pending_tools
-                    tool_gate = ('\n本轮输出最终JSON之前必须先成功调用：' + ', '.join(pending_tools) +
-                                 '。先完成这些工具，再生成最终回复；已经成功的工具不要重复调用。') if pending_tools else ''
+                    tool_gate = (AUTONOMOUS_NORMAL_TEXT['tool_gate_2'] + ', '.join(pending_tools) +
+                                 AUTONOMOUS_NORMAL_TEXT['tool_gate_1']) if pending_tools else ''
                     trace_before = len(trace)
                     attempt_usage = {}
                     async def capture_attempt(awaitable):
@@ -489,26 +540,41 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                     image_blocks = [*(current_image_blocks or []), *delivery_blocks]
                     harness_input = ([{"type": "text", "text": text_input}, *image_blocks]
                                      if image_blocks else text_input)
-                    attempt_timeout = min(remaining, NORMAL_FINALIZE_TIMEOUT_SECONDS) if tools_exhausted else remaining
-                    result = await asyncio.wait_for(
-                        capture_attempt(harness_runner(harness_input, model_config,
-                                       {k: v for k, v in tools.items() if not tools_exhausted or
-                                        (image_delivery_available and k == 'stage_web_image')},
-                                       system_prompt=SYSTEM + ("\n\n" + personal_preferences if personal_preferences else "") + tool_gate + ("\n服务端提示：前一草稿尚未发送。请使用verified_observations中的已获取证据，"
-                                           "按最终JSON传输协议修订输出；不能直接输出聊天纯文本。" if attempt else ""),
-                                       timeout_seconds=attempt_timeout, max_tokens=4096,
-                                       max_tool_calls=None if tools_exhausted and image_delivery_available else 0 if (tools_exhausted or repairing_output) and not pending_tools
-                                       else NORMAL_TOOL_CALL_LIMIT,
-                                       stop_on_tool_budget=not tools_exhausted,
-                                       tool_timeout_seconds=None if tools_exhausted else NORMAL_TOOL_TIME_LIMIT_SECONDS,
-                                       force_no_tools=tools_exhausted and not image_delivery_available,
-                                       delivery_only=tools_exhausted,
-                                       delivery_tool_names=('stage_web_image',) if image_delivery_available else (),
-                                       delivery_timeout_seconds=NORMAL_FINALIZE_TIMEOUT_SECONDS,
-                                       tool_budget_state=tool_budget_state,
-                                       **({'input_channel': input_channel} if input_channel is not None else {}))),
-                        timeout=attempt_timeout,
-                    )
+                    attempt_timeout = None if tools_exhausted else max(0.0, exploration_deadline - time.monotonic())
+                    try:
+                        result = await asyncio.wait_for(
+                            capture_attempt(harness_runner(harness_input, model_config,
+                                           {k: v for k, v in tools.items() if not tools_exhausted or
+                                            (image_delivery_available and k == 'stage_web_image')},
+                                           system_prompt=SYSTEM + ("\n\n" + personal_preferences if personal_preferences else "") + tool_gate + (AUTONOMOUS_NORMAL_TEXT['result_2'] if attempt else ""),
+                                           timeout_seconds=attempt_timeout,
+                                           max_tokens=(min(int(model_config.get("options", {}).get("max_tokens", 8192)),
+                                                           NORMAL_DELIVERY_MAX_TOKENS)
+                                                       if tools_exhausted
+                                                       else int(model_config.get("options", {}).get("max_tokens", 8192))),
+                                           delivery_reasoning_effort=NORMAL_DELIVERY_REASONING_EFFORT,
+                                           max_tool_calls=None if tools_exhausted and image_delivery_available else 0 if (tools_exhausted or repairing_output) and not pending_tools
+                                           else NORMAL_TOOL_CALL_LIMIT,
+                                           stop_on_tool_budget=not tools_exhausted,
+                                           tool_timeout_seconds=attempt_timeout,
+                                           force_no_tools=tools_exhausted and not image_delivery_available,
+                                           delivery_only=tools_exhausted,
+                                           delivery_tool_names=('stage_web_image',) if image_delivery_available else (),
+                                           delivery_timeout_seconds=None,
+                                           tool_budget_state=tool_budget_state,
+                                           **({'input_channel': input_channel} if input_channel is not None else {}))),
+                            timeout=attempt_timeout,
+                        )
+                    except asyncio.TimeoutError:
+                        if tools_exhausted or time.monotonic() < exploration_deadline:
+                            raise  # An actual model/transport failure, not our exploration switch.
+                        for key, value in attempt_usage.get('usage', {}).items():
+                            totals[key] = totals.get(key, 0) + value
+                        llm_api_calls += attempt_usage.get('llm_api_calls', 0)
+                        used_tool_calls += max(attempt_usage.get('tool_call_count', 0), len(trace) - trace_before)
+                        attempt_usage = {}
+                        enter_delivery("exploration_deadline_exceeded")
+                        continue
                     for key, value in (result.get("usage") or {}).items():
                         if type(value) in (int, float):
                             totals[key] = totals.get(key, 0) + value
@@ -517,33 +583,15 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                     used_tool_calls += max(callback_attempts, int(result.get("tool_call_count", callback_attempts)))
                     if result.get("finish_reason") in {
                             "tool_budget_exhausted", "tool_time_budget_exhausted"}:
-                        tools_exhausted = True
-                        repairing_output = True
-                        require_search = False
-                        deadline = min(deadline, time.monotonic() + NORMAL_FINALIZE_TIMEOUT_SECONDS)
-                        tool_budget_state.setdefault('delivery_deadline', deadline)
-                        if relationship_state_update is not None:
-                            prompt_data['relationship_state'] = relationship_state_update
-                            prompt_data['relationship_execution_contract'] = _relationship_execution_contract(relationship_state_update)
-                        prompt_data["verified_observations"] = list(observations)
-                        prompt_data["previous_attempt"] = {
-                            "reply": result.get("final_response") or "", "tool_attempts": list(trace),
-                        }
-                        prompt_data["completion_feedback"] = (
-                            "探索阶段已达到40秒或12次调用上限。停止搜索、下载和其他探索操作。"
-                            + ("后续80秒为交付阶段：如有已成功下载查看且符合要求的图片，可调用stage_web_image发送；"
-                               "发送已有图片不占探索预算，不得把未发送的图片说成已发送。"
-                               if web_image_tools is not None and web_image_tools.delivery_context() else
-                               "本轮没有已下载查看的网络图片；交付阶段不提供工具，直接完成最终回复JSON，不提交空图片选择。") +
-                            "只依据当前原文、角色资料和verified_observations中已经取得的信息生成最终回复；"
-                            "资料不足时如实说明，不得继续检索或重复工具。")
+                        enter_delivery(str(result.get("finish_reason")),
+                                       str(result.get("final_response") or ""))
                         continue
                     if result.get("finish_reason") != "completed":
                         raise NormalAgentError("Autonomous Harness turn did not complete")
                     format_error = ""
                     try:
                         if result.get('mode_selection_required'):
-                            raise ValueError('尚未读取对话模式。根据上下文自行调用load_chat_skill选择instant_messaging或virtual_roleplay，再提交回复；不要向用户询问虚实。')
+                            raise ValueError(AUTONOMOUS_NORMAL_TEXT['run_autonomous_turn_11'])
                         raw_reply = str(result.get("final_response") or "")
                         parsed_reply = close_complete_json(raw_reply)
                         delivery_metadata(parsed_reply)
@@ -565,7 +613,7 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                                 "scene_patch": scene_patch,
                                 "tool_call_count": used_tool_calls,
                                 "envelope": envelope, "bubble_count": count, "required_bubble_count": expected_count, "tool_trace": trace,
-                                "input_message_ids": [m.get("message_id") for m in window + [latest]],
+                                "input_message_ids": [m.get("message_id") for m in window + batch],
                                 "memory_store": memory_store, "relationship_state_update": relationship_state_update,
                                 "image_observation": json.loads(envelope).get('image_observation'),
                                 "reply_dedup_report": {"status": "agent_owned"}, "reply_dedup_repairs": 0,
@@ -586,15 +634,13 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                     }
                     prompt_data["verified_observations"] = list(observations)
                     prompt_data["completion_feedback"] = (
-                        "最终输出无法交付：" + format_error + "。保留已确认的事实，修复所指出的JSON、气泡承载或必要操作问题；无关措辞不要改写。"
-                        "已成功的记忆草案仍然保留，不要重复stage_memory或其他已成功工具。")
+                        "最终输出无法交付：" + format_error + AUTONOMOUS_NORMAL_TEXT['prompt_data_completion_feedback_1'])
                 raise NormalAgentError("Autonomous Harness did not satisfy completion requirements")
             except Exception as exc:
-                if recovery_attempt or time.monotonic() >= deadline:
+                if getattr(exc, 'retryable', True) is False or recovery_attempt:
                     raise
                 # Recover within this task, before any reply/business commit.
-                # Retain successful drafts/evidence. The recovery shares the
-                # original three-minute deadline, including request preparation.
+                # Model failures retain one recovery attempt; elapsed delivery time is not a failure.
                 partial = getattr(exc, 'harness_usage', {}) or attempt_usage
                 for key, value in partial.get('usage', {}).items():
                     totals[key] = totals.get(key, 0) + value
@@ -609,21 +655,22 @@ async def _run_autonomous_turn(*, messages, character_profile, environment, mode
                     prompt_data['relationship_state'] = relationship_state_update
                     prompt_data['relationship_execution_contract'] = _relationship_execution_contract(relationship_state_update)
                 prompt_data['verified_observations'] = list(observations)
-                prompt_data['previous_attempt'] = {'reply': '', 'tool_attempts': list(trace)}
-                prompt_data['automatic_retry'] = {'attempt': 1, 'maximum': 1}
-                prompt_data['completion_feedback'] = (
-                    '上一轮执行未能交付，服务端立即自动重试一次。继续处理当前用户的全部消息；'
-                    '已成功工具和暂存结果仍有效，不要重复执行。严格核对最终JSON所有必填字段。'
-                    + (str(exc) if isinstance(exc, NormalAgentError) else '模型执行中断，请重新完成交付。'))
-    except asyncio.TimeoutError as exc:
-        partial = getattr(exc, 'harness_usage', {}) or attempt_usage
-        for key, value in partial.get('usage', {}).items():
-            totals[key] = totals.get(key, 0) + value
-        llm_api_calls += partial.get('llm_api_calls', 0)
-        used_tool_calls += max(partial.get('tool_call_count', 0), len(trace) - trace_before) if partial else 0
-        if memory_store is not None:
-            memory_store.discard()
-        raise NormalAgentError("Autonomous Harness exceeded its total time budget") from exc
+                prompt_data['previous_attempt'] = {
+                    'reply': str(getattr(exc, 'partial_reply', '') or ''), 'tool_attempts': list(trace)}
+                degraded = tools_exhausted or time.monotonic() >= exploration_deadline
+                if degraded:
+                    # One controlled degraded retry: same task, same facts, same
+                    # preferences, same already-executed operations, less input.
+                    prompt_data = _degraded_prompt_data(prompt_data)
+                    tools_exhausted = True
+                    repairing_output = True
+                    tool_budget_state.pop('delivery_deadline', None)
+                    tool_budget_state['delivery_started'] = True
+                else:
+                    prompt_data['automatic_retry'] = {'attempt': 1, 'maximum': 1}
+                    prompt_data['completion_feedback'] = (
+                        AUTONOMOUS_NORMAL_TEXT['prompt_data_completion_feedback_2']
+                        + (str(exc) if isinstance(exc, NormalAgentError) else AUTONOMOUS_NORMAL_TEXT['prompt_data_completion_feedback_4']))
     except BaseException as exc:
         partial = getattr(exc, 'harness_usage', {}) or attempt_usage
         for key, value in partial.get('usage', {}).items():
@@ -647,11 +694,11 @@ async def run_autonomous_turn(*, messages, character_profile, environment, model
                               calendar_memory=None, relationship_context=None, relationship_updater=None,
                               source_reader=None, prior_image_reader=None, history_image_tools=None, web_image_tools=None, group_history_reader=None,
                               business_tools=None, usage_sink=None, input_channel=None,
-                              personal_preferences="", harness_runner=run_harness_turn, deadline=None):
+                              personal_preferences="", harness_runner=run_harness_turn, deadline=None, internal_task=None):
     """Produce a reply and drafts; only the successful-delivery layer may commit."""
     try:
         return await _run_autonomous_turn(
-            scene_state=scene_state,
+            scene_state=scene_state, internal_task=internal_task,
             messages=messages, character_profile=character_profile, environment=environment,
             personal_preferences=personal_preferences,
             model_config=model_config, memory_store=memory_store, history_reader=history_reader,

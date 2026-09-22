@@ -105,8 +105,8 @@ internal fun ChatRelationshipPanel(
         maxItemChars = 14
     ) { it.suggestions }
     val isPullRefreshing = state.isLoadingRelationshipSnapshot
-    val showLoadingPanel = state.relationshipStageOverride == null &&
-        (isPullRefreshing || pageContent == null || state.relationshipSnapshotError != null)
+    // Keep the content composed while fetching updates, preserving scroll and avatars.
+    val showLoadingPanel = state.relationshipStageOverride == null && pageContent == null
     val refreshAction by rememberUpdatedState(onRefresh)
     val scrollState = rememberScrollState()
     val density = LocalDensity.current
@@ -352,6 +352,8 @@ internal fun ChatRelationshipPanel(
                     stage = stageUi,
                     loading = isPullRefreshing || !state.hasLoadedRelationshipSnapshot,
                     message = state.relationshipSnapshotError,
+                    modifier = Modifier.zIndex(1f).graphicsLayer { translationY = pullRefreshOffsetPx },
+                    scrollState = scrollState,
                 )
             } else {
                 Column(

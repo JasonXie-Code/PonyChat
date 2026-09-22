@@ -1,4 +1,5 @@
 """Validated scheduling plans persisted in the same transaction as the reply."""
+from .Prompts import AUTONOMOUS_SCHEDULE_TEXT
 import json
 import re
 import time
@@ -13,7 +14,7 @@ SCHEDULE_SCHEMA = {'type':'object','properties':{
     'schedule_type':{'type':'string','enum':['once','interval','daily','weekly','monthly']},
     'target_delay_seconds':{'type':'integer','minimum':1,'maximum':2592000},
     'interval_seconds':{'type':'integer','minimum':1,'maximum':2592000},
-    'time_of_day':{'type':'string','maxLength':5,'description':'HH:MM，00:00到23:59'},
+    'time_of_day':{'type':'string','maxLength':5,'description':AUTONOMOUS_SCHEDULE_TEXT['SCHEDULE_SCHEMA_1']},
     'days':{'type':'array','maxItems':31,'items':{'type':'integer','minimum':0,'maximum':31}},
     'expires_seconds':{'type':'integer','minimum':1,'maximum':2592000},
     'reason':{'type':'string','maxLength':400}},'required':['kind','summary','source_message_id'],
@@ -26,7 +27,7 @@ def validate_schedule(arguments, request, history):
     mid = arguments['source_message_id']
     batch = user_batch(history)
     if not any(m.get('message_id')==mid for m in batch) or mid == getattr(request,'_normal_internal_trigger_message_id',None):
-        raise HarnessToolValidationError('调度必须引用本轮原始用户消息，内部触发不是新的用户约定')
+        raise HarnessToolValidationError(AUTONOMOUS_SCHEDULE_TEXT['validate_schedule_1'])
     data = {**arguments, 'enabled':True}
     if data.get('time_of_day') and not re.fullmatch(r'([01][0-9]|2[0-3]):[0-5][0-9]', data['time_of_day']):
         raise HarnessToolValidationError('time_of_day must be HH:MM, 00:00..23:59')
@@ -34,16 +35,16 @@ def validate_schedule(arguments, request, history):
         data['cancel_if_user_replies'] = False
         plan = old.coerce_user_agreed_task(data)
         if plan.get('schedule_type') in ('weekly','monthly') and not plan.get('days'):
-            raise HarnessToolValidationError('周期提醒须提供具体星期或日期')
+            raise HarnessToolValidationError(AUTONOMOUS_SCHEDULE_TEXT['validate_schedule_3'])
     else:
         latest = '\n'.join(m.get('content','') for m in batch)
         if old._is_user_conversation_end(latest):
-            raise HarnessToolValidationError('用户已结束对话，不安排主动追发')
+            raise HarnessToolValidationError(AUTONOMOUS_SCHEDULE_TEXT['validate_schedule_4'])
         data.update(seed=arguments['summary'], cancel_if_user_replies=True,
                     allow_reschedule_after_send=False, pressure_level='low')
         plan = old.coerce_scheduled_followup(data, is_new_contact_opening=bool(getattr(request,'_is_new_contact_opening',False)))
     if not plan.get('enabled'):
-        raise HarnessToolValidationError('缺少有效调度时间或当前状态不允许创建任务')
+        raise HarnessToolValidationError(AUTONOMOUS_SCHEDULE_TEXT['validate_schedule_2'])
     return {'kind':arguments['kind'],'source_message_id':mid,'plan':plan,'id':('pt_' if arguments['kind']=='agreed' else 'sf_')+uuid.uuid4().hex}
 
 

@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import sqlite3
 import time
+import uuid
 from contextlib import closing
 
 import psutil
@@ -51,6 +52,7 @@ def begin(scope):
                   'normal' if mode == 'agent_memory' else mode),
            str(params['trace_id']))
     now = time.time()
+    generation = uuid.uuid4().hex
     with closing(_connect()) as conn, conn:
         conn.execute('BEGIN IMMEDIATE')
         row = conn.execute('SELECT payload FROM progress WHERE owner=? AND trace=?', key).fetchone()
@@ -59,28 +61,37 @@ def begin(scope):
             'phase': 'background_memory' if mode == 'agent_memory' or params.get('phase') == 'background_memory' else 'foreground',
             'model': scope['model'], 'started_at': now, '_runs': {},
         }
-        state.update(status='running', activity='准备本次任务', finished_at=None, updated_at=now, _process=_PROCESS)
+        state.update(status='running', activity='准备本次任务', finished_at=None, updated_at=now,
+                     _process=_PROCESS, _generation=generation)
         for run in state['_runs'].values():
             run['active_tools'] = {}
         conn.execute('INSERT OR REPLACE INTO progress VALUES(?,?,?,?,?)',
                      (*key, str(params.get('conversation_id') or ''), now, json.dumps(state, ensure_ascii=False)))
         conn.execute('DELETE FROM progress WHERE updated < ?', (now - 86400,))
-    return key
+    return (*key, generation)
 
 
-def _change(key, change):
+def _change(key, change, *, settle_previous=False):
     if key is None:
         return
     with closing(_connect()) as conn, conn:
         conn.execute('BEGIN IMMEDIATE')
-        row = conn.execute('SELECT payload FROM progress WHERE owner=? AND trace=?', key).fetchone()
+        row = conn.execute('SELECT payload FROM progress WHERE owner=? AND trace=?', key[:2]).fetchone()
         if row is None:
             return
         state = json.loads(row[0])
+        previous = len(key) > 2 and key[2] != state.get('_generation')
+        if previous and not settle_previous:
+            return
+        activity = state['activity']
         change(state)
+        if previous:
+            # Late metering still belongs to the shared batch, but cannot
+            # change the new attempt's activity or stop its clock.
+            state['activity'] = activity
         state['updated_at'] = time.time()
         conn.execute('UPDATE progress SET updated=?, payload=? WHERE owner=? AND trace=?',
-                     (state['updated_at'], json.dumps(state, ensure_ascii=False), *key))
+                     (state['updated_at'], json.dumps(state, ensure_ascii=False), *key[:2]))
 
 
 def set_model(key, model):
@@ -92,6 +103,8 @@ def event(key, run_id, kind, data):
     if not isinstance(data, dict):
         return
     def update(state):
+        if state['status'] != 'running':
+            return
         run = state['_runs'].setdefault(run_id, {
             'steps': [], 'tools': [], 'models': 0, 'tool_count': 0, 'recent_tools': []})
         if kind in ('step/start', 'step/end', 'assistant/message'):
@@ -132,9 +145,10 @@ def settle_run(key, run_id, result):
             count = result.get(source, 0)
             if type(count) is int and count >= 0:
                 run[target] = max(run[target], count)
-        state['activity'] = '正在整理本次结果'
+        if state['status'] == 'running':
+            state['activity'] = '正在整理本次结果'
         run['active_tools'] = {}
-    _change(key, update)
+    _change(key, update, settle_previous=True)
 
 
 def retry(key, retry_count):
@@ -177,6 +191,7 @@ def _public(state, now):
     state = dict(state)
     runs = state.pop('_runs')
     state.pop('_process', None)
+    state.pop('_generation', None)
     models = sum(run['models'] for run in runs.values())
     tools = sum(run['tool_count'] for run in runs.values())
     active = list(dict.fromkeys(name for run in runs.values()

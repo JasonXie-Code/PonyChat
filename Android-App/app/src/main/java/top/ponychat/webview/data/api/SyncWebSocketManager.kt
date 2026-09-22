@@ -524,7 +524,8 @@ object SyncWebSocketManager {
             NotificationTrace.log("ws_connect_try", "attempt=$connectAttempt url=$wsUrl nudgeEp=${nudgeEpoch.get()}")
 
             val connected = CompletableDeferred<Boolean>()
-            val lastRxAt = AtomicLong(System.currentTimeMillis())
+            val lastRxAt = AtomicLong(android.os.SystemClock.elapsedRealtime())
+            val socketClosed = AtomicBoolean(false)
             val client = NetworkClient.createTrustAllClient(
                 connectTimeoutSec = 15,
                 readTimeoutSec = 90,
@@ -539,7 +540,7 @@ object SyncWebSocketManager {
                     val code = response.code
                     val proto = response.protocol
                     Log.i(TAG, "connected: $wsUrl")
-                    lastRxAt.set(System.currentTimeMillis())
+                    lastRxAt.set(android.os.SystemClock.elapsedRealtime())
                     delayMs = 1_000L
                     connected.complete(true)
                     NotificationTrace.log("ws_open", "code=$code protocol=$proto url=$wsUrl")
@@ -550,7 +551,7 @@ object SyncWebSocketManager {
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
-                    lastRxAt.set(System.currentTimeMillis())
+                    lastRxAt.set(android.os.SystemClock.elapsedRealtime())
                     if (text == "ping") {
                         webSocket.send("pong")
                         return
@@ -561,16 +562,19 @@ object SyncWebSocketManager {
                 }
 
                 override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    socketClosed.set(true)
                     webSocket.close(code, reason)
                 }
 
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    socketClosed.set(true)
                     Log.i(TAG, "closed code=$code reason=$reason")
                     if (!connected.isCompleted) connected.complete(false)
                     NotificationTrace.log("ws_closed", "code=$code reason=${reason.ifBlank { "(empty)" }} url=$wsUrl")
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    socketClosed.set(true)
                     val http = response?.code
                     Log.w(TAG, "failure: ${t.message} http=$http", t)
                     if (!connected.isCompleted) connected.complete(false)
@@ -608,7 +612,11 @@ object SyncWebSocketManager {
                         NotificationTrace.log("ws_loop_exit", "reason=$loopExit sessionEp=$sessionEpoch nowEp=${nudgeEpoch.get()}")
                         break
                     }
-                    val now = System.currentTimeMillis()
+                    if (socketClosed.get()) {
+                        loopExit = "socket_closed"
+                        break
+                    }
+                    val now = android.os.SystemClock.elapsedRealtime()
                     val idle = now - lastRxAt.get()
                     if (tick % 30 == 0 && tick > 0) {
                         NotificationTrace.log("ws_tick", "idle_ms=$idle url=$wsUrl ep=$sessionEpoch")
@@ -635,8 +643,8 @@ object SyncWebSocketManager {
                             NotificationTrace.log("ws_loop_exit", "reason=$loopExit ep=$sessionEpoch")
                             break
                         }
-                        // 后台/厂商节电时下行文本可能长时间不到，但 ping 已入队；避免仅靠收不到 pong 误判 rx_idle
-                        lastRxAt.set(System.currentTimeMillis())
+                        // Enqueueing a ping does not prove the downlink is alive.
+                        // Only onOpen/onMessage advance lastRxAt.
                         NotificationTrace.log("ws_ping_out", "ok=true ep=$sessionEpoch")
                     }
                 }
@@ -664,7 +672,7 @@ object SyncWebSocketManager {
             } catch (_: Exception) { }
             ws = null
             if (!running.get()) break
-            if (loopExit == "ping_send_failed" || loopExit == "rx_idle") {
+            if (loopExit == "ping_send_failed" || loopExit == "rx_idle" || loopExit == "socket_closed") {
                 delayMs = 1_000L
             }
             NotificationTrace.log("ws_reconnect", "after=${loopExit ?: "unknown"} backoff=${delayMs}ms")

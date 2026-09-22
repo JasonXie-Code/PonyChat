@@ -1,6 +1,7 @@
 from __future__ import annotations
+from .Prompts import CHARACTER_TEXT
 
-from .Prompts import ROLEPLAY_ANCHOR_PROMPT, NORMAL_MODE_WRITER_ANCHOR_PROMPT, NORMAL_MODE_REASONING_PERSPECTIVE_GUARD_PROMPT, NORMAL_MODE_OUTPUT_STYLE_PROMPT
+from .Prompts import ROLEPLAY_ANCHOR_PROMPT
 
 import json
 import re
@@ -10,29 +11,28 @@ from typing import Optional
 from ..config import logger
 from ..db import get_database
 from ..official_characters import merge_official_source_into_reference
-from .normal_plain_text import NORMAL_CHAT_EXPRESSION_PROMPT
 from .species_anatomy import (
     equine_species_prompt_line,
     profile_species_has_equine_anatomy,
 )
 
 _MBTI_STYLE_DESCRIPTIONS = {
-    "INTJ": "战略、独立、洞察，倾向长期规划，重视能力、逻辑和自主性。",
-    "INTP": "理性、好奇、分析，喜欢理解原理，常以概念和可能性思考。",
-    "ENTJ": "果断、目标感、领导，倾向组织资源、推动结果并承担决策。",
-    "ENTP": "机敏、创意、挑战，喜欢新点子、辩论和打破惯性。",
-    "INFJ": "理想、共情、深刻，关注意义、关系和内在价值。",
-    "INFP": "温柔、理想主义、共情，重视真诚、个人价值和情感细节。",
-    "ENFJ": "热忱、鼓舞、亲和，擅长理解他人并带动群体气氛。",
-    "ENFP": "自由、热情、想象力，反应鲜活，喜欢探索关系和新体验。",
-    "ISTJ": "可靠、秩序、负责，重视规则、承诺、事实和稳定执行。",
-    "ISFJ": "体贴、稳定、守护，关心他人需求，倾向温和而实际地照顾。",
-    "ESTJ": "务实、组织、执行，直接高效，重视责任、秩序和可见成果。",
-    "ESFJ": "友善、照顾、合群，重视关系和氛围，乐于提供支持。",
-    "ISTP": "冷静、动手、灵活，偏好观察现实、解决具体问题并保留空间。",
-    "ISFP": "敏感、审美、自由，重视当下感受、个人边界和自然表达。",
-    "ESTP": "行动、直接、冒险，反应快，喜欢现场感、挑战和即时体验。",
-    "ESFP": "活泼、感受力、快乐，外向鲜明，擅长带动情绪和享受当下。",
+    "INTJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_1'],
+    "INTP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_2'],
+    "ENTJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_3'],
+    "ENTP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_4'],
+    "INFJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_5'],
+    "INFP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_6'],
+    "ENFJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_7'],
+    "ENFP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_8'],
+    "ISTJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_9'],
+    "ISFJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_10'],
+    "ESTJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_11'],
+    "ESFJ": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_12'],
+    "ISTP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_13'],
+    "ISFP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_14'],
+    "ESTP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_15'],
+    "ESFP": CHARACTER_TEXT['MBTI_STYLE_DESCRIPTIONS_16'],
 }
 
 
@@ -45,15 +45,7 @@ def equine_profile_mammary_anatomy_line(species: str) -> str:
         return ""
     organ_line = equine_species_prompt_line(species)
     return (
-        "种族解剖学补充：角色档案的种族字段属于马/小马类体态；"
-        "以下身体结构事实只适用于当前角色本人，不适用于用户/Jason/玩家或其他人类参与者；"
-        f"{organ_line}"
-        "日常描写和身体介绍里自然使用蹄子、前蹄、蹄尖等符合蹄类体态的表达，不要主动罗列缺失部位；"
-        "只有用户直接询问手、手指、中指或替代写法时，才简短说明应按蹄类体态理解，并给出蹄尖/前蹄等替代表达；"
-        "若本轮需要回答或描写乳房位置，按事实解剖学定义为位于胯间、后腿之间，"
-        "一共两个乳房。"
-        "不要写成四个或两对乳房，也不要把乳头数量当作乳房数量；"
-        "不要写成人类胸前、胸口或上半身位置。"
+        CHARACTER_TEXT['equine_profile_mammary_anatomy_line_1'].format(organ_line)
     )
 
 
@@ -79,17 +71,12 @@ def human_profile_anatomy_line(species: str, gender: str = "") -> str:
     gender_text = str(gender or "").strip()
     female = bool(re.search(r"(女|女性|雌|girl|woman|female)", gender_text, re.I))
     mammary = (
-        "若本轮需要回答或描写当前角色自己的乳房位置，按人类女性体态写在胸前/胸部前侧；"
+        CHARACTER_TEXT['mammary_1']
         if female
-        else "若本轮需要回答或描写当前角色自己的身体部位，按人类体态和角色性别设定处理；"
+        else CHARACTER_TEXT['mammary_2']
     )
     return (
-        "种族解剖学补充：角色档案的种族字段属于人类体态；"
-        "以下身体结构事实只适用于当前角色本人，不适用于其他非人类参与者；"
-        f"{mammary}"
-        "人类没有可爱标记/cutie mark/臀部标记；"
-        "当前角色自己的拿取、支撑、轻点、托脸、指方向等动作使用手、手指、指尖、手掌等人类手部表达，"
-        "不要写成蹄子、前蹄、蹄尖或马蹄。"
+        CHARACTER_TEXT['human_profile_anatomy_line_1'].format(mammary)
     )
 
 
@@ -100,12 +87,10 @@ def _format_mbti_for_prompt(value) -> str:
     description = _MBTI_STYLE_DESCRIPTIONS.get(code, "")
     if description:
         return (
-            f"{code}（性格倾向参考）：{description}"
-            " 仅用于表达风格、决策倾向和互动节奏参考。"
+            CHARACTER_TEXT['format_mbti_for_prompt_2'].format(code, description)
         )
     return (
-        f"{code}（性格倾向参考）：用户填写的 16 人格类型；"
-        "若不认识该类型，不要只照抄字母，应按角色其它设定自然补足表现。"
+        CHARACTER_TEXT['format_mbti_for_prompt_1'].format(code)
     )
 
 
@@ -156,9 +141,7 @@ def build_character_profile_prompt_block(char: dict, *, include_guidance: bool =
     if not include_guidance:
         return "【角色档案】\n" + "\n".join(lines)
     return (
-        "【角色档案】\n"
-        "这些是角色主页档案中由创建者填写的角色信息，属于角色设定的一部分，请与下方详细设定合并理解。"
-        "其中“16人格”只提供性格倾向参考，用来辅助表达风格、决策倾向和互动节奏。\n"
+        CHARACTER_TEXT['build_character_profile_prompt_block_1']
         + "\n".join(lines)
     )
 
@@ -169,8 +152,6 @@ def character_profile_reference_guidance(char: dict) -> str:
     gender = _clean_profile_text(char.get("profileGender"))
     return "\n".join(filter(None, (
         equine_profile_mammary_anatomy_line(species) or human_profile_anatomy_line(species, gender),
-        "只回答本轮涉及的身体问题；并列列出的器官不代表长在同一部位，需要描述位置时使用该部位的明确依据，不自行把器官列表拼成位置关系。" if profile_species_has_equine_anatomy(species) else "",
-        _format_mbti_for_prompt(char.get("profileMbti")),
     )))
 
 
@@ -235,7 +216,7 @@ def load_character_from_db(username: str, char_id: str) -> Optional[dict]:
                         row = cursor.fetchone()
                         if row:
                             logger.info(
-                                "🔁 [RolePlay] 角色 ID alias: %s/%s -> %s",
+                                CHARACTER_TEXT['load_character_from_db_2'],
                                 username,
                                 char_id,
                                 lookup_char_id,
@@ -275,7 +256,7 @@ def load_character_from_db(username: str, char_id: str) -> Optional[dict]:
         finally:
             conn.close()
     except Exception as e:
-        logger.error(f"❌ [RolePlay] 从数据库加载角色失败 {username}/{char_id}: {e}")
+        logger.error(CHARACTER_TEXT['load_character_from_db_1'].format(username, char_id, e))
         return None
 
 
@@ -308,9 +289,9 @@ def load_character_prompts(username: str, char_id: str, **_kw) -> tuple[str, str
         instruction_prompt = ""
 
         if persona_prompt:
-            logger.info(f"🎭 [RolePlay] 成功加载角色 {char.get('name', char_id)} 的设定 (长度: {len(persona_prompt)})")
+            logger.info(CHARACTER_TEXT['load_character_prompts_1'].format(char.get('name', char_id), len(persona_prompt)))
         else:
-            logger.warning(f"⚠️ [RolePlay] 角色 {char.get('name', char_id)} 存在但设定内容为空")
+            logger.warning(CHARACTER_TEXT['load_character_prompts_2'].format(char.get('name', char_id)))
 
         return persona_prompt, instruction_prompt
     except Exception as e:

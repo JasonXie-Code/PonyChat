@@ -3,6 +3,7 @@ import asyncio
 import json
 import re
 from contextlib import closing
+from functools import wraps
 from datetime import datetime
 
 from .store import AgentMemoryStore, CATEGORIES, STATUSES, CERTAINTIES
@@ -16,9 +17,9 @@ SYSTEM = """你是当前角色的记忆整理Agent，与聊天Agent共享同一�
 先读近期原始聊天和当前记忆，查漏补缺、合并重复、纠正旧事实。已有同一事实必须用entry_id和expected_version更新，不要反复创建。
 分类：preference用户明确偏好，episode经历，activity活动，commitment约定/任务，relationship关系事实，understanding角色的可修订认识，current_scene当前会话状态，fact其他事实。
 certainty区分explicit用户明确表达、observed原文实际发生、inferred你的推测；understanding必须inferred，推测不能升级成用户明确偏好。
-status区分active有效、planned计划、completed完成、cancelled取消、retracted错误或被明确否定。改变偏好不等于厌恶旧偏好。
+status区分active有效、planned计划、completed完成、cancelled取消、retracted错误或被明确否定。改变偏好不等于厌恶旧偏好。用户要求忘记的条目按retracted撤回，不因旧原文仍存在而重新提取已要求忘记的事实；保留版本不等于仍可作为有效记忆使用。
 约定被取消时更新原条目为cancelled，不创建一条并存的有效约定；场景跟随最新明确动作，不把用户动作当自己的动作。
-记忆与摘要必须引用实际读过的source_message_ids；发生时间用来源时间，历史时间未知时注明未知，不编造。
+记忆与摘要必须引用实际读过的source_message_ids；事件实际发生时间明确时才填写occurred_at；历史发生时间未知或精度不足时填null，不用告知时间冒充事件时间，告知时间从来源消息追溯。
 原文的人名、地点和事件不明确时保持原样，禁止根据角色档案补全为具体地名或额外事实。原文只说图书馆就不能写成某座特定图书馆；发现旧条目扩写细节时纠正。
 助手自行补充的背景、假设或没有用户依据的“又发生了”不能当成用户历史事实；角色实际写出的本轮动作可以作为observed互动记录，但应与用户明确表达区分。
 先用list_periods检查待整理周期。日摘主要依据当天完整原始聊天；read_period有has_more时须继续读完，不能把分页首屏当全天。
@@ -52,14 +53,39 @@ STAGE_SCHEMA = {'type':'object','properties':{
     'content':{'type':'string','minLength':1,'maxLength':8000},
     'importance':{'type':'integer','minimum':1,'maximum':10,'description':'必填，按系统中的长期价值评分规范逐条评估，不得统一填5'},
     'source_message_ids':{'type':'array','minItems':1,'maxItems':128,'items':{'type':'string'}},
-    'occurred_at':{'type':'string'},'entry_id':{'type':'string'},'expected_version':{'type':'integer','minimum':0},
+    'occurred_at':{'type':['string','null']},'entry_id':{'type':'string'},'expected_version':{'type':'integer','minimum':0},
     'period':{'type':'string'}},'required':['kind','category','content','source_message_ids','occurred_at','importance'], 'additionalProperties':False}
+
+def _off_loop(method):
+    """Serialize one review's mutable cursors/drafts and drain on cancellation."""
+    @wraps(method)
+    async def call(self, *args, **kwargs):
+        async with self._io_lock:
+            worker = asyncio.create_task(asyncio.to_thread(method, self, *args, **kwargs))
+            try:
+                return await asyncio.shield(worker)
+            except asyncio.CancelledError:
+                # A thread cannot be cancelled. Finish before discard/commit or
+                # another tool touches the same authorization map and drafts.
+                while not worker.done():
+                    try:
+                        await asyncio.shield(worker)
+                    except asyncio.CancelledError:
+                        continue
+                    except Exception:
+                        break
+                if not worker.cancelled():
+                    worker.exception()
+                raise
+    return call
+
 
 class ReviewTools:
     def __init__(self,path,job,store):
         self.path,self.job,self.store = path,job,store
         self.cursors,self.complete,self.summary_offsets = {},set(),{}
         self.trace = []
+        self._io_lock = asyncio.Lock()
 
     def rows(self,**kwargs):
         with closing(connect(self.path)) as conn:
@@ -69,15 +95,18 @@ class ReviewTools:
         self.store.allow_visible_sources(r['message_id'] for r in rows)
         return [dict(r,occurred_at=datetime.fromtimestamp(float(r['timestamp'])/1000,evidence.LOCAL).isoformat()) for r in rows]
 
-    async def history(self,args):
+    @_off_loop
+    def history(self,args):
         rows = self.rows(before=self.cursors.get('history'),limit=41)
         more = len(rows)>40; rows=rows[-40:]
         if rows:
             self.cursors['history'] = (rows[0]['timestamp'],rows[0]['cursor_rowid'])
         return {'messages':self.allow(rows),'has_more':more}
 
-    async def memories(self,args):
-        rows = await self.store.search(args.get('query',''),category=args.get('category'),limit=100,include_stale=True)
+    @_off_loop
+    def memories(self,args):
+        rows = self.store.list(query=args.get('query',''),category=args.get('category'),limit=100,
+                               include_stale=True,rank_by_importance=True)
         self.store.allow_visible_sources(r['source_ref'] for r in rows if not r['stale'])
         for row in rows:
             if row['stale'] or row['status']=='retracted':
@@ -89,7 +118,8 @@ class ReviewTools:
             rows = conn.execute(evidence.RAW_SELECT+' ORDER BY m.timestamp', (self.job['username'],self.job['character_id'])).fetchall()
         return sorted({datetime.fromtimestamp(float(r['timestamp'])/1000,evidence.LOCAL).date() for r in rows})
 
-    async def periods(self,args):
+    @_off_loop
+    def periods(self,args):
         today = datetime.now(evidence.LOCAL).date()
         values = set()
         for day in self.days():
@@ -116,7 +146,8 @@ class ReviewTools:
                                 'version':row['version'] if row else 0})
         return {'pending':pending[:80],'more_periods':len(pending)>80,'target_period':target}
 
-    async def read_period(self,args):
+    @_off_loop
+    def read_period(self,args):
         key=(args['category'],args['period'])
         rows=self.rows(category=key[0],period=key[1],before=self.cursors.get(key),limit=41)
         more=len(rows)>40; rows=rows[-40:]
@@ -127,7 +158,8 @@ class ReviewTools:
         return {'messages':self.allow(rows),'has_more':more,'period':key[1],
                 'ready_to_stage':not more, 'next_action':'read_period' if more else 'stage_memory'}
 
-    async def summaries(self,args):
+    @_off_loop
+    def summaries(self,args):
         key=(args['category'],args['period']); lo,hi=evidence.period_bounds(*key)
         child='monthly' if key[0]=='annual' else 'daily'
         expected={d.strftime('%Y-%m') if child=='monthly' else d.isoformat() for d in self.days()
@@ -145,7 +177,8 @@ class ReviewTools:
                 'ready_to_stage':ready,
                 'next_action':'stage_memory' if ready else 'read_summaries' if more else 'read_period'}
 
-    async def stage(self,args):
+    @_off_loop
+    def stage(self,args):
         if type(args.get('importance')) is not int or not 1 <= args['importance'] <= 10:
             raise ValueError('importance is required and must be an integer from 1 to 10; assess this memory explicitly')
         if args.get('category') in ('relationship_page','relationship_state'):
@@ -158,7 +191,8 @@ class ReviewTools:
                              'Do not retry stage_memory before completing that read.')
         return self.store.stage(**args)
 
-    async def stage_relationship(self,args):
+    @_off_loop
+    def stage_relationship(self,args):
         page=validate_copy(args['page'])
         existing=self.store.list(category='relationship_page',include_stale=True,limit=1)
         current=project(self.path,self.job['username'],self.job['character_id'])
@@ -168,10 +202,11 @@ class ReviewTools:
             content=json.dumps(page,ensure_ascii=False),source_message_ids=args['source_message_ids'],
             occurred_at=args['occurred_at'],**update)
 
-    async def legacy(self,args):
+    @_off_loop
+    def legacy(self,args):
         from .legacy import read_legacy
-        return await asyncio.to_thread(read_legacy,self.path,self.job['username'],self.job['character_id'],
-                                       args.get('query',''),offset=args.get('offset',0))
+        return read_legacy(self.path,self.job['username'],self.job['character_id'],
+                           args.get('query',''),offset=args.get('offset',0))
 
     def register(self):
         from ..chat_modules.harness_runtime import HarnessTool,HarnessToolValidationError
@@ -214,21 +249,22 @@ async def review(path,job,model_config,profile,*,harness_runner=None):
 
 
 async def _review(path,job,model_config,profile,*,harness_runner=None):
-    from ..chat_modules.memory_importance import IMPORTANCE_POLICY
+    from ..chat_modules.Prompts import memory
     if harness_runner is None:
         from ..chat_modules.harness_runtime import run_harness_turn
         harness_runner = run_harness_turn
-    store=AgentMemoryStore(path,username=job['username'],character_id=job['character_id'],conversation_id='review')
+    store=await asyncio.to_thread(AgentMemoryStore,path,username=job['username'],
+                                  character_id=job['character_id'],conversation_id='review')
     tools=ReviewTools(path,job,store)
     page_only = bool(job.get('relationship_requested'))
     prompt={'character_profile':profile,'time':datetime.now(evidence.LOCAL).isoformat(),
             'target_period':json.loads(job['target_period']) if job.get('target_period') else None,
             'recent_raw_messages':await tools.history({}),
             'pending_periods':{'pending': [], 'more_periods': False} if page_only else await tools.periods({})}
-    page=project(path,job['username'],job['character_id'])
-    from .relationship_control import CONTROL_INSTRUCTION
+    page=await asyncio.to_thread(project,path,job['username'],job['character_id'])
+    from ..chat_modules.Prompts import relationship
     prompt['relationship_context']=page
-    prompt['relationship_control_instruction']=CONTROL_INSTRUCTION
+    prompt['relationship_skill']=relationship
     required_page=bool(job.get('relationship_requested') or
         (any(r['role']=='user' for r in prompt['recent_raw_messages']['messages']) and
          not complete_page((page or {}).get('relationship_page'))))
@@ -249,7 +285,7 @@ async def _review(path,job,model_config,profile,*,harness_runner=None):
     completed = False
     try:
         registered = tools.register()
-        system = SYSTEM + '\n' + IMPORTANCE_POLICY
+        system = SYSTEM + '\n' + memory
         if page_only:
             registered = {name: tool for name, tool in registered.items()
                           if name in {'stage_relationship_page', 'read_history', 'search_memory'}}

@@ -1,5 +1,7 @@
 # PonyChat 普通对话语音消息完整实施计划
 
+> 文档状态：2026-08-09 已复核。本文是计划或审计记录，结论对应其记录时点；当前实现与风险以 `docs/PROJECT_STATUS.md` 和代码为准。
+
 > 编写日期：2026-05-31  
 > 最近更新：2026-06-02  
 > 适用范围：Android App 普通对话模式、PonyChat 主后端、PonyChat Voice Lab（`voice.ponychat.org`）  

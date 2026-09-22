@@ -56,6 +56,7 @@ import top.ponychat.webview.data.model.XiangqiPrepareRequest
 import top.ponychat.webview.data.repo.ChatRepository
 import top.ponychat.webview.data.repo.MinigameRepository
 import top.ponychat.webview.ui.common.PonyTopBar
+import top.ponychat.webview.ui.common.PonyTopBarBackButton
 import top.ponychat.webview.util.ClientContextHelper
 import top.ponychat.webview.util.DebugLog
 import java.util.UUID
@@ -1231,9 +1232,7 @@ internal fun ChineseChessScreen(
                 shadowElevation = 2.dp,
                 horizontalPadding = 8.dp
             ) {
-                IconButton(onClick = onBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                }
+                PonyTopBarBackButton(onClick = onBack)
                 Text(
                     text = "中国象棋",
                     style = MaterialTheme.typography.titleMedium,

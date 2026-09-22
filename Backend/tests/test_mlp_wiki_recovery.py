@@ -44,7 +44,7 @@ def test_original_wiki_snapshot_recovers_online_failure(tmp_path, failure):
     assert data['content'] == body
     assert data['snapshot_sha256'] == hashlib.sha256((tmp_path / '辉麦与金梨果酱.txt').read_bytes()).hexdigest()
     assert data['online_status'] in {'access_denied', 'rate_limited', 'unavailable', 'timeout'}
-    assert '不是最新网页' in data['note'] and web.MLP_CANON_SCOPE in data['note']
+    assert '不是最新网页' in data['note'] and web.mlp_reference in data['note']
     assert data['url'] == URL and len(seen) == 1
     again = asyncio.run(tool.search({'url': URL}))
     assert again['cached_this_turn'] and len(seen) == 1
@@ -69,7 +69,7 @@ def test_missing_snapshot_retains_online_failure(tmp_path):
     assert 'content' not in data
 
 
-def test_search_and_page_budgets_are_independent_and_bounded(tmp_path):
+def test_search_and_page_calls_continue_beyond_old_limits(tmp_path):
     seen = []
 
     def handle(request):
@@ -85,12 +85,12 @@ def test_search_and_page_budgets_are_independent_and_bounded(tmp_path):
             assert (await tool.search({'query': str(i)}))['status'] == 'no_results'
         for i in range(3):
             assert (await tool.search({'url': 'https://example.com/' + str(i)}))['status'] == 'success'
-        assert (await tool.search({'query': 'fourth'}))['status'] == 'budget_exhausted'
-        assert (await tool.search({'url': 'https://example.com/fourth'}))['status'] == 'budget_exhausted'
+        assert (await tool.search({'query': 'fourth'}))['status'] == 'no_results'
+        assert (await tool.search({'url': 'https://example.com/fourth'}))['status'] == 'success'
         assert (await tool.search({'url': 'https://example.com/0'}))['cached_this_turn']
 
     asyncio.run(exercise())
-    assert len(seen) == 6 and tool.calls == tool.page_calls == 3
+    assert len(seen) == 8 and tool.calls == tool.page_calls == 4
 
 
 @pytest.mark.parametrize('url', [

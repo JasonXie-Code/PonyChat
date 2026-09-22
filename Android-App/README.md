@@ -21,7 +21,7 @@ Companion Runtime 的同签名、系统预装和协议检查决定设备操作�
 验收时，普通手机或普通模拟器必须显示手机版首屏；自研设备镜像必须显示主机首屏。安装环境与首屏形态的验证，不能只用 Companion 是否在线代替。
 
 > **最后更新日期**：2026-09-09
-> 当前版本：`6.0.1` / `versionCode 379`
+> 当前版本：`6.0.11` / `versionCode 389`
 
 ## 技术栈
 
@@ -110,7 +110,7 @@ cd PonyChat\Android-App
 拒绝同版本不同内容或意外降级。后端无需重启，USA/CN 不上传或保存 APK。
 
 官网 `/download/apk` 通过 USA 转发本机最新文件；App 更新下载地址为
-`http://39.101.74.217:80/download/apk`。`--activate-download` 在本地模式兼容旧命令，
+`https://39.101.74.217/download/apk`。`--activate-download` 在本地模式兼容旧命令，
 不再写服务器静态 APK alias。不要使用旧服务器发布/部署流程恢复 USA APK 文件。
 
 Debug APK 输出路径：
@@ -121,7 +121,7 @@ Release 构建需要签名配置：`Android-App/signing/keystore.properties`，�
 ## 配置
 
 - 应用名：`app/src/main/res/values/strings.xml`
-- 正式连接：`http://39.101.74.217:80`（HTTP，Server-CN 回环隧道到本机 5000）；升级时忽略旧生产域名偏好，显式调试地址仍可使用。
+- 正式连接：`https://39.101.74.217`（HTTPS，Server-CN 回环隧道到本机 5000）；升级时忽略旧生产域名偏好，显式调试地址仍可使用。
 - 默认公网地址：`app/src/main/java/top/ponychat/webview/data/prefs/AppPreferences.kt` 中 `DEFAULT_WAN_URL`
 - 当前版本号：`app/build.gradle.kts` 中 `versionName` / `versionCode`
 - 服务端最低版本门槛：后端 `Backend/config.py` 中 `PONYCHAT_MIN_APP_VERSION_NAME`，当前默认 `5.3.0`

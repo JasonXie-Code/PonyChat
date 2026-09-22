@@ -50,6 +50,13 @@ def period_digest(conn, username, character_id, category, period):
                         (username, character_id,lo,hi)).fetchall()
     return digest([dict(r) for r in rows])
 
+# Keep owner/visibility/participant checks in RAW_SELECT, but locate candidate
+# rows using existing message_id/id indexes before evaluating that contract.
+RAW_REF_FILTER = """ AND m.rowid IN (
+ SELECT rowid FROM messages WHERE message_id=?3
+ UNION ALL SELECT rowid FROM messages WHERE id=?3 AND (message_id IS NULL OR message_id=''))"""
+
+
 def resolve(conn, username, character_id, ref, *, depth=0):
     if depth > 6:
         return None
@@ -68,7 +75,7 @@ def resolve(conn, username, character_id, ref, *, depth=0):
         if not row or row['status']=='retracted' or not valid(conn,username,character_id,row,depth=depth+1):
             return None
         return digest(dict(row))
-    row = conn.execute(RAW_SELECT+" AND COALESCE(NULLIF(m.message_id,''),m.id)=?", (username,character_id,ref)).fetchone()
+    row = conn.execute(RAW_SELECT+RAW_REF_FILTER, (username,character_id,ref)).fetchone()
     if not row:
         return None
     content = dict(row)
@@ -83,7 +90,7 @@ def matches(conn, username, character_id, ref, expected, *, depth=0):
     # Existing evidence manifests remain valid when their original fingerprint
     # matches. Do not rewrite old memories or grant edited/hidden evidence.
     if actual and not ref.startswith(('note:','memory:')) and not expected.startswith('raw-v2:'):
-        row = conn.execute(RAW_SELECT+" AND COALESCE(NULLIF(m.message_id,''),m.id)=?",(username,character_id,ref)).fetchone()
+        row = conn.execute(RAW_SELECT+RAW_REF_FILTER,(username,character_id,ref)).fetchone()
         return bool(row and digest(dict(row))==expected)
     return False
 

@@ -1,6 +1,7 @@
 """Stage narrow, evidence-backed edits to user settings, separate from memory."""
+from .Prompts import AUTONOMOUS_PREFERENCES_TEXT
 
-from .Prompts import PREFERENCE_POLICY
+from .Prompts import preferences
 import json
 
 from .autonomous_contracts import user_batch
@@ -27,7 +28,7 @@ class PreferenceEdits:
         if not self.username or not self.sources:
             return
         capability('stage_personal_preference',
-            '追加、调整或取消当前角色当前模式的长期表达偏好。纯表达习惯使用此工具，不用记忆碎片。', {
+            AUTONOMOUS_PREFERENCES_TEXT['register_1'], {
                 'type': 'object', 'properties': {
                     'before': {'type': 'string', 'maxLength': MAX_PREFERENCE_LENGTH},
                     'after': {'type': 'string', 'maxLength': MAX_PREFERENCE_LENGTH},
@@ -40,7 +41,7 @@ class PreferenceEdits:
     async def stage(self, arguments):
         mid, quote = arguments['source_message_id'], arguments['source_quote']
         if mid not in self.sources or not quote.strip() or quote not in self.sources[mid]:
-            raise HarnessToolValidationError('必须引用本轮用户消息中的准确原文')
+            raise HarnessToolValidationError(AUTONOMOUS_PREFERENCES_TEXT['stage_2'])
         before, after = arguments['before'], arguments['after']
         if any(e == arguments for e in self.edits):
             return {'staged': True, 'duplicate_ignored': True, 'personal_preferences': self.value}
@@ -48,18 +49,18 @@ class PreferenceEdits:
             raise HarnessToolValidationError('本轮偏好修改过多')
         if before:
             if self.value.count(before) != 1:
-                raise HarnessToolValidationError('待调整片段必须在当前个人偏好中唯一存在')
+                raise HarnessToolValidationError(AUTONOMOUS_PREFERENCES_TEXT['stage_4'])
             updated = self.value.replace(before, after, 1)
         elif after.strip():
             updated = self.value if after.strip() in self.value else (self.value.rstrip() + '\n' + after.strip()).lstrip('\n')
         else:
             raise HarnessToolValidationError('不能提交空修改')
         if len(updated) > MAX_PREFERENCE_LENGTH:
-            raise HarnessToolValidationError('个人偏好超过长度限制；只精简本次相关要求，不删除无关偏好')
+            raise HarnessToolValidationError(AUTONOMOUS_PREFERENCES_TEXT['stage_3'])
         self.value = updated
         self.edits.append(dict(arguments))
         return {'staged': True, 'personal_preferences': self.value,
-                'note': '与本轮回复一起保存；本轮立即按新要求表达'}
+                'note': AUTONOMOUS_PREFERENCES_TEXT['stage_1']}
 
     def commit_on_connection(self, conn):
         if not self.edits:

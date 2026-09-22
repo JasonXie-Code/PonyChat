@@ -22,7 +22,7 @@ def verify():
     report = {"passed": False, "health": {}, "versions": {}, "downloads": {}, "log_details": []}
     with httpx.Client(trust_env=False, timeout=30) as client:
         for label, base in [("local", "http://127.0.0.1:5000"),
-                            ("cn", "http://39.101.74.217:80"), ("usa", "https://www.ponychat.org")]:
+                            ("cn", "https://39.101.74.217"), ("usa", "https://www.ponychat.org")]:
             response = client.get(base + "/api/health")
             response.raise_for_status()
             report["health"][label] = response.json()

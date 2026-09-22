@@ -36,14 +36,17 @@ internal fun AgentStatusCard(
     val snapshot = rememberAgentStatus(
         AgentStatusScope(username, baseUrl, characterId, mode, conversationId), lifecycleOwner, api,
     )
-    AgentStatusContent(snapshot, "$username/$characterId/$mode/${conversationId.orEmpty()}")
+    Column {
+        AgentStatusContent(snapshot, "$username/$characterId/$mode/${conversationId.orEmpty()}", mode)
+        ConversationActivityContent(snapshot, mode)
+    }
 }
 
 @Composable
-internal fun AgentStatusContent(snapshot: AgentStatusSnapshot, selectionScope: String) {
-    var selectedRun by remember(selectionScope) { mutableStateOf<String?>(null) }
-    var selecting by remember(selectionScope) { mutableStateOf(false) }
-    val agents = snapshot.agents.ifEmpty { listOfNotNull(snapshot.agent) }
+internal fun AgentStatusContent(snapshot: AgentStatusSnapshot, selectionScope: String, mode: String) {
+    var selectedRun by remember(selectionScope, mode) { mutableStateOf<String?>(null) }
+    var selecting by remember(selectionScope, mode) { mutableStateOf(false) }
+    val agents = snapshot.agents.ifEmpty { listOfNotNull(snapshot.agent) }.filter { it.mode == mode }
     val current = agents.firstOrNull { it.runId == selectedRun }
         ?: agents.firstOrNull { it.runId == snapshot.agent?.runId } ?: agents.firstOrNull()
     val notice = snapshot.notice
@@ -128,7 +131,8 @@ internal fun AgentStatusContent(snapshot: AgentStatusSnapshot, selectionScope: S
                     Text("每次模型调用、每次工具调用各消耗 1 分", style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     if (notice != null) Text("$notice；以上为上次获取的状态", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error)
+                        color = if (snapshot.noticeIsError) MaterialTheme.colorScheme.error
+                            else MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

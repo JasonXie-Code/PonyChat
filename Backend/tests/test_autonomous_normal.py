@@ -37,14 +37,26 @@ def model_result(text="我在这里。", finish="completed"):
     return {"finish_reason": finish, "final_response": json.dumps(data, ensure_ascii=False), "usage": {}, "llm_api_calls": 1}
 
 
-def test_autonomous_system_defaults_to_no_dash_in_visible_replies():
-    assert '默认不要使用破折号' in normal.SYSTEM
-    assert '必须用第二人称“你”指用户' in normal.SYSTEM
-    assert '无论当前用户是动作主体、动作对象、心理所想对象还是回忆对象' in normal.SYSTEM
-    assert '（你抱住我的那一刻，我一下安静下来）' in normal.SYSTEM
-    assert '以用户明确要求为准' in normal.SYSTEM
-    assert normal.DEFAULT_CHARACTER_REPLY_STYLE_PROMPT in normal.SYSTEM
-    assert '主体与对象换位时，仍保持此人称' in normal.OUTPUT_CONTRACT
+def test_autonomous_system_contains_only_agent_workflow_and_skill_calls():
+    assert '负责阅读当前任务和对话资料，调用工具' in normal.SYSTEM
+    assert '必须成功调用load_chat_skill' in normal.SYSTEM
+    assert '默认不要使用破折号' not in normal.SYSTEM
+    assert normal.DEFAULT_CHARACTER_REPLY_STYLE_PROMPT not in normal.SYSTEM
+
+
+def test_normal_chat_uses_time_budget_without_call_count_limit():
+    async def runner(prompt, config, tools, **options):
+        assert options['max_tool_calls'] is None
+        assert 0 < options['tool_timeout_seconds'] <= 60
+        assert options['delivery_timeout_seconds'] is None
+        assert options['stop_on_tool_budget'] is True
+        return model_result() | {'tool_call_count': 32}
+
+    result = run(normal.run_autonomous_turn(
+        messages=[{'role': 'user', 'content': '你好', 'message_id': 'u1'}],
+        character_profile='温和', environment='', model_config={}, harness_runner=runner))
+    assert result['tool_call_count'] == 32
+    assert result['output_format_repairs'] == 0
 
 
 def test_missing_final_container_closer_does_not_call_model_again():
@@ -65,7 +77,7 @@ def test_missing_final_container_closer_does_not_call_model_again():
     assert json.loads(result['envelope'])['bubbles'][0]['parts'][0]['text'] == '我望着你。'
 
 
-def test_personal_preferences_follow_default_style_prompt(monkeypatch):
+def test_personal_preferences_are_appended_without_style_rules_in_system(monkeypatch):
     captured = {}
 
     async def runner(_prompt, _config, _tools, **kwargs):
@@ -79,7 +91,8 @@ def test_personal_preferences_follow_default_style_prompt(monkeypatch):
 
     assert result['bubble_count'] == 1
     system = captured['system_prompt']
-    assert system.index('默认不要使用破折号') < system.index('用户偏好：使用第三人称括号描写。')
+    assert system.endswith('用户偏好：使用第三人称括号描写。')
+    assert '默认不要使用破折号' not in system
 
 
 def make_store(path, sources=("latest",)):
@@ -117,7 +130,7 @@ def test_simple_chat_needs_no_tool_calls_and_gets_raw_context():
     assert observed["character_profile"] == "暮光闪闪：独角兽"
     assert observed["environment"] == "傍晚，窗边"
     assert observed["latest_user_message"]["content"] == "晚安！"
-    assert [m["message_id"] for m in observed["recent_raw_messages"]] == [str(i) for i in range(10, 40)]
+    assert [m["message_id"] for m in observed["recent_raw_messages"]] == [str(i) for i in range(40)]
     assert observed["memory_enabled"] is False
     assert observed["expression_context"]["recent_10"]["observed_turns"] == 1
     envelope = json.loads(result["envelope"])
@@ -163,12 +176,8 @@ def test_agent_updates_relationship_fields_and_receives_code_contract():
     assert 'balanced不表示拘谨' in contract['agent_discretion']
     assert '字段变化通过工具提交' in contract['agent_discretion']
     assert result["relationship_state_update"] == decision
-    assert "最新原文使关系阶段、亲密风格、请求推进程度或压力水平发生实质变化时" in observed["system_prompt"]
-    assert "没有变化时沿用原状态，不例行重复提交" in observed["system_prompt"]
-    assert "不存在另一个规划模型" in observed["system_prompt"]
-    for stage in ("new_contact", "uncertain", "familiar", "flirting", "committed_partner", "intimate_partner",
-                  "broken_up", "in_conflict", "mentor_student", "trusted_companion", "family_like"):
-        assert stage in observed["system_prompt"]
+    assert "最新原文使关系阶段、亲密风格、请求推进程度或压力水平发生实质变化时" not in observed["system_prompt"]
+    assert "不存在另一个规划模型" not in observed["system_prompt"]
 
 
 def test_agent_can_keep_relationship_state_without_calling_update_tool():
@@ -218,7 +227,7 @@ def test_current_images_are_native_input_to_the_same_agent():
         assert json.loads(prompt[0]["text"])["current_images_available"] is True
         assert prompt[1] == block
         assert "inspect_current_images" not in tools
-        assert "自己读取画面和文字，按实际内容回应" in kwargs["system_prompt"]
+        assert "自己读取画面和文字，按实际内容回应" not in kwargs["system_prompt"]
         result = model_result("图里是一只蓝色杯子。")
         data = json.loads(result['final_response'])
         data['image_observation'] = {'image_summary':'一只蓝色杯子','visible_text':'',
@@ -494,20 +503,20 @@ def test_negative_ordinary_or_untrusted_requests_are_not_forced_to_retry(tmp_pat
     assert calls == [1] and result["memory_completion_repairs"] == 0
 
 
-def test_format_repairs_and_automatic_retry_share_three_minute_deadline(tmp_path, monkeypatch):
-    store = make_store(tmp_path / "app.sqlite")
-    clock = iter([0.0, 0.0, 181.0, 181.0])
-    monkeypatch.setattr(normal, "time", types.SimpleNamespace(monotonic=lambda: next(clock)))
-    attempts = []
-
-    async def runner(*args, **kwargs):
-        attempts.append(1)
-        return model_result() | {"final_response": "not JSON"}
-
-    with pytest.raises(normal.NormalAgentError, match="total time budget"):
-        run(turn(messages=[row_message("latest", "请记住我喜欢红茶")], memory_store=store, harness_runner=runner))
-    assert attempts == [1]
-    assert store.commit(reply_succeeded=True, generation_is_current=lambda: True) == []
+def test_delivery_survives_old_total_deadline_and_repairs_json(monkeypatch):
+    clock = [0.0]
+    monkeypatch.setattr(normal, 'time', types.SimpleNamespace(monotonic=lambda: clock[0]))
+    limits = []
+    async def runner(*args, **options):
+        limits.append(options['timeout_seconds'])
+        if len(limits) == 1:
+            clock[0] = 60
+            return model_result(finish='tool_time_budget_exhausted')
+        clock[0] += 1000
+        return model_result() if len(limits) == 3 else model_result() | {'final_response': 'invalid JSON'}
+    result = run(turn(harness_runner=runner, deadline=1))
+    assert limits == [60, None, None]
+    assert result['output_format_repairs'] == 1
 
 
 def test_date_only_validation_feedback_can_be_corrected_using_derived_source_time(tmp_path):
@@ -639,6 +648,27 @@ def test_failed_memory_tool_remains_invalid_without_forcing_final_retry(tmp_path
     assert store.commit(reply_succeeded=True, generation_is_current=lambda: True) == []
 
 
+def test_expression_read_failure_is_not_retried_by_outer_recovery():
+    from autonomous_normal_under_test.autonomous_expression_paths import ExpressionReadIncomplete
+    calls = []
+    usage = []
+
+    async def runner(*args, **kwargs):
+        calls.append(1)
+        error = ExpressionReadIncomplete('missing reply_review')
+        error.harness_usage = {'usage': {'total_tokens': 23}, 'llm_api_calls': 1}
+        raise error
+
+    with pytest.raises(ExpressionReadIncomplete):
+        run(normal.run_autonomous_turn(
+            messages=[{'role': 'user', 'content': '你好', 'message_id': 'u1'}],
+            character_profile='温和', environment='', model_config={},
+            harness_runner=runner, usage_sink=usage.append))
+    assert calls == [1]
+    assert usage[-1]['automatic_retries'] == 0
+    assert usage[-1]['usage']['total_tokens'] == 23
+
+
 @pytest.mark.parametrize('raw', ['[]', 'null', '42', '{}'])
 def test_incompatible_json_shape_is_retried_as_format_error(raw):
     calls = []
@@ -647,3 +677,34 @@ def test_incompatible_json_shape_is_retried_as_format_error(raw):
         return model_result() | {'final_response': raw} if len(calls) == 1 else model_result()
     result = run(turn(harness_runner=runner))
     assert calls == [1, 1] and result['output_format_repairs'] == 1
+
+
+@pytest.mark.parametrize("budget", [8192, 393216])
+def test_model_output_budget_survives_incomplete_run_retry(budget):
+    calls = []
+
+    async def runner(prompt, config, tools, **options):
+        calls.append(options["max_tokens"])
+        return model_result(finish="max-tokens" if len(calls) == 1 else "completed")
+
+    result = run(normal.run_autonomous_turn(
+        messages=[{"role": "user", "content": "你好", "message_id": "u1"}],
+        character_profile="温和", environment="",
+        model_config={"options": {"max_tokens": budget}}, harness_runner=runner))
+    assert calls == [budget, budget]
+    assert result["automatic_retries"] == 1
+
+
+def test_history_preserves_sticker_labels_and_descriptions(history_db):
+    metadata = {'intro': '适合俏皮回应', 'detail': '抬蹄碰角', 'custom_tags': ['俏皮'], 'image_text': ''}
+    with sqlite3.connect(history_db) as conn:
+        conn.execute('CREATE TABLE message_attachments(conversation_id TEXT,message_id TEXT,type TEXT,asset_id TEXT,name TEXT,metadata_json TEXT)')
+        conn.executemany('INSERT INTO message_attachments VALUES(?,?,?,?,?,?)', [
+            ('c1', 'm8', 'sticker', 'visible', '素材', json.dumps(metadata, ensure_ascii=False)),
+            ('c1', 'm8', 'sticker', 'broken', '旧素材', '{bad json'),
+            ('c2', 'm8', 'sticker', 'foreign', '外部素材', json.dumps({'detail': 'private'})),
+        ])
+    attachments = read(history_db)[-1]['attachments']
+    assert len(attachments) == 2
+    assert attachments[0]['metadata'] == metadata
+    assert 'metadata' not in attachments[1]

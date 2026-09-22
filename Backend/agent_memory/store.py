@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import evidence
+from .prose import clean_memory_prose
 from .schema import connect, ensure, state, bump
 
 CATEGORIES = ('fact','preference','episode','activity','commitment','relationship','understanding','current_scene',
@@ -64,6 +65,8 @@ class AgentMemoryStore:
         if category=='relationship_state':
             from .relationship import normalize_decision
             content=json.dumps(normalize_decision(json.loads(content),strict=True),ensure_ascii=False)
+        if isinstance(content, str) and category not in ('relationship_page', 'relationship_state'):
+            content = clean_memory_prose(content)
         if not isinstance(content,str) or not content.strip() or len(content)>8000:
             raise ValueError('content must contain 1..8000 characters')
         if isinstance(source_message_ids,(str,bytes)):
@@ -71,12 +74,16 @@ class AgentMemoryStore:
         refs = list(dict.fromkeys(map(str,source_message_ids)))
         if not 1<=len(refs)<=128 or not set(refs)<=self._allowed.keys():
             raise ValueError('Provide 1..128 previously read visible evidence IDs')
-        try:
-            parsed = datetime.fromisoformat(occurred_at.replace('Z','+00:00'))
-            if parsed.tzinfo is None:
-                raise ValueError()
-        except (ValueError,AttributeError):
-            raise ValueError('occurred_at must be ISO 8601 with time and timezone') from None
+        if occurred_at is None:
+            normalized_time = ''  # Legacy NOT NULL column; empty means unknown, never now.
+        else:
+            try:
+                parsed = datetime.fromisoformat(occurred_at.replace('Z','+00:00'))
+                if parsed.tzinfo is None:
+                    raise ValueError()
+                normalized_time = parsed.isoformat()
+            except (ValueError,AttributeError):
+                raise ValueError('occurred_at must be null or ISO 8601 with time and timezone') from None
         if type(expected_version) is not int or expected_version<0 or (expected_version and not entry_id):
             raise ValueError('Updates require an entry_id and expected_version')
         if kind=='current_scene' and entry_id is None:
@@ -111,7 +118,7 @@ class AgentMemoryStore:
         elif period:
             raise ValueError('Only summaries have a period')
         draft = dict(entry_id=mid,kind=kind,category=category,status=status,certainty=certainty,content=content.strip(),
-                     source_message_ids=refs,occurred_at=parsed.isoformat(),expected_version=expected_version,
+                     source_message_ids=refs,occurred_at=normalized_time,expected_version=expected_version,
                      period=period,period_hash=period_hash,importance=importance,evidence_json={r:self._allowed[r] for r in refs})
         self._drafts[mid] = draft
         return {k:v for k,v in draft.items() if k not in ('evidence_json','period_hash')} | {'version':expected_version+1,'staged':True}
@@ -252,7 +259,8 @@ def list_entries(conn, username, character_id, *, conversation_id=None, query=''
         if terms:
             order = '(' + '+'.join('(instr(lower(v.content),?)>0)' for _ in terms) + ') DESC,' + order
             args.extend(terms)
-    rows = conn.execute(sql+' ORDER BY '+order+' LIMIT 500',args).fetchall()
+    result_limit = max(1,min(500,int(limit)))
+    rows = conn.execute(sql+' ORDER BY '+order+' LIMIT 500',args)
     results = []
     for row in rows:
         score = sum(t in row['content'].lower() for t in terms)
@@ -262,10 +270,17 @@ def list_entries(conn, username, character_id, *, conversation_id=None, query=''
         if not is_valid and not include_stale:
             continue
         item = dict(row)
+        if not item.get('occurred_at'):
+            item['occurred_at'] = None
         item['importance'] = item.pop('effective_importance')
         item.pop('evidence_json'); item.pop('period_hash')
         item.update(source_message_ids=json.loads(row['source_message_ids']),staged=False,
                     stale=not is_valid,source_ref=f"memory:{row['entry_id']}:{row['version']}")
         results.append((score,item))
+        # With no search terms SQL already has the final stable ordering.
+        # Stop only after enough visible/valid rows; stale rows never consume
+        # the requested result count. Keyword ranking still considers all 500.
+        if not terms and len(results) >= result_limit:
+            break
     results.sort(key=lambda r:(r[0],r[1]['importance'] if rank_by_importance else 0),reverse=True)
-    return [item for _,item in results[:max(1,min(500,int(limit)))]]
+    return [item for _,item in results[:result_limit]]

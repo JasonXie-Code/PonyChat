@@ -114,7 +114,7 @@ class Entry:
             if self.harness is not None:
                 await asyncio.to_thread(self.harness.close)
         finally:
-            self.home.cleanup()
+            await asyncio.to_thread(self.home.cleanup)
 
     async def close(self):
         if self.close_task is None:
@@ -167,7 +167,7 @@ class Pool:
         model_patch = provider_patch(config)
         key = (factory, hashlib.sha256(json.dumps([options, model_patch, list(registered.values()), system_prompt],
                    sort_keys=True, ensure_ascii=False).encode()).digest())
-        deadline = time.monotonic()+timeout
+        deadline = time.monotonic()+timeout if timeout is not None else None
         async with self.spawn_lock:
             for entry in list(self.entries):
                 if not entry.busy and entry.key == key and entry.alive() and time.monotonic()-entry.last_used < 15:
@@ -178,7 +178,7 @@ class Pool:
                 if not entry.busy:
                     await self.retire(entry)
             while not memory_allows_start() and self.entries:
-                if time.monotonic() >= deadline:
+                if deadline is not None and time.monotonic() >= deadline:
                     raise TimeoutError('Harness memory admission deadline')
                 await asyncio.sleep(.1)
                 for entry in list(self.entries):
@@ -204,11 +204,11 @@ class Pool:
                 entry.harness = factory(dsh_home=entry.home.name, cwd=entry.home.name, profile='sdk-minimal',
                     patches=(str(patch_path),), **options,
                     env={'DSH_SYSTEM_PROMPT': system_prompt, 'PONYCHAT_HARNESS_TOKEN': entry.token},
-                    initialize_timeout_seconds=min(60, timeout), request_timeout_seconds=None, shutdown_timeout_seconds=1)
+                    initialize_timeout_seconds=min(60, timeout) if timeout is not None else 60, request_timeout_seconds=None, shutdown_timeout_seconds=1)
                 # Single-file startup prevents concurrent cold starts from thrashing the page cache.
                 starter = asyncio.create_task(asyncio.to_thread(entry.harness.start))
                 try:
-                    await asyncio.wait_for(asyncio.shield(starter), max(.001, deadline-time.monotonic()))
+                    await asyncio.wait_for(asyncio.shield(starter), max(.001, deadline-time.monotonic()) if deadline is not None else None)
                 except BaseException:
                     # Interrupt initialization first, then close again after its
                     # thread settles (it may have spawned just after the first close).

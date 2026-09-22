@@ -296,6 +296,9 @@ class ChatRepository(private val prefs: AppPreferences) {
         try {
             call.execute().use { response ->
                 if (!response.isSuccessful) {
+                    if (isNormalMode && response.code in setOf(408, 502, 503, 504)) {
+                        throw java.io.IOException("Chat transport HTTP ${response.code}")
+                    }
                     if (response.code == 409) {
                         val body = response.body?.string() ?: ""
                         val busyMsg = try {
@@ -449,6 +452,8 @@ class ChatRepository(private val prefs: AppPreferences) {
                 return@flow
             }
             DebugLog.e(TAG, "聊天请求错误: ${e.message}", e)
+            // Socket failure is not server rejection: retain normal mode recovery.
+            if (e is CancellationException || (isNormalMode && e is java.io.IOException)) throw e
             emit(ChatDelta.Error(e.toUserMessage("消息发送失败，请检查网络后重试")))
         } finally {
             cancelHandle?.dispose()

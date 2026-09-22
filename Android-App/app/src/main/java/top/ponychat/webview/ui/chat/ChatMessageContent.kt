@@ -215,7 +215,7 @@ private fun getB64CacheDir(context: Context): java.io.File {
 
 // _mediaCache：缓存 splitMessageMedia 解析结果；最大 300 条消息
 private val _mediaCache: android.util.LruCache<Long, MessageMedia> = android.util.LruCache(300)
-private const val LOCAL_IMAGE_REMOTE_PREFS = "ponychat_local_image_remote"
+internal const val LOCAL_IMAGE_REMOTE_PREFS = "ponychat_local_image_remote"
 
 /** 把 (len, hash) 两个 Int 压缩成一个 Long 作为缓存 key */
 private fun contentCacheKey(len: Int, hash: Int): Long =
@@ -439,13 +439,14 @@ internal fun replaceLocalChatImagesForServer(context: Context, content: String):
 @Composable
 internal fun rememberChatImageRequest(urlOrDataUrl: String): ImageRequest {
     val context = LocalContext.current
-    val len  = urlOrDataUrl.length
-    val hash = urlOrDataUrl.hashCode()
-    return remember(len, hash) {
-        val cacheKey = if (urlOrDataUrl.startsWith("data:")) "base64_${len}_${hash}" else urlOrDataUrl
-        val urlShort = urlOrDataUrl.takeLast(60)
+    val resolvedUrl = rememberResolvedChatImageUrl(urlOrDataUrl)
+    val len = resolvedUrl.length
+    val hash = resolvedUrl.hashCode()
+    return remember(context, resolvedUrl) {
+        val cacheKey = if (resolvedUrl.startsWith("data:")) "base64_${len}_${hash}" else resolvedUrl
+        val urlShort = resolvedUrl.takeLast(60)
         ImageRequest.Builder(context)
-            .data(imageModelForCoil(urlOrDataUrl, context))
+            .data(imageModelForCoil(resolvedUrl, context))
             .memoryCacheKey(cacheKey)
             .diskCacheKey(cacheKey)
             .listener(
@@ -467,13 +468,14 @@ internal fun rememberChatImageRequest(urlOrDataUrl: String): ImageRequest {
 @Composable
 internal fun rememberThumbnailImageRequest(urlOrDataUrl: String): ImageRequest {
     val context = LocalContext.current
-    val len  = urlOrDataUrl.length
-    val hash = urlOrDataUrl.hashCode()
-    return remember(len, hash) {
-        val cacheKey = if (urlOrDataUrl.startsWith("data:")) "thumb_${len}_${hash}" else "thumb_$urlOrDataUrl"
-        val urlShort = urlOrDataUrl.takeLast(60)
+    val resolvedUrl = rememberResolvedChatImageUrl(urlOrDataUrl)
+    val len = resolvedUrl.length
+    val hash = resolvedUrl.hashCode()
+    return remember(context, resolvedUrl) {
+        val cacheKey = if (resolvedUrl.startsWith("data:")) "thumb_${len}_${hash}" else "thumb_$resolvedUrl"
+        val urlShort = resolvedUrl.takeLast(60)
         ImageRequest.Builder(context)
-            .data(imageModelForCoil(urlOrDataUrl, context))
+            .data(imageModelForCoil(resolvedUrl, context))
             .size(360, 360)
             .precision(coil.size.Precision.INEXACT)
             .scale(coil.size.Scale.FILL)

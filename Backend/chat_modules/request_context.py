@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import base64
 import json
@@ -16,8 +16,6 @@ from ..user_model_selection import get_user_active_model
 from ..utils import ChatMessage, ChatRequest, pil_image_to_rgb_on_white
 from ..websocket import generation_locker, manager
 from .character import (
-    NORMAL_MODE_OUTPUT_STYLE_PROMPT,
-    NORMAL_MODE_WRITER_ANCHOR_PROMPT,
     ROLEPLAY_ANCHOR_PROMPT,
     load_character_from_db,
     load_character_prompts,
@@ -175,7 +173,8 @@ async def resolve_auth_and_quota(
 
     skip_generation_lock = (bool(getattr(request, "_normal_multi_speaker_child", False))
                             or bool(getattr(request, '_normal_live_turn', None)
-                                    and getattr(request, '_normal_accepted_already_streamed', False)))
+                                    and getattr(request, '_normal_accepted_already_streamed', False)
+                                    and not getattr(request, '_normal_reply_batch', None)))
     if username and character_id and not skip_generation_lock:
         clear_generation_cancelled(username, character_id, client_id)
 
@@ -409,7 +408,6 @@ async def build_user_context(
             identity.get("settings") or {},
             effective_speaker_character_id(request),
             request.mode or "normal",
-            compact=compact,
         )
         if preferences:
             user_context_prompt += "\n\n" + preferences
@@ -512,6 +510,14 @@ def _image_url_from_attachment(attachment: Any) -> str:
         if isinstance(value, str) and value.strip():
             candidate = value.strip()
             break
+    if not candidate and att_type in {"sticker", "emoji_asset"}:
+        # Persisted/mobile attachments may carry only IDs, just like the UI's
+        # image fallback. Feed those originals to vision as well.
+        for key, route in (("asset_id", "admin/assets"), ("user_sticker_id", "assets/stickers")):
+            asset_id = str(data.get(key) or "")
+            if re.fullmatch(r"[A-Za-z0-9_-]+", asset_id):
+                candidate = f"/api/{route}/{asset_id}/file"
+                break
     if not candidate:
         return ""
     if att_type in {"sticker", "emoji_asset"} and re.fullmatch(
@@ -701,8 +707,8 @@ def build_client_user_assistant_messages_from_request(
             emotion_text = _meta_str(meta, "emotions")
             scene_text = _meta_str(meta, "scenes")
             line_parts = [
-                "【用户发送表情包｜文字语义转写】",
-                "互动说明：这是一条聊天表情包/贴纸，系统已将它转写为文字语义；角色应把它理解为用户对当前文字、当前话题或上一句话的态度补充。若同一条消息里还有文字，必须先结合文字意图判断表情包是在表达期待、催促、调侃、赞同、安慰、害羞、得意或开心等哪一种态度；不要脱离文字语境默认说用户“心情好”。默认不要复述素材细节、素材名、标签、具体角色、物品或姿势；除非用户明确询问素材里是谁、有哪些元素或写了什么字，否则第一反应应概括用户此刻对当前话题的态度，再自然延续当前聊天。无需声明能力限制或素材不可访问。",
+                "【用户发送表情包｜主要语义说明】",
+                "互动说明：这是一条聊天表情包/贴纸。以下标签、简介和详细说明是理解表情包的主要依据，识图只作辅助；两者冲突时优先按标签和说明回应。结合用户文字及当前话题自然反应，不必复述标签或解释识图差异，不要补充未经确认的动作和表情。原图读取失败时仍可按标签含义回应，但不要假装亲眼看过。",
             ]
             if name:
                 line_parts.append(f"素材名（内部参考，回复时不要复述名称或据此点名素材角色）：{name}")
@@ -991,8 +997,6 @@ async def assemble_messages(
         if persona_prompt:
             system_prefix.append({"role": "system", "content": persona_prompt})
             if (request.mode or "normal") == "normal":
-                system_prefix.append({"role": "system", "content": NORMAL_MODE_WRITER_ANCHOR_PROMPT})
-                system_prefix.append({"role": "system", "content": NORMAL_MODE_OUTPUT_STYLE_PROMPT})
                 guest_prompt = speaker_context_prompt(request)
                 if guest_prompt:
                     system_prefix.append({"role": "system", "content": guest_prompt})
@@ -1031,6 +1035,9 @@ async def assemble_messages(
         memory_block = replace_user_placeholder(memory_block, display_name)
         memory_block = (
             f"【记忆指代说明】以下长期记忆中的 {USER_MEMORY_PLACEHOLDER}、USER 或“用户”均指当前用户「{display_name}」。\n"
+            "【记忆只作事实依据，不作为表达方式依据】以下条目只用于确认事实、经历、偏好和关系；"
+            "不得把记忆正文的用词、句式、比喻、语气、口癖或叙述方式当作表达范本，"
+            "也不因为某个词在记忆里出现过就在回复中继续使用它。角色自己的表达方式以角色设定、当前场景和本轮对话为准。\n"
             + memory_block
         )
         system_prefix.append({"role": "system", "content": memory_block})

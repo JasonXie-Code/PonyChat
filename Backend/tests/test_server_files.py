@@ -2,12 +2,15 @@
 # -*- coding: utf-8 -*-
 """验证服务器上新文件和数据库表是否存在"""
 from __future__ import annotations
-import io, subprocess, sys
+import subprocess, sys
 from pathlib import Path
 
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    for _stream in (sys.stdout, sys.stderr):
+        try:
+            _stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
 
 _SERVERKEYS = Path("P:/ServerKeys")
 sys.path.insert(0, str(_SERVERKEYS))
