@@ -142,7 +142,7 @@ MAX_REACTION_CHARS = 30
 _COMPANION_ROLEPLAY_ANCHOR = (
     "角色扮演规则：你就是上方设定中描述的那个角色，永远不要承认自己是 AI 或程序，"
     "若被问到，以符合角色性格的方式困惑、否认或反问即可。"
-    "说话要自然口语化，有自己的情绪，不要像助手一样开场，不要用 Markdown 格式。"
+    "以发消息的方式回应，有自己的情绪，不要像助手一样开场，不要用 Markdown 格式。"
 )
 
 
@@ -676,7 +676,7 @@ async def analyze_frame(
         ) + _env_block + (
             f"你正在陪用户玩游戏/看他的屏幕，用户在看着屏幕的同时直接跟你说了话。"
             f"请结合截图内容理解上下文，并用你的角色口吻自然回应用户说的话，"
-            f"不超过{limit}字，口语化，不要废话，不加任何前缀或引号。"
+            f"不超过{limit}字，不要废话，不加任何前缀或引号。"
         )
         image_data_url = f"data:image/jpeg;base64,{body.image_base64}"
         current_user_msg = {
@@ -695,7 +695,7 @@ async def analyze_frame(
             f"{persona_with_memory}\n\n" if persona_with_memory else ""
         ) + _env_block + (
             f"你正在陪用户玩游戏/看他的屏幕，现在他直接在跟你说话。"
-            f"请用你的角色口吻自然回应，不超过{limit}字，口语化，不要废话，不加任何前缀或引号。"
+            f"请用你的角色口吻自然回应，不超过{limit}字，不要废话，不加任何前缀或引号。"
         )
         current_user_msg = {"role": "user", "content": body.user_text.strip()}
         token_budget = max(60, limit * 3)
@@ -712,7 +712,7 @@ async def analyze_frame(
             f"1. 如果截图里的输入框/文本区域中有正在输入的文字，且内容像是在对你说话"
             f"（例如提到你的名字「{char_name}」、向你提问、跟你聊天），"
             f"请直接用角色口吻回应这段话，不超过{limit}字。\n"
-            f"2. 否则，用你的角色口吻发表一句简短的陪玩评论（不超过{limit}字，口语化，自然，不要废话）。\n"
+            f"2. 否则，用你的角色口吻发表一句简短的陪玩评论（不超过{limit}字，自然，不要废话）。\n"
             "只输出回应本身，不加任何前缀或引号。"
         )
         image_data_url = f"data:image/jpeg;base64,{body.image_base64}"
@@ -868,7 +868,7 @@ async def analyze_frame_stream(
                 f"要求：1.不能重复或改写刚才说过的内容；"
                 f"2.可以从新角度评论当前画面、追问用户一个问题、或自然转到相关话题；"
                 f"3.内容与上一句要有递进、转折或互动关系，不能只是换个说法重复。"
-                f"口语化自然，不超过{limit}字，不加任何前缀或引号。"
+                f"自然回应，不超过{limit}字，不加任何前缀或引号。"
             )
         system_prompt = (
             f"{persona_with_memory}\n\n" if persona_with_memory else ""
@@ -894,7 +894,7 @@ async def analyze_frame_stream(
         ) + _env_block + (
             f"你正在陪用户玩游戏/看他的屏幕，用户在看着屏幕的同时直接跟你说了话。"
             f"请结合截图内容理解上下文，并用你的角色口吻自然回应用户说的话，"
-            f"不超过{limit}字，口语化，不要废话，不加任何前缀或引号。"
+            f"不超过{limit}字，不要废话，不加任何前缀或引号。"
         )
         image_data_url = f"data:image/jpeg;base64,{body.image_base64}"
         current_user_msg = {
@@ -913,7 +913,7 @@ async def analyze_frame_stream(
             f"{persona_with_memory}\n\n" if persona_with_memory else ""
         ) + _env_block + (
             f"你正在陪用户玩游戏/看他的屏幕，现在他直接在跟你说话。"
-            f"请用你的角色口吻自然回应，不超过{limit}字，口语化，不要废话，不加任何前缀或引号。"
+            f"请用你的角色口吻自然回应，不超过{limit}字，不要废话，不加任何前缀或引号。"
         )
         current_user_msg = {"role": "user", "content": body.user_text.strip()}
         token_budget = max(60, limit * 3)
@@ -929,7 +929,7 @@ async def analyze_frame_stream(
             f"1. 如果截图里的输入框/文本区域中有正在输入的文字，且内容像是在对你说话"
             f"（例如提到你的名字「{char_name}」、向你提问、跟你聊天），"
             f"请直接用角色口吻回应这段话，不超过{limit}字。\n"
-            f"2. 否则，用你的角色口吻发表一句简短的陪玩评论（不超过{limit}字，口语化，自然，不要废话）。\n"
+            f"2. 否则，用你的角色口吻发表一句简短的陪玩评论（不超过{limit}字，自然，不要废话）。\n"
             "只输出回应本身，不加任何前缀或引号。"
         )
         image_data_url = f"data:image/jpeg;base64,{body.image_base64}"

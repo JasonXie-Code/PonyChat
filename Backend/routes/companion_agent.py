@@ -685,7 +685,7 @@ async def agent_action_stream(
         else:
             task_instruction = (
                 f"用户没有回应你，你趁空档主动再说一句话延续聊天。"
-                f"不能重复刚才说过的内容；口语化自然，不超过{limit}字，不加任何前缀或引号。"
+                f"不能重复刚才说过的内容；自然回应，不超过{limit}字，不加任何前缀或引号。"
             )
         system_prompt = (
             f"{persona_with_memory}\n\n" if persona_with_memory else ""
@@ -710,7 +710,7 @@ async def agent_action_stream(
             f"{persona_with_memory}\n\n" if persona_with_memory else ""
         ) + _env_block + agent_task_prefix + (
             f"用户发来了截图和文字。请结合截图理解上下文，用角色口吻自然回应，"
-            f"不超过{limit}字，口语化，不加任何前缀或引号。"
+            f"不超过{limit}字，不加任何前缀或引号。"
         )
         image_data_url = f"data:image/jpeg;base64,{body.image_base64}"
         current_user_msg = {
@@ -728,7 +728,7 @@ async def agent_action_stream(
         system_prompt = (
             f"{persona_with_memory}\n\n" if persona_with_memory else ""
         ) + _env_block + agent_task_prefix + (
-            f"用户直接跟你说话了。请用角色口吻自然回应，不超过{limit}字，口语化，不加任何前缀或引号。"
+            f"用户直接跟你说话了。请用角色口吻自然回应，不超过{limit}字，不加任何前缀或引号。"
         )
         current_user_msg = {"role": "user", "content": body.user_text.strip()}
         token_budget = max(60, limit * 3)
@@ -741,7 +741,7 @@ async def agent_action_stream(
             f"{persona_with_memory}\n\n" if persona_with_memory else ""
         ) + _env_block + agent_task_prefix + (
             "观察截图，用角色口吻发表一句简短评论（同时你会决定要不要帮用户点点按钮）。"
-            f"不超过{limit}字，口语化，不加前缀或引号。"
+            f"不超过{limit}字，不加前缀或引号。"
         )
         image_data_url = f"data:image/jpeg;base64,{body.image_base64}"
         current_user_msg = {
