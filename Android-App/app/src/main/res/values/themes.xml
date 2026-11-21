@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 基础主题 -->
+    <style name="Theme.PonyChatApp" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/pony_primary</item>
+        <item name="colorPrimaryDark">@color/pony_primary_dark</item>
+        <item name="colorAccent">@color/pony_primary</item>
+        <item name="android:colorAccent">@color/pony_primary</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+
+    <!-- 全屏主题 -->
+    <style name="Theme.PonyChatApp.Fullscreen" parent="Theme.PonyChatApp">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
+
+</resources>

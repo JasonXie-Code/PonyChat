@@ -1,0 +1,8 @@
+{
+  "active_model": "deepseek-flash",
+  "model_sources": [
+    "models/deepseek.json",
+    "models/local.json"
+  ],
+  "custom_models": []
+}

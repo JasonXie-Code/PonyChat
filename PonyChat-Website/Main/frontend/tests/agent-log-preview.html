@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent 日志组件验收</title>
+<style>body{font-family:system-ui,sans-serif;margin:24px;background:#f8fafc;color:#24344b}#app{max-width:720px;margin:auto}output{display:block;padding:12px}</style>
+<div id="app"></div>
+<script type="module">
+import { createApp, h, ref } from 'vue'
+import AgentLogDetails from '../src/views/admin/sections/AgentLogDetails.vue'
+const detail = {
+  stage: 'AGENT_RUN_RESPONSE', traceId: 'synthetic-trace-001',
+  raw: { params: { run_number: 2 }, data: {
+    llm_api_calls: 2, tool_call_count: 2, finish_reason: 'completed',
+    events: [
+      { type: 'step/start', elapsed_ms: 4, data: { turn: 1, step: 1 } },
+      { type: 'tool/execution', elapsed_ms: 124, data: { tool: 'search_memory', arguments: { query: '约定' },
+        status: 'success', http_status: 200, latency_ms: 20, result: { entries: ['周六一起看书'] } } },
+      { type: 'tool/execution', elapsed_ms: 160, data: { tool: 'web_search', arguments: { query: '天气' },
+        status: 'error', http_status: 500, latency_ms: 30, error: { type: 'TimeoutError', message: '合成测试：搜索超时' } } },
+      { type: 'assistant/message', elapsed_ms: 250, data: { turn: 1, step: 2, content: '记得周六一起看书。' } },
+    ],
+  } },
+}
+createApp({ setup() {
+  const selected = ref('尚未选择链路')
+  return () => [h(AgentLogDetails, { detail, onTrace: value => selected.value = value }), h('output', selected.value)]
+} }).mount('#app')
+</script>
+</html>

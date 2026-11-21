@@ -1,0 +1,17 @@
+{
+  "version_name": "6.0.18",
+  "version_code": 396,
+  "package": "top.ponychat.webview",
+  "sha256": "5af11480525c1181881336ada74677bd1fbd4c130d818c61b33227fdf8d1c5b4",
+  "bytes": 12062116,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.0.18-396-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.0.18-396-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

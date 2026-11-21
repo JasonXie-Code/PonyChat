@@ -1,0 +1,76 @@
+.pony-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  color: inherit;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pony-checkbox-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.pony-checkbox-box {
+  position: relative;
+  flex: 0 0 auto;
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid rgba(100, 116, 139, 0.55);
+  border-radius: 4px;
+  background: rgba(15, 23, 42, 0.95);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.pony-checkbox-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 4px;
+  height: 8px;
+  margin: auto;
+  border: solid #ddd6f5;
+  border-width: 0 2px 2px 0;
+  box-sizing: border-box;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-1px) rotate(45deg) scale(0.78);
+  transition: opacity 0.14s, transform 0.14s;
+}
+
+.pony-checkbox:hover .pony-checkbox-box {
+  border-color: rgba(159, 134, 214, 0.42);
+}
+
+.pony-checkbox-input:focus-visible + .pony-checkbox-box {
+  box-shadow: 0 0 0 2px rgba(117, 73, 212, 0.28);
+}
+
+.pony-checkbox-input:checked + .pony-checkbox-box {
+  border-color: rgba(159, 134, 214, 0.68);
+  background: rgba(98, 52, 168, 0.52);
+}
+
+.pony-checkbox-input:checked + .pony-checkbox-box::after {
+  opacity: 1;
+  transform: translateY(-1px) rotate(45deg) scale(1);
+}
+
+.pony-checkbox-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pony-checkbox--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.20",
+  "version_code": 446,
+  "package": "top.ponychat.webview",
+  "sha256": "90654b3576ecfd06c59f7d7a08d6ebeee85ec8b3267e14c7b71f8821c9772182",
+  "bytes": 14791837,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.20-446-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复创造模式长公式在流式更新时闪烁、阅读位置跳动的问题；未完成公式显示稳定占位，已完成公式持续复用渲染结果。\n补充创造模式复制、编辑、删除、重新生成、版本切换、上下文排序和设置等操作的震动反馈。\n生成期间每秒进行 4 次短震，结束、停止、出错或离开页面时停止；遵循消息震动开关，不追加回复完成双短震。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.20-446-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

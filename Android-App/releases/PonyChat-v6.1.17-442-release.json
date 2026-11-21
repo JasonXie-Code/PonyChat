@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.17",
+  "version_code": 442,
+  "package": "top.ponychat.webview",
+  "sha256": "7beb3e4112415e14103be933350316d188210d49641dcca95fac665a240c93cc",
+  "bytes": 14786269,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.17-442-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式的会话标题、创作指令与上下文统一放入“创作设定”，上下文用量显示在右上角。\n精简系统提示词并设为只读，自定义文本块仍可编辑。\n角色设定不再显示在对话设定页面。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.17-442-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

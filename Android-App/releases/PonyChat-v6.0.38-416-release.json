@@ -1,0 +1,18 @@
+{
+  "version_name": "6.0.38",
+  "version_code": 416,
+  "package": "top.ponychat.webview",
+  "sha256": "61185a38be3197760dc2387aba51ee1b998ff130d5568135e36131ad5737730f",
+  "bytes": 12632824,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.0.38-416-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "长期记忆默认开启，移除记忆开关；主动消息仍可独立关闭。\n修复关系状态更新不及时的问题，手动刷新会重新核对近期对话中的关系变化。\n修复场景卡片长时间为空的问题，对话回复完成后自动更新场景。\n优化主动消息设置保存，切换后立即同步，保存失败时给出提示。\n更新提示新增“更新内容”，今后的版本会在这里说明具体改进。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.0.38-416-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

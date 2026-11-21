@@ -1,0 +1,333 @@
+﻿@font-face
+{
+    font-family: "Montserrat-Regular";
+    src: url("../Fonts/Montserrat-Medium.otf");
+}
+
+@font-face
+{
+    font-family: "Montserrat-Bold";
+    src: url("../Fonts/Montserrat-Bold.otf");
+}
+
+body
+{
+    background-color: #8B8FC6;
+    background-image: url("../Images/background.svg");
+    background-repeat: no-repeat;
+    background-size: 100% auto;
+}
+
+.ie-error
+{
+    display: none;
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active)
+{
+    .ie-error
+    {
+        display: inline-block;
+    }
+}
+
+.cloud-bg
+{
+    #height: 100px;
+    #height: 120px;
+    height: 12%;
+    height: 7.45rem;
+    z-index: -10000;
+}
+
+.cloud-fg
+{
+    #height: 63px;
+    #height: 75.6px;
+    height: 4.7rem;
+    z-index: 10000;
+    pointer-events: none;
+}
+
+.flip-x
+{
+    transform: scaleX(-1);
+}
+
+.flip-y
+{
+    transform: scaleY(-1);
+}
+
+.flip-xy
+{
+    transform: scale(-1, -1);
+}
+
+.navbar-toggle
+{
+    border-color: #BF2667;
+    border-radius: 0.2em;
+    margin: 0.7rem;
+    height: 34px;
+    font-size: 1rem;
+    background-color: #FEBDD8;
+}
+
+.navbar-toggler-icon
+{
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba(191,38,103, 1)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 8h24M4 16h24M4 24h24'/%3E%3C/svg%3E");
+}
+
+.navbar, .footer
+{
+    background-color: #FD92BF;
+    outline: solid #AB0249 2.5pt;
+    padding: 0px; 
+}
+
+.navbar
+{
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+}
+
+.nav-item
+{
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+nav ul li a
+{
+    font-size: 1.69rem;
+    #font-size-adjust: 0.75;
+    #margin: 15%;
+    #margin-bottom: 0.1rem;;
+    margin-left: 0.3rem;
+    margin-right: 0.3rem;
+    margin-top: 0.05rem;
+    
+    transition: transform 0.15s;
+}
+
+nav ul li a:hover
+{
+    transform: scale(1.15);
+}
+
+.nav-link, h1, h2, label, button
+{
+    font-family: "Montserrat-Bold", "Helvetica Neue", sans-serif;
+    color: #AB0249;
+    -webkit-text-fill-color: #FBDAE8; /* Will override color (regardless of order) */
+    -webkit-text-stroke-width: 0.04em;
+    -webkit-text-stroke-color: #AB0249;
+    
+}
+
+h1
+{
+    font-size: 2.5rem;
+}
+
+h2
+{
+    font-size: 2rem;
+}
+
+p, div
+{
+    font-family: "Montserrat-Bold", "Helvetica Neue", sans-serif;
+    color: white;
+    font-size: 1.2rem;
+}
+
+div.content
+{
+    #margin-top: 4.2%;
+    padding-top: 9.5rem;
+    margin-left: auto;
+    margin-right: auto;
+    #max-width: 90%;
+    max-width: 107rem;
+}
+
+.heart-container
+{
+    margin-bottom: 22%;
+    min-width: 440px;
+    max-width: calc(65% + 190px);
+    #transition: max-width 0.15s;
+}
+
+.heart-bg
+{
+    height: 100%;
+    width: 100%;
+}
+
+.heart-fg
+{
+    height: 100%;
+    width: 100%;
+    position: relative;
+    margin-top: -38.9%;
+}
+
+.buttons-menu
+{
+    height: 100%;
+    width: 100%;
+    position: relative;
+    margin-top: -46.5%;
+}
+
+.heart
+{
+    width: 62.5%;
+    margin-bottom: auto;
+}
+
+.wing
+{
+    width: 14.5%;
+    margin-bottom: auto;
+    
+}
+
+.wing-img
+{
+    -webkit-transform-origin: 93‬% 93%;
+    -moz-transform-origin: 94% 93%;
+    -o-transform-origin: 94% 93%;
+    transform-origin: 94% 93%;
+    animation: wing-rotate 1s infinite;
+    animation-timing-function: ease-in-out;
+}
+
+.pony
+{
+    margin-top: auto;
+    width: 36%;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.pony-divider
+{
+    width: 10%;
+}
+
+.pony-left
+{
+    margin-left: auto;
+}
+
+.pony-right
+{
+    margin-right: auto;
+}
+
+.pws-title
+{
+    width: 42%;
+    left: 1.9%;
+    position: relative;
+}
+
+.buttons-menu-list
+{
+    height: 100%;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: auto;
+    max-height: 10px;
+}
+
+.menu-button
+{
+    margin-top: 1.2%;
+    margin-left: auto;
+    margin-right: auto;
+    width: 20%;
+    #position: relative;
+    border-radius: 0.2em;
+    #font-size: calc((16px - 2%) + (5 * (0.01rem)));
+    #font-size-adjust: 0.6;
+    transition: transform 0.15s;
+    border: none;
+}
+
+button p
+{
+    margin: 0px;
+    font-size: 2.5vw;
+}
+
+@media screen and (min-width: 107rem) 
+{
+    button p
+    {
+        font-size: 32pt;
+    }
+}
+
+@media screen and (max-width: 520px) 
+{
+    button p
+    {
+        font-size: 10pt;
+    }
+}
+
+.menu-button:hover
+{
+    
+    transform: scale(1.15);
+}
+
+.button-play
+{
+    border: 2px solid #F90049;
+    background-color: #FBDAE8;
+    color: #F90049;
+    -webkit-text-fill-color: #F90049;
+    -webkit-text-stroke-width: 0pt;
+}
+
+.button-pledge
+{
+    border: 2px solid #E85B46;
+    background-color: #E47768;
+    color: white;
+    -webkit-text-fill-color: white;
+    -webkit-text-stroke-width: 0pt;
+}
+
+.no-select
+{
+    user-drag: none;
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Safari 4.0 - 8.0 前缀 */
+@-webkit-keyframes wing-rotate 
+{
+  0%{transform: rotate(20deg);}
+  50%{transform: rotate(-20deg);}
+  100%{transform: rotate(20deg);}
+}
+
+/* 标准语法 */
+@keyframes wing-rotate 
+{
+  0%{transform: rotate(20deg);}
+  50%{transform: rotate(-20deg);}
+  100%{transform: rotate(20deg);}
+}

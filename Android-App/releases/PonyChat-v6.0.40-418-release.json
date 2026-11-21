@@ -1,0 +1,18 @@
+{
+  "version_name": "6.0.40",
+  "version_code": 418,
+  "package": "top.ponychat.webview",
+  "sha256": "c6d932c8b8467918f38c00964ffb38725b0442142c905b8f433d3dd500f9547a",
+  "bytes": 12640820,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.0.40-418-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "为角色列表、聊天记录、记忆、主动任务、场景卡片和个人偏好等内容加载加入骨架动画。\n优化订阅积分、用量统计、表情及图片和视频的加载占位，减少加载时的闪烁和布局跳动。\n场景卡片长内容平滑展开，已有内容刷新时尽量保留原布局，图片加载前后保持占位高度。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.0.40-418-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

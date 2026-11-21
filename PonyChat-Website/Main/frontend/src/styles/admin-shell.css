@@ -1,0 +1,525 @@
+/* 管理控制台：复用主站 landing.css 的 :root 变量，无网格背景，仅深色底 + 轻光晕 */
+/* 桌面端优先：最小宽度，避免布局在宽屏上过度拉伸变形 */
+.admin-shell {
+  --sidebar-width: 220px;
+  --topbar-h: 56px;
+  --admin-card-bg: rgba(30, 41, 59, 0.85);
+  /* 细滚动条（Firefox scrollbar-color：thumb track） */
+  --admin-scrollbar-w: 6px;
+  --admin-scrollbar-track: rgba(15, 23, 42, 0.45);
+  --admin-scrollbar-thumb: rgba(100, 116, 139, 0.5);
+  --admin-scrollbar-thumb-hover: rgba(148, 163, 184, 0.72);
+  min-width: 1280px;
+  min-height: 100vh;
+  font-size: 14px;
+  background: var(--bg-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(159, 134, 214, 0.1), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 100%, rgba(78, 191, 207, 0.06), transparent),
+    radial-gradient(ellipse 50% 35% at 0% 80%, rgba(159, 134, 214, 0.05), transparent);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.admin-shell a {
+  color: var(--accent-mid);
+}
+.admin-shell a:hover {
+  color: var(--accent-to);
+}
+
+.admin-shell .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--stroke-strong);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+  transition: border-color 0.15s, background 0.15s;
+}
+.admin-shell .btn:hover {
+  border-color: var(--accent-from);
+  background: var(--surface-hover);
+}
+.admin-shell .btn-primary {
+  background: var(--btn-primary);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+.admin-shell .btn-primary:hover {
+  background: var(--btn-primary-hover);
+}
+.admin-shell .btn-danger {
+  background: #dc2626;
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+.admin-shell .btn-danger:hover {
+  background: #b91c1c;
+}
+/* 描边危险操作（侧栏退出等，避免大面积实心红刺眼） */
+.admin-shell .btn-danger-outline {
+  background: transparent;
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fca5a5;
+  font-weight: 600;
+}
+.admin-shell .btn-danger-outline:hover {
+  background: rgba(220, 38, 38, 0.12);
+  border-color: rgba(248, 113, 113, 0.85);
+  color: #fecaca;
+}
+.admin-shell .btn-sm {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.78rem;
+}
+
+.admin-shell input:not([type='checkbox']):not([type='radio']),
+.admin-shell textarea,
+.admin-shell select {
+  background: var(--bg-deep);
+  border: 1px solid var(--stroke-strong);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.6rem;
+  font-size: 0.875rem;
+  font-family: var(--font-body);
+}
+
+/* 未使用 AdminNumberInput 的 number：隐藏系统箭头，仅键盘输入 */
+.admin-shell input[type='number']:not(.admin-num-input) {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.admin-shell input[type='number']:not(.admin-num-input)::-webkit-outer-spin-button,
+.admin-shell input[type='number']:not(.admin-num-input)::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 复选框：暗色底 + 紫色选中，避免系统默认高亮蓝白块 */
+.admin-shell input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  min-width: 1rem;
+  padding: 0;
+  margin: 0;
+  border-radius: 4px;
+  border: 1px solid rgba(100, 116, 139, 0.55);
+  background: rgba(15, 23, 42, 0.95);
+  cursor: pointer;
+  vertical-align: middle;
+  flex-shrink: 0;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.admin-shell input[type='checkbox']:hover {
+  border-color: rgba(159, 134, 214, 0.42);
+}
+.admin-shell input[type='checkbox']:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(117, 73, 212, 0.28);
+}
+.admin-shell input[type='checkbox']:checked {
+  background: rgba(98, 52, 168, 0.52);
+  border-color: rgba(159, 134, 214, 0.68);
+}
+.admin-shell input[type='checkbox']:checked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 4px;
+  height: 8px;
+  border: solid #ddd6f5;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.admin-shell input[type='checkbox']:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.admin-shell table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.admin-shell th,
+.admin-shell td {
+  border-bottom: 1px solid var(--stroke);
+  padding: 0.65rem 0.5rem;
+  text-align: left;
+  min-height: 48px;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.admin-shell .admin-data-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.admin-shell .admin-data-table tbody tr {
+  transition: background 0.12s;
+}
+.admin-shell .admin-data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.admin-shell .admin-data-table tr.active td {
+  background: rgba(61, 168, 130, 0.08);
+}
+.admin-shell .admin-grid-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.admin-shell .admin-grid-head,
+.admin-shell .admin-grid-row {
+  align-items: center;
+  gap: 0 0.75rem;
+  padding: 0 0.5rem;
+}
+.admin-shell .admin-grid-head {
+  color: #64748b;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.4rem;
+  text-transform: uppercase;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+.admin-shell .admin-grid-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-shell .admin-grid-row {
+  border-bottom: 1px solid #1e293b;
+  padding-top: 0.45rem;
+  padding-bottom: 0.45rem;
+  transition: background 0.12s;
+}
+.admin-shell .admin-grid-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+.admin-shell .admin-grid-row:last-child {
+  border-bottom: none;
+}
+.admin-shell .admin-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-shell .admin-mono {
+  font-family: Consolas, ui-monospace, monospace;
+  font-size: 0.78rem;
+}
+.admin-shell .admin-nowrap {
+  white-space: nowrap;
+}
+.admin-shell .admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.admin-shell .badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.admin-shell .badge-success {
+  background: rgba(61, 168, 130, 0.16);
+  color: #6fb894;
+}
+.admin-shell .badge-warning {
+  background: rgba(212, 184, 92, 0.18);
+  color: #d4c070;
+}
+.admin-shell .badge-danger {
+  background: rgba(224, 112, 112, 0.16);
+  color: #e8a0a0;
+}
+.admin-shell .badge-info {
+  background: rgba(78, 191, 207, 0.14);
+  color: #8bc4cf;
+}
+.admin-shell .badge-muted {
+  background: rgba(100, 116, 139, 0.2);
+  color: #94a3b8;
+}
+
+.admin-shell .modal-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(480px, 100vw);
+  height: 100dvh;
+  z-index: 9000;
+  background: var(--admin-card-bg);
+  border-left: 1px solid var(--stroke);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.admin-shell .modal-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+@keyframes admin-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-shell .card {
+  background: var(--admin-card-bg);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.4);
+}
+.admin-shell .card.card--error {
+  border-color: #d88080;
+}
+.admin-shell .card.card--warning {
+  border-color: #c9a85a;
+}
+
+.admin-shell .muted {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* 统计卡片图标槽（与 OverviewSection 配合） */
+.admin-shell .stat-card-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+}
+.admin-shell .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-glow);
+}
+.admin-shell .stat-icon ion-icon {
+  font-size: 1.5rem;
+  color: #fff;
+}
+.admin-shell .stat-text {
+  flex: 1;
+  min-width: 0;
+}
+.admin-shell .stat-val {
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-family: var(--font-display);
+  color: var(--text);
+}
+.admin-shell .stat-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.15rem;
+}
+
+/* ── 细滚动条：列表 / 表格 / 侧栏 / 弹层等（Firefox + WebKit） ── */
+.admin-shell,
+.admin-shell * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-scrollbar-thumb) var(--admin-scrollbar-track);
+}
+
+.admin-shell::-webkit-scrollbar,
+.admin-shell *::-webkit-scrollbar {
+  width: var(--admin-scrollbar-w);
+  height: var(--admin-scrollbar-w);
+}
+
+.admin-shell::-webkit-scrollbar-track,
+.admin-shell *::-webkit-scrollbar-track {
+  background: var(--admin-scrollbar-track);
+  border-radius: 999px;
+}
+
+.admin-shell::-webkit-scrollbar-thumb,
+.admin-shell *::-webkit-scrollbar-thumb {
+  background: var(--admin-scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.admin-shell::-webkit-scrollbar-thumb:hover,
+.admin-shell *::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+.admin-shell::-webkit-scrollbar-corner,
+.admin-shell *::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* xterm 终端视口（在 AdminLayout.admin-shell 内，单独加强选择器） */
+.admin-shell .xterm-viewport {
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-scrollbar-thumb) var(--admin-scrollbar-track);
+}
+.admin-shell .xterm-viewport::-webkit-scrollbar {
+  width: var(--admin-scrollbar-w);
+  height: var(--admin-scrollbar-w);
+}
+.admin-shell .xterm-viewport::-webkit-scrollbar-track {
+  background: var(--admin-scrollbar-track);
+  border-radius: 999px;
+}
+.admin-shell .xterm-viewport::-webkit-scrollbar-thumb {
+  background: var(--admin-scrollbar-thumb);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.admin-shell .xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: var(--admin-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+
+/* Toast 堆叠（Teleport 到 body；仅当内容溢出时出现细滚动条） */
+.toast-stack {
+  scrollbar-width: thin;
+  scrollbar-color: var(--admin-scrollbar-thumb, rgba(100, 116, 139, 0.5))
+    var(--admin-scrollbar-track, rgba(15, 23, 42, 0.45));
+}
+.toast-stack::-webkit-scrollbar {
+  width: 6px;
+}
+.toast-stack::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.45);
+  border-radius: 999px;
+}
+.toast-stack::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.toast-stack::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.72);
+  background-clip: padding-box;
+}
+
+/* AdminLayout 主内容：满高 flex；列表页用分页填满视口，避免表体内部纵向滚动 */
+.admin-shell .content.content-scroll {
+  padding: 1rem 1.25rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+.admin-shell .content.content-scroll > .section-root {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.admin-shell .content.content-scroll > .section-root.section-scrollable {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.admin-shell .content.content-scroll > .section-root:not(.section-scrollable) {
+  overflow: hidden;
+}
+.admin-shell .content.content-scroll .card.card-fill {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+/* 表格局部滚动：避免末行被裁切（分页行高估算与真实行高略有偏差时） */
+.admin-shell .content.content-scroll .table-wrap.table-viewport {
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 可排序表头 */
+.admin-shell th.th-sortable,
+.admin-shell .list-head .th-sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.12s;
+  white-space: nowrap;
+}
+.admin-shell th.th-sortable:hover,
+.admin-shell .list-head .th-sortable:hover {
+  color: var(--accent-mid, #bbb0ea);
+}
+
+/* 列宽拖拽把手（th-resizable 表头需 position:relative） */
+.admin-shell th.th-resizable,
+.admin-shell .list-head .th-resizable {
+  position: relative;
+}
+.admin-shell .col-resizer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 1;
+}
+.admin-shell .col-resizer::after {
+  content: '';
+  position: absolute;
+  top: 20%;
+  bottom: 20%;
+  right: 2px;
+  width: 2px;
+  border-radius: 1px;
+  background: transparent;
+  transition: background 0.12s;
+}
+.admin-shell .col-resizer:hover::after,
+.admin-shell .col-resizer:active::after {
+  background: rgba(159, 134, 214, 0.45);
+}

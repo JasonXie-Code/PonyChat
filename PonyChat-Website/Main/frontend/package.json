@@ -1,0 +1,26 @@
+{
+  "name": "ponychat-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\\.bin;%PATH%\" && vite",
+    "dev:cursor": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\\.bin;%PATH%\" && cross-env VITE_SIMPLE_BROWSER=1 vite",
+    "build": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\\.bin;%PATH%\" && vite build",
+    "preview": "set \"NODE_PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\" && set \"PATH=P:\\Tools\\managed-dependencies\\node-modules\\PonyChat\\PonyChat-Website\\Main\\frontend\\node_modules\\.bin;%PATH%\" && vite preview --host 127.0.0.1 --port 4173 --strictPort"
+  },
+  "dependencies": {
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "chart.js": "^4.4.8",
+    "marked": "^9.1.6",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.2.1",
+    "cross-env": "^10.1.0",
+    "vite": "^6.0.7"
+  }
+}

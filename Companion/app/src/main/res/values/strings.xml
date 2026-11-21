@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PonyChat Companion</string>
+    <string name="tagline">云端 AI 大脑 + Android 实体执行终端</string>
+    <string name="open_accessibility_settings">打开无障碍服务设置</string>
+    <string name="run_agent_demo">运行 Agent 闭环演示</string>
+    <string name="capabilities">基础能力\n\n• UI Tree 观察与语义操作\n• 坐标点击、滑动、返回、Home\n• 视觉目标接口（待接入模型）\n• Emulator / H618 可替换适配层\n• 观察 → 决策 → 操作 → 验证 → 纠错</string>
+    <string name="log_placeholder">运行日志会显示在这里。</string>
+    <string name="service_connected">控制服务：已连接\n可以读取 UI Tree 并执行系统操作。</string>
+    <string name="service_disconnected">控制服务：未连接\n请先在系统设置中启用 PonyChat Companion 控制服务。</string>
+    <string name="accessibility_service_name">PonyChat Companion 控制服务</string>
+    <string name="accessibility_service_description">让 PonyChat Companion 读取界面结构并执行点击、滑动、输入和系统导航。</string>
+</resources>

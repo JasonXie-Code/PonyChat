@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <overlayable name="PonyChatDeviceConfig">
+        <policy type="signature|system|product">
+            <item type="bool" name="device_home_enabled" />
+        </policy>
+    </overlayable>
+</resources>

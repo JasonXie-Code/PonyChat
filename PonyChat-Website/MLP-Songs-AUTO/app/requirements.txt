@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+pypdf
+numpy

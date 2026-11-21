@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.25",
+  "version_code": 451,
+  "package": "top.ponychat.webview",
+  "sha256": "99b39b0d49e0733d27dc1032003cdfe5c43ee23c6630e04b6359971d79cde3fb",
+  "bytes": 14791429,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.25-451-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式新增续写按钮：点击回复下方的播放图标，让角色接着当前内容继续写，保留已有剧情和输入草稿。\n续写和重新生成会随机获得推进、转折、回顾线索或受阻回退等创作方向，让回复呈现更多变化。\n连续续写后，重新生成只重写最后一段，保留前面的剧情；生成期间隐藏消息操作，避免重复点击。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.25-451-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

@@ -1,0 +1,7 @@
+{
+  "_comment": "这是 admin_config.json 的模板。复制为 admin_config.json 后填写真实值；该文件已被 .gitignore 忽略，切勿提交。",
+  "username": "admin",
+  "password": "<在此填入高强度随机口令，切勿使用默认值或纯数字>",
+  "created_at": "1970-01-01T00:00:00.000000",
+  "password_changed_at": "1970-01-01T00:00:00.000000"
+}

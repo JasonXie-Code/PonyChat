@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 量产系统镜像通过 Runtime Resource Overlay 覆盖为 true。 -->
+    <bool name="device_home_enabled">false</bool>
+</resources>

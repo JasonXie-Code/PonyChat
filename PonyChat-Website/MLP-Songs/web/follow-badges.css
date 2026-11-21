@@ -1,0 +1,9 @@
+/* Keep the note visible when a title needs an ellipsis. */
+.follow-title-marked { display: flex !important; align-items: center; gap: .35em; min-width: 0; max-width: 100%; }
+.follow-title-label { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.follow-available-icon { display: block; flex: 0 0 14px; width: 14px; height: 18px; color: #a78bfa; }
+.song-text:has(.follow-title-marked) { flex: 1; }
+.queue-song > .follow-title-marked { flex: 1; }
+.queue-song span.follow-title-label { color: inherit; width: auto; flex: 1; flex-shrink: 1; }
+#nowTitle.follow-title-marked { justify-content: center; }
+#nowTitle .follow-available-icon { flex-basis: .65em; width: .65em; height: .82em; }

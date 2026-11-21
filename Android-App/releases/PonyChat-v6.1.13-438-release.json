@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.13",
+  "version_code": 438,
+  "package": "top.ponychat.webview",
+  "sha256": "e6ce97925fb8776e5a69a901ec8631e0dc2bea999d02e9a91b1a5ee77d79e0b8",
+  "bytes": 14782109,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.13-438-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复创造模式流程图长中文节点和分支文字显示不全的问题。\n长文本自动换行并完整显示，保留离线渲染、整图预览和缩放查看。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.13-438-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

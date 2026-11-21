@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.4",
+  "version_code": 429,
+  "package": "top.ponychat.webview",
+  "sha256": "48c39662e179eaf0f7b62ed2c5fa9e6d48fcd20c0bb7a700141030b109e37552",
+  "bytes": 13166318,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.4-429-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复创造模式中断提示卡片的恢复操作：将“刷新会话”改为“重新生成”，直接基于上一条用户消息重新生成回复。\n重新生成期间隐藏旧的中断提示，避免错误卡片反复出现。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.4-429-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

@@ -1,0 +1,75 @@
+{
+  "PonyChat-Website/Main/deploy/server-usa/deploy_static_web_now.py": [
+    "    # web_repo = Main/（其下 frontend/dist、deploy/server-usa）"
+  ],
+  "PonyChat-Website/Main/frontend/src/styles/landing.css": [
+    "*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }"
+  ],
+  "PonyChat-Website/MBTI/Common/src/index.css": [
+    "*::before,",
+    "*::after {"
+  ],
+  "PonyChat-Website/MLP-Songs/web/style.css": [
+    "*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/scripts/build_demo.py": [
+    "    # sync 事件中 max(beatInMeasure + noteDuration)。"
+  ],
+  "PonyChat-Website/MLP-Songs-AUTO/web/style.css": [
+    "*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }"
+  ],
+  "PonyChat-Website/PonyWaifuSim/index.html": [
+    "                <!-- <li class=\"nav-item\"> -->",
+    "                    <!-- <a class=\"nav-link\" href=\"#progress\">进度</a> -->",
+    "            <!-- <div class=\"game-progress\" id=\"progress\"> -->",
+    "                <!-- <h1 class=\"game-progress-title\">进度</h1> -->",
+    "                <!-- <div class=\"game-progress-grp d-flex flex-column d-md-flex flex-xl-row\"> -->",
+    "                    <!-- <div class=\"jira-content d-flex flex-column\"> -->",
+    "                        <!-- <div class=\"task-bars d-flex flex-column\" id=\"progrss-bar-parent\"> -->",
+    "                            <!-- <div class=\"progress-status-grp d-flex flex-row\" id=\"progress-status-grp\"> -->",
+    "                                <!-- <p class=\"mb-1 ml-auto\" id=\"task-count\"></p> -->",
+    "                            <!-- </div> -->",
+    "                        <!-- </div> -->",
+    "                        <!-- <p class=\"mr-auto\" id=\"tasks-updated\"></p> -->",
+    "                        <!-- <div class=\"jira-epics d-flex flex-column\" id=\"jira-epics\"> -->",
+    "                        <!-- </div> -->",
+    "                    <!-- </div> -->",
+    "                    <!-- <div class=\"patreon-updates ml-3\"> -->",
+    "                    <!-- </div> -->",
+    "                <!-- </div> -->",
+    "            <!-- </div> -->",
+    "                <!-- <button class=\"download-button btn default\" onclick=\"window.location = 'play';\">WebGL<br><img class=\"download-button-img\" src=\"Images/FontAwesome/html5.svg\" /></button> -->"
+  ],
+  "PonyChat-Website/PonyWaifuSim/JavaScript/Main.js": [
+    "    // getJiraInfo(onJiraSuccess, onJiraFailure);"
+  ],
+  "misc/_apply_comment_translations.py": [
+    "# ── PonyChat-Website/Main ──────────────────────────────────────────",
+    "# ── MBTI build_questions ───────────────────────────────────────────",
+    "# ── MLP-Songs-AUTO deploy ──────────────────────────────────────────",
+    "# ── MLP-Songs-AUTO web/app.js ──────────────────────────────────────",
+    "# ── PonyWaifuSim ───────────────────────────────────────────────────",
+    "# ── misc ───────────────────────────────────────────────────────────",
+    "# ── temp ───────────────────────────────────────────────────────────",
+    "# ── Backend ────────────────────────────────────────────────────────"
+  ],
+  "misc/tmp-scripts/clear_invalid_context_summaries.py": [
+    "    # ── conversations 表 ──",
+    "    # ── galgame_data 表 ──",
+    "    # ── galgame_lock_data 表 ──"
+  ],
+  "misc/tmp-scripts/migrate_fs_to_db.py": [
+    "    # 1. 新格式：conversations/{charId}/{convId}.json",
+    "    # 3. Galgame：galgame/{charId}.json"
+  ],
+  "misc/tmp-scripts/repair_message_ordering.py": [
+    "    # 行布局：rowid、<partition...>、message_id、id、timestamp、sequence_number"
+  ],
+  "Backend/scripts/launch/AAA_launch_backend.py": [
+    "            # uvicorn.access 常见 args:",
+    "            # (client_addr, method, full_path, http_version, status_code)"
+  ],
+  "Backend/data/mlp/build_vector_db.py": [
+    "# ── 加载 tags.jsonl → {filename: {cn_name, type, importance}} ────────────────"
+  ]
+}

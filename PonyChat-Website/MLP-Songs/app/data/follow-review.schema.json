@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Human-reviewed score, independent-audio, or browser evidence",
+  "oneOf": [
+    {"$ref": "#/$defs/sourceReview"},
+    {"$ref": "#/$defs/audioReview"},
+    {"$ref": "#/$defs/browserReview"}
+  ],
+  "$defs": {
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sourceReview": {
+      "type": "object",
+      "required": ["followId", "sourceScoreId", "sourcePDFsha", "canonicalMusicxml", "canonicalSha256", "fullPitchAudit"],
+      "properties": {
+        "followId": {"type": "string"},
+        "sourceScoreId": {"type": "string"},
+        "sourcePDFsha": {"$ref": "#/$defs/hash"},
+        "canonicalSha256": {"$ref": "#/$defs/hash"},
+        "canonicalMusicxml": {"type": "string"},
+        "fullPitchAudit": {
+          "type": "object", "required": ["status", "reviewedMeasures", "pitchedNotes", "measures"],
+          "properties": {
+            "status": {"const": "all-canonical-pitches-and-durations-match-visually-read-source"},
+            "reviewedMeasures": {"type": "integer", "minimum": 1},
+            "pitchedNotes": {"type": "integer", "minimum": 1},
+            "measures": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["part", "measure"]}}
+          }
+        }
+      }
+    },
+    "audioReview": {
+      "type": "object", "required": ["followId", "status", "audioSha256", "evidence"],
+      "properties": {
+        "followId": {"type": "string"},
+        "status": {"enum": ["pending-listening-acceptance", "pending-algorithmic-acoustic-acceptance", "pending-acoustic-correction", "passed"]},
+        "audioSha256": {"$ref": "#/$defs/hash"},
+        "syncSha256": {"$ref": "#/$defs/hash"},
+        "notationSha256": {"$ref": "#/$defs/hash"},
+        "evidence": {
+          "type": "object", "required": ["independentDTW", "spectrogram"],
+          "properties": {"independentDTW": {"type": "string"}, "spectrogram": {"type": "string"}}
+        }
+      },
+      "allOf": [{"if": {"properties": {"status": {"const": "passed"}}}, "then": {"required": ["syncSha256", "notationSha256"]}}]
+    },
+    "browserReview": {
+      "type": "object", "required": ["followId", "status", "syncSha256", "notationSha256", "checks", "screenshots"],
+      "properties": {
+        "followId": {"type": "string"},
+        "status": {"enum": ["pending", "passed"]},
+        "syncSha256": {"$ref": "#/$defs/hash"},
+        "notationSha256": {"$ref": "#/$defs/hash"},
+        "checks": {"oneOf": [
+          {"type": "object", "minProperties": 1, "additionalProperties": {"type": "boolean"}},
+          {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["passed"], "properties": {"passed": {"type": "boolean"}}}}
+        ]},
+        "screenshots": {"type": "array", "minItems": 1, "items": {"oneOf": [
+          {"type": "string"},
+          {"type": "object", "required": ["path"], "properties": {"path": {"type": "string"}, "description": {"type": "string"}}}
+        ]}}
+      }
+    }
+  }
+}

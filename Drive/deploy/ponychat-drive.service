@@ -1,0 +1,25 @@
+[Unit]
+Description=PonyChat Drive standalone file service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ponychat-drive
+Group=ponychat-drive
+WorkingDirectory=/opt/ponychat-drive
+EnvironmentFile=/etc/ponychat-drive/service.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/ponychat-drive/.venv/bin/python -m uvicorn Drive.app:app --host 127.0.0.1 --port 18050 --workers 1 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=3
+TimeoutStopSec=30
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/ponychat-drive
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

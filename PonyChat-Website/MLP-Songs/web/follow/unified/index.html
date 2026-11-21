@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>歌曲跟谱 · MLP Music</title>
+  <meta id="musicStableScrollLoader" name="reader-scroll" content="unified" />
+  <meta id="musicPrintedLyricsLoader" name="reader-lyrics" content="unified" />
+  <link rel="icon" href="/favicon.png" />
+  <link rel="stylesheet" href="/follow/auto.css?v=2.1.17" />
+  <link rel="stylesheet" href="/scrollbars.css?v=20261007" />
+  <link rel="stylesheet" href="/controls.css?v=20261007-glass2" />
+  <link rel="stylesheet" href="/follow/unified/style.css?v=20261112-harmony1" />
+</head>
+<body>
+  <main class="follow-panel">
+    <header class="follow-toolbar">
+      <div class="score-view-tabs" role="tablist" aria-label="谱面显示">
+        <button type="button" data-score-view="staff" role="tab" aria-selected="true">五线谱</button>
+        <button type="button" data-score-view="jianpu" role="tab" aria-selected="false" disabled>简谱</button>
+      </div>
+      <div id="notationSizeLabel" hidden><button type="button" id="sizeButton" aria-haspopup="menu" aria-expanded="false">字号 · 标准</button><div id="sizeMenu" role="menu" hidden></div><span>字号</span> <select id="notationSize" aria-label="简谱字号" hidden aria-hidden="true" tabindex="-1"><option value="0.9">小</option><option value="1" selected>标准</option><option value="1.15">大</option><option value="1.3">特大</option></select></div>
+      <button type="button" id="resumeFollow" hidden>回到当前音符</button>
+      <button id="originalScore" type="button" class="original-score" hidden>查看原谱</button>
+      <a id="downloadOriginal" class="original-score" download hidden>下载 PDF</a>
+      <span id="stageStatus" role="status">正在加载谱面…</span>
+    </header>
+    <p id="sourceTempoNotice" class="source-tempo-beat-notice" hidden></p>
+    <p id="followNotice" class="follow-notice" hidden></p>
+    <p id="recordingKeyNotice" class="recording-key-notice" hidden></p>
+    <p id="jianpuKeyNotice" class="recording-key-notice" hidden></p>
+    <div class="follow-position"><span id="nowMeasure">前奏</span><span id="nowChord"></span><span id="nowLyric"></span></div>
+    <div id="scoreWrap" data-mode="staff" tabindex="0" aria-label="跟谱阅读区">
+      <div id="staffScore"></div>
+      <div id="jianpuScore" class="jp-score" hidden aria-label="简谱"></div>
+    </div>
+  </main>
+  <script id="musicUnifiedCursorLoader" src="/follow/unified/model-smile-compat-v1.js?v=20261111-grace1" defer></script>
+  <script src="/follow/unified/notation.js?v=20261111-grace1" defer></script>
+  <script src="/follow/policy.js?v=2.1.17" defer></script>
+  <script src="/follow/unified/policy.js?v=20261112-harmony1" defer></script>
+  <script src="/follow/unified/app.js?v=20261112-harmony1" defer></script>
+</body>
+</html>

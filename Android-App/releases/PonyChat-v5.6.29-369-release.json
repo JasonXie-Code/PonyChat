@@ -1,0 +1,32 @@
+{
+  "version_name": "5.6.29",
+  "version_code": 369,
+  "package": "top.ponychat.webview",
+  "sha256": "2bc29f8e162df46282a6ff8e2c79979679c1fb6dceb3c2018fae1fe3fa6d1981",
+  "bytes": 11990740,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v5.6.29-369-release.apk",
+  "public_url": "https://www.ponychat.org/releases/PonyChat-v5.6.29-369-release.apk",
+  "remote_path": "/opt/ponychat/PonyChat-Website/Main/deploy/releases/PonyChat-v5.6.29-369-release.apk",
+  "backend_restart": true,
+  "published": true,
+  "server": {
+    "name": "usa",
+    "host": "154.17.23.237"
+  },
+  "http_status": 200,
+  "content_type": "application/octet-stream",
+  "public_sha256": "2bc29f8e162df46282a6ff8e2c79979679c1fb6dceb3c2018fae1fe3fa6d1981",
+  "public_bytes": 11990740,
+  "canonical_http_status": 200,
+  "canonical_content_disposition": "attachment; filename=\"PonyChat-v5.6.29-369-release.apk\"",
+  "canonical_url": "https://www.ponychat.org/download/apk",
+  "canonical_sha256": "2bc29f8e162df46282a6ff8e2c79979679c1fb6dceb3c2018fae1fe3fa6d1981",
+  "nginx_reloaded": true,
+  "version_activated": true,
+  "public_version": {
+    "version_name": "5.6.29",
+    "version_code": 369,
+    "download_url": "https://ponychat.org/download/apk"
+  }
+}

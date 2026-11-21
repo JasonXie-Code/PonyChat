@@ -1,0 +1,6 @@
+/* This stylesheet is loaded only by the candidate's signed versioned frame. */
+#jianpuScore { overflow: clip; }
+.jp-key-caption { padding: 5px 12px 0; color: #647084; font-size: 11px; }
+.jp-key-section + .jp-key-section { border-top: 2px solid #d8d0ea; margin-top: 12px; }
+.jp-key-section .jp-head { position: sticky; top: 0; z-index: 2; background: #fcfcff; padding: 6px 12px; margin-bottom: 3px; }
+.jp-key-section .jp-head > :last-child { display: none; }

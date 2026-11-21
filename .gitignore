@@ -1,0 +1,123 @@
+# 运行时数据
+var/
+Backend/database/*
+!Backend/database/README.md
+Backend/backups/
+Backend/data/mlp/*.db
+Backend/data/web_chars.json*
+Backend/data/mlp-database/pinkie_profile*.json
+Backend/data/mlp-database/profiles/pinkie_profile_v3.json
+Backend/data/mlp-database/query_samples/*_stdout.json
+Backend/data/mlp-database/query_samples/*pinkie*.json
+
+# 便携工具链（体积极大，独立维护）
+misc/tools/
+misc/_tmp_model/
+PonyChat-Website/MBTI/MLP/misc/python/
+PonyChat-Website/MBTI/MLP/misc/node-windows-64/
+PonyChat-Website/MBTI/Standard/misc/python/
+PonyChat-Website/MBTI/Standard/misc/node-windows-64/
+
+# 前端依赖与构建产物
+**/node_modules/
+**/dist/
+PonyChat-Website/Main/frontend/dist/
+PonyChat-Website/static_web/dist/
+PonyChat-Website/MLP-Songs-AUTO/generated/
+
+# Voice Lab runtime data and large local assets
+PonyChat-Website/TTS/Data/
+PonyChat-Website/TTS/models/
+PonyChat-Website/TTS/voices/
+PonyChat-Website/TTS/outputs/
+PonyChat-Website/TTS/uploads/
+PonyChat-Website/TTS/generation_logs/
+
+# Android 构建产物
+Android-App/.gradle/
+Android-App/build/
+Android-App/app/build/
+Android-App/local.properties
+Android-App/app/local.properties
+Android-App/signing/*.jks
+Android-App/signing/*.keystore
+Android-App/signing/keystore.properties
+!Android-App/signing/keystore.properties.example
+
+# Python
+.runtime/
+__pycache__/
+*.py[cod]
+**/.venv*/
+Backend/.deploy_revision
+
+# 日志/临时输出
+*.log
+artifacts/
+.tmp/
+Android-App/output.txt
+Android-App/full_log.txt
+Android-App/build_log.txt
+*.song.autosave
+Android-App/素材/**/History/
+
+# 本地临时/敏感文件
+temp/
+.agent/
+.docs/
+.codex-remote-attachments/
+.env
+.env.*
+.secrets/
+ServerKeys.md
+*id_rsa*
+PonyChat-Website/Main/deploy/server-usa/
+
+# 系统
+.DS_Store
+Thumbs.db
+# Local reversible model-service pause marker
+.ponychat-models-paused
+
+# Local inference assets and vendor source (installed independently)
+LocalLLM/models/*/
+LocalLLM/server/bin/
+LocalLLM/tools/
+LocalLLM/llama.cpp-master/
+LocalLLM/*.zip
+LocalLLM/logs/
+LocalLLM/.vscode/
+LocalLLM/server/config.before-*.json
+
+# Nested linked worktree and reproducible local probe inputs
+.codex-dedup-clean/
+Backend/Agent-Test/cache/
+Backend/Agent-Test/reports/coverage-audit-20260906/tmp-candidate.tar.gz
+Android-App/20 Audition.lnk
+
+# Reproducible local build outputs, probes and source snapshots
+/tmp/
+
+# Locally retained source snapshot; metadata and checksum stay tracked
+/代码存档/PonyChat后端完整源码_20260911_001157_保存角色表达优化与记忆评分修复版本.zip
+
+# Local historical archives and linked development worktrees
+/Project-Archives/
+/PonyChat-work/
+
+# PonyChat local credentials and runtime state
+/.secrets/
+/.env
+/.env.*
+!/.env.example
+/ServerKeys.md
+/Backend/data/admin_config.json
+/Backend/data/admin_config.json.*
+!/Backend/data/admin_config.json.example
+/Backend/conf/TUN*.yaml
+/Backend/conf/TUN*.yml
+/Backend/db/ponychat.db
+/Backend/db/ponychat.db-*
+/Android-App/signing/keystore.properties
+/Android-App/signing/*.jks
+/Android-App/signing/*.keystore

@@ -1,0 +1,76 @@
+:root { color-scheme: dark; font-family: Inter, "Microsoft YaHei", sans-serif; color: #d9dfee; background: #111a2c; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; height: 100dvh; overflow: hidden; }
+button, select { font: inherit; }
+button, select { color: #ddd6fe; background: #242d43; border: 1px solid #a78bfa30; border-radius: 8px; padding: 7px 11px; cursor: pointer; }
+button:hover { background: #353651; }
+button:focus-visible, select:focus-visible, #scoreWrap:focus-visible { outline: 2px solid #b5a0ff; outline-offset: -2px; }
+.follow-panel { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.follow-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px 6px; font-size: 12px; flex-shrink: 0; }
+.score-view-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 10px; background: #ffffff06; }
+.score-view-tabs button { border: 0; background: transparent; color: #96a2ba; }
+.score-view-tabs button[aria-selected="true"] { background: #a78bfa28; color: #e5deff; }
+#notationSizeLabel { display: flex; gap: 7px; align-items: center; color: #a7b0c4; }
+#notationSize { padding: 5px 7px; }
+#stageStatus { color: #8d9ab2; margin-left: auto; font-size: 11px; }
+#resumeFollow { color: #f0eaff; }
+.original-score { color: #b9a9e8; background: transparent; border: 0; text-decoration: none; padding: 7px 3px; }
+.original-score:hover { color: #eee7ff; text-decoration: underline; }
+.original-score:focus-visible { outline: 2px solid #b5a0ff; outline-offset: 2px; }
+.follow-notice { flex-shrink: 0; color: #a9b5cb; font-size: 11px; line-height: 1.6; margin: 1px 15px 5px; }
+.recording-key-notice { flex-shrink: 0; align-self: flex-start; max-width: calc(100% - 24px); margin: 2px 12px 6px; padding: 5px 9px; border: 1px solid #a78bfa26; border-radius: 9px; background: #a78bfa0b; color: #b8b1cf; font-size: 11px; line-height: 1.6; backdrop-filter: blur(12px); overflow-wrap: anywhere; }
+.follow-position { display: flex; gap: 12px; align-items: center; min-height: 32px; padding: 0 15px 7px; color: #9faec4; font-size: 12px; flex-shrink: 0; }
+#nowMeasure { font-variant-numeric: tabular-nums; color: #cfc3fa; }
+#nowMeasure, #nowChord { flex-shrink: 0; }
+#nowChord { color: #c4b5fd; }
+#nowLyric { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#scoreWrap { flex: 1; min-height: 0; overflow: auto; padding: 8px; overscroll-behavior: contain; scroll-behavior: auto; overflow-anchor: none; }
+#staffScore { display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.auto-page { position: relative; width: 100%; max-width: 1100px; flex-shrink: 0; background: #fff; border-radius: 9px; overflow: hidden; }
+.auto-page img { width: 100%; height: auto; display: block; }
+.staff-row-band { display: none; position: absolute; left: 5%; right: 5%; background: #8b5cf611; border-radius: 5px; pointer-events: none; }
+.auto-cursor { display: none; position: absolute; width: 3px; background: #7c3aed; box-shadow: 0 0 0 4px #a78bfa35; border-radius: 3px; pointer-events: none; }
+.auto-cursor::before { content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #7c3aed; left: -3px; top: -4px; }
+.auto-cursor.has-head-center::before { top: calc(var(--cursor-head-y) - 4.5px); }
+.auto-cursor.rest { background: #64748b; box-shadow: 0 0 0 3px #94a3b833; }
+.auto-cursor.rest::before { background: #64748b; }
+.has-current .staff-row-band, .has-current .auto-cursor { display: block; }
+[data-precision="score-section"] .auto-cursor { display: none; }
+[data-precision="score-section"] .staff-row-band { border: 2px solid #8b5cf6; background: #8b5cf618; }
+.jp-score { width: 100%; background: #fcfcff; color: #202639; border-radius: 10px; overflow: hidden; user-select: none; }
+.jp-head { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 17px 17px 15px; margin: 0 12px 5px; border-bottom: 1px solid #e5e5ef; font-size: 13px; color: #647084; }
+.jp-head strong { font-size: 17px; color: #252a3d; }
+.jp-head > :last-child { margin-left: auto; font-size: 11px; }
+.jp-svg { display: block; max-width: 100%; height: auto; overflow: visible; }
+.jp-row-bg { fill: transparent; transition: fill .16s ease; }
+.jp-row-active .jp-row-bg { fill: #ede9fe80; }
+.jp-note { cursor: pointer; outline: none; }
+.jp-bg { fill: transparent; }
+.jp-note:hover .jp-bg, .jp-note:focus-visible .jp-bg { fill: #ddd6fe70; stroke: #a78bfa; stroke-width: 1; }
+.jp-active .jp-bg { fill: #ddd2ff; }
+.jp-active .jp-digit, .jp-active .jp-lyric, .jp-active .jp-dot { fill: #6026b7; }
+.jp-active.jp-rest .jp-bg { fill: #e2e8f0; }
+.jp-progress { fill: #8b5cf6; visibility: hidden; }
+.jp-active .jp-progress { visibility: visible; }
+.jp-digit { font-family: "Times New Roman", Georgia, serif; font-size: var(--note-size); font-weight: 600; fill: #242b3f; }
+.jp-accidental { font-family: "Segoe UI Symbol", "Noto Music", Georgia, serif; font-size: calc(var(--note-size)*.7); fill: #242b3f; }
+.jp-lyric { font-family: Arial, "Microsoft YaHei", sans-serif; font-size: var(--lyric-size); fill: #536076; }
+.jp-measure-number, .jp-meter, .jp-tuplet { font-family: Arial, sans-serif; font-size: var(--small-size); fill: #8b92a4; }
+.jp-tuplet { fill: #3e465a; }
+.jp-dot { fill: #242b3f; }
+.jp-beam, .jp-bar, .jp-tie { stroke: #3e465a; stroke-width: 1.25; fill: none; }
+.jp-bar { stroke: #9ca3b2; stroke-width: 1; }
+.jp-continuation { stroke-dasharray: 3 3; }
+.jp-readonly { cursor: default; }
+.jp-readonly .jp-digit { fill: #8790a0; }
+.jp-timing-notice { font-family: Arial, "Microsoft YaHei", sans-serif; font-size: var(--small-size); fill: #8790a0; }
+.jp-tempo-change { white-space: nowrap; }
+.jp-readonly:hover .jp-bg { fill: transparent; }
+@media (max-width: 480px) {
+  .follow-toolbar { padding: 8px 9px 4px; gap: 6px; }
+  #stageStatus { width: 100%; margin: 0; padding: 1px 3px; }
+  .follow-position { padding-left: 12px; min-height: 29px; }
+  .jp-head > :last-child { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }

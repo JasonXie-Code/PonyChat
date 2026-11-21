@@ -1,0 +1,105 @@
+.game-progress
+{
+    padding-top: 7.8%;
+    margin-top: -7.8%;
+}
+
+.jira-content
+{
+    width: 50%;
+    min-width: 350px;
+}
+
+.progress 
+{
+    background-color: #FEBDD8;
+    border: 2px solid #BF2667;
+    height: 2rem;
+    border-radius: 8px;
+    margin-bottom: 0.1rem;
+}
+
+.progress-bar
+{
+    background-color: #FD92BF;
+    border-radius: 8px;
+    
+}
+
+.progress-bar-text-group
+{
+    position: relative;
+    margin-bottom: -1.9rem;
+}
+
+.progress-bar-text
+{
+    margin-top: auto;
+    margin-bottom: auto;
+    overflow: hidden;
+}
+
+.jira-epics
+{
+    margin-top: 1%;
+}
+
+.jira-epic
+{
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+}
+
+.jira-epic-heart
+{
+    width: 4.8rem;
+}
+
+.jira-epic-version
+{
+    width: 4.8rem;
+    text-align: center;
+    margin-top: -3.2rem;
+    margin-bottom: 0;
+    font-size: 1.3rem;
+}
+
+.jira-epic-label
+{
+    height: 2rem;
+    background-color: #FEBDD8;
+    border: 2px solid #BF2667;
+    border-radius: 8px;
+    margin-left: 2.1rem;
+    padding-left: 3rem;
+    margin-top: -2rem;
+    z-index: -2;
+}
+
+.jira-epic-connector
+{
+    border: 2px solid #BF2667;
+    background-color: #FD92BF;
+    height: 5.3rem;
+    width: 2.5%;
+    width: 1.1rem;
+    margin-top: -2.65rem;
+    margin-bottom: -2.65rem;
+    margin-left: 1.875rem;
+    z-index: -3;
+    display: none;
+}
+
+@media screen and (max-width: 1200px) 
+{
+    .jira-content, patreon-updates
+    {
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .game-progress-title
+    {
+        text-align: center;
+    }
+}

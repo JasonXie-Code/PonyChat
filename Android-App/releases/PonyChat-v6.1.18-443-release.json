@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.18",
+  "version_code": 443,
+  "package": "top.ponychat.webview",
+  "sha256": "badb2a906b028d43bacc6492a7aa1954f5ef2d1455588bd5f34cbb05916303fa",
+  "bytes": 14787457,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.18-443-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复创造模式中单美元符号包裹的行内公式未渲染的问题。\n公式闭合后即可在生成过程中显示，代码、金额及未完成公式保留原样。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.18-443-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

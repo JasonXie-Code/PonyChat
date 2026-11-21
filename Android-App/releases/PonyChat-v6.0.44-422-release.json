@@ -1,0 +1,18 @@
+{
+  "version_name": "6.0.44",
+  "version_code": 422,
+  "package": "top.ponychat.webview",
+  "sha256": "bd23710c22bd8d837cb2994b1b0c5802514c95d6e8a1977861223dd17161789c",
+  "bytes": 12661604,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.0.44-422-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复聊天错误弹窗出现后立即消失的问题：后台刷新和回复恢复不会关闭已经显示的错误，需手动关闭。\n保留错误详情，方便查看和复制超时原因及请求编号。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.0.44-422-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

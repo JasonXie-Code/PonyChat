@@ -1,0 +1,37 @@
+[Unit]
+Description=PonyChat Backend API
+After=network.target redis-server.service
+
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/ponychat
+EnvironmentFile=-/opt/ponychat/.env
+Environment=PORT=5000
+Environment=UVICORN_WORKERS=1
+Environment=PONYCHAT_DB_PATH=/opt/ponychat/Backend/database/ponychat.db
+Environment=PONYCHAT_BACKUP_DIR=/opt/ponychat/Backend/backups
+Environment=PONYCHAT_VOICE_ENABLED=1
+Environment=PONYCHAT_VOICE_LAB_ENABLED=1
+Environment=PONYCHAT_TTS_PROVIDER=cosyvoice
+Environment=PONYCHAT_COSYVOICE_BASE_URL=https://voice.ponychat.org/cosyvoice
+Environment=COSYVOICE_MODEL=cosyvoice-v3.5-plus
+Environment=PONYCHAT_VOICE_LAB_DEFAULT_VARIANT=original
+Environment=PONYCHAT_VOICE_LAB_JOB_TIMEOUT=180
+Environment=PONYCHAT_VOICE_RECIPE_JOB_TIMEOUT=240
+Environment=PONYCHAT_VOICE_LAB_CIRCUIT_FAILURE_THRESHOLD=2
+Environment=PONYCHAT_VOICE_LAB_CIRCUIT_FAILURE_WINDOW_SECONDS=120
+Environment=PONYCHAT_VOICE_LAB_CIRCUIT_OPEN_SECONDS=180
+Environment=PONYCHAT_VOICE_LAB_CIRCUIT_PROBE_INTERVAL_SECONDS=10
+Environment=PONYCHAT_VOICE_LAB_CIRCUIT_PROBE_TIMEOUT_SECONDS=1.5
+ExecStart=/opt/ponychat/.venv/bin/python -m Backend
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ponychat-backend
+
+[Install]
+WantedBy=multi-user.target

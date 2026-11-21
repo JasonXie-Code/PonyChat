@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.10",
+  "version_code": 435,
+  "package": "top.ponychat.webview",
+  "sha256": "045358bbce17a4e3dc7b1331c4e06c1ba03f6b7e5fa2b27e3d621e74312a465a",
+  "bytes": 13203146,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.10-435-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式支持本地会话缓存，弱网时先显示缓存再同步。\n新增对话设置，可调整深色主题、字体大小和时间戳显示。\n代码块支持语法高亮，并优化表格横向滚动后的输入聚焦和位置保持。\n左滑先查看下一个已有版本，到最新版本后才生成；滑动提示移至侧边空白区域。\n修复重新生成时偶发的顶部对齐问题，默认创作指令调整至最新输入之前。\n弱网提示明确说明正在显示本地缓存，避免误报回复未完成。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.10-435-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

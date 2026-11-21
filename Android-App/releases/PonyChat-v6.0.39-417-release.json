@@ -1,0 +1,18 @@
+{
+  "version_name": "6.0.39",
+  "version_code": 417,
+  "package": "top.ponychat.webview",
+  "sha256": "978c612ff3ee3cb0480c36dae2a960f972a09d495737ac72032c715386af11fd",
+  "bytes": 12632740,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.0.39-417-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复呆站找图更换描述后仍显示旧结果的问题，新搜索立即展示加载动画。\n自然语言找图支持按语义理解官方画风，例如“画得和官方一样”“和电视上的一样”。\n支持按翅膀、角等特征理解天马、独角兽、天角兽和陆马，并结合否定及组合描述进行判断。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.0.39-417-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

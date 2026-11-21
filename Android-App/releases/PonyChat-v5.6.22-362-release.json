@@ -1,0 +1,26 @@
+{
+  "version_name": "5.6.22",
+  "version_code": 362,
+  "package": "top.ponychat.webview",
+  "sha256": "4e8bcdf86d325f0eea4bf34c544926a0ab8f743de4e9435358c9013263d3c61f",
+  "bytes": 11985304,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v5.6.22-362-release.apk",
+  "public_url": "https://www.ponychat.org/releases/PonyChat-v5.6.22-362-release.apk",
+  "remote_path": "/opt/ponychat/PonyChat-Website/Main/deploy/releases/PonyChat-v5.6.22-362-release.apk",
+  "backend_restart": false,
+  "published": true,
+  "server": {
+    "name": "usa",
+    "host": "154.17.23.237"
+  },
+  "http_status": 200,
+  "content_type": "application/octet-stream",
+  "public_sha256": "4e8bcdf86d325f0eea4bf34c544926a0ab8f743de4e9435358c9013263d3c61f",
+  "public_bytes": 11985304,
+  "canonical_http_status": 200,
+  "canonical_content_disposition": "attachment; filename=\"PonyChat-v5.6.22-362-release.apk\"",
+  "canonical_url": "https://www.ponychat.org/download/apk",
+  "canonical_sha256": "4e8bcdf86d325f0eea4bf34c544926a0ab8f743de4e9435358c9013263d3c61f",
+  "nginx_reloaded": true
+}

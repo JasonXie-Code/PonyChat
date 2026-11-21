@@ -1,0 +1,2652 @@
+{
+  "revision": "c30c38c6dd65fed14f7cf69d0b2fcc9320f4a8e7",
+  "firstCommit": "2026-05-21",
+  "through": "2026-10-15",
+  "count": 1608,
+  "days": [
+    {
+      "date": "2026-10-15",
+      "items": [
+        "发布 Android 6.1.25：创造模式新增续写按钮，续写和重新生成加入随机创作方向；连续续写后只重写最后一段，保留已有剧情和草稿。",
+        "继续校对音乐跟谱的原谱、播放时钟和桌面及移动端显示，并记录已发布曲目的验收结果。"
+      ],
+      "sources": [
+        "c30c38c6dd65fed14f7cf69d0b2fcc9320f4a8e7",
+        "c56437c59d15ea2d80db4d0a5b43fe18e829ba2f",
+        "7d1e327eede40cb467d6dc7d714a12ba70892ae0",
+        "df311f86533137c684fafae6779df62f1463c137",
+        "439979c70d717d02425278199c5091db58a9bfa0",
+        "089bce2268f07ff708996f4d8a2416cdcb139d6a",
+        "de5ab453ac7432d5bceafc96e7febd810b5f75ff",
+        "85982077267e085ff11e56a4ced52a18672f1a98",
+        "5d63b20b3a9be34fb2ddb02e0ec28d068bdfde40",
+        "a0a4b103a55c71984f3967b6f791fc5a202f1f6b",
+        "c01fd9c080bbe8e524f6a85d2950d5be76f15ccf",
+        "7764dc90537f5e9c2802e62ea2fa3f3d19e146d1",
+        "aab37c8a45d62644df2113d772a43bdfc8078ba6",
+        "36c4a326ff567baed91d61a7d4e3f56acc2fd415",
+        "9de91918071b799e48f64aac181e1efdc6ae7213",
+        "e7987cd0efcc28ded995f97b2f7472626a9b9d0a",
+        "772e761f8acb4818b3609368f1a71bbd3e3371d4",
+        "6bf6e3c968d7f3fc2931f90fe300509834096492",
+        "4cb26789d7e43870f22ca1ff9a6c164fc106b659",
+        "933416dc67d761ef25bf9eeef441c7327e23600f",
+        "bfa88c668f3237ea46674929727eebd41941dfba",
+        "665cb684f64982c8f569c1756bae47183f5d8573",
+        "4c684eae948fb2b810af809c4f33390f51b2cd5e",
+        "f334f8f2418b8c88ef9bb31e9bb29388f7ffe353",
+        "965e4b7f8a2fae5a5800707f7909179c7c24e2f4",
+        "f7064c3cf0a6675e728f35819f0cc5019282a89b",
+        "10757ced84789382a43076383854041bc3bec621",
+        "5f8acba9958f00050cd73524657932cae5df61e4",
+        "8f3dd01cb3abc602bce27148d080c7a99b861ffb",
+        "5ba594117bcb0ec3df468893a75c599a0c79d586",
+        "17401291f2e0e7c90c3010cfb21c269a07bac840",
+        "0d04f3e161dd3332dff82c5017b26b11e637063e",
+        "79730ec29fc0a3d2321d655ffd3ef4220bc92bd5",
+        "6efc6055b3e6246b2d52309a2e8e5b701b6642c1",
+        "8ba6b4ce45de739e45a5097ba450c2fbd88fd1b8",
+        "b3c57496c9700ddffa377f3eb674491951b900b8",
+        "1d11fd64f9d1a4ac64c47404e23cb8fabad03eac",
+        "415ccd9307cbd72f96b58d566f9092cbd75a8ebc",
+        "7339247af5b15f347b78b0233bc098c37e15261f",
+        "d60cd6836ce525f479b20b4bcc58e493d6a67cd4",
+        "79afa5f37b0c7e930aa3a4cb12ae18a9ab76c238",
+        "a4b3971ce5b6de2145235a3476ef36c8da078053",
+        "d10927286270aa1c321d64565fd34301cd11e4cc",
+        "56f3f078d69379264daf7f357031b18604a182b1",
+        "5517b52e9a169d669b19df598bb7d8adbc063bc4",
+        "7d091b4da0b22998abf51e35bf146d7b2d7df723",
+        "903c4f52bd1dc661d340b23028902089114670ae"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-14",
+      "items": [
+        "完善音乐跟谱的原谱时钟、音符显示和歌词对齐，记录多首曲目的桌面及移动端验收结果。"
+      ],
+      "sources": [
+        "c06cb7494264fe9c8ec8fdfb5dacd33972bfee44",
+        "3fa03c3ba89af86a1d4313d435a405c74960d043",
+        "4c2b3a7d10dd0e19b1edef847b575a6d6cbc3dd5",
+        "3410d0a894e9265d4be2a2dc621ba2341cd0cc22",
+        "e423955b871f20b3a9267d32c888b0ad0a86f917",
+        "bb3e486dc734832fc09b7ab46602db8b143eb5e6",
+        "49b2c63c8c49351b668a54b5f3da9165fa9cd4bc",
+        "fc2c267e39c7a4bfedbbe63375e9ca0163b77cfe",
+        "7be72f1b8ee06d360348d62473110cfc3449c964",
+        "3b1cb6ccdb0a6a94a6640a7f48b33986858a9cf1",
+        "ce9c197f1bbff0601c2a34cebd53f625fd0772f4",
+        "61f4eddc4bd4721aff251d7380fe098bfe44b8a5",
+        "c57b3a475876454338a63865f1d17ec14fece23c",
+        "b87d65aa180c4d050d5aface7a26007f7a1c445e",
+        "0d842f65de6eb97182245849ceb1d68d63718103",
+        "445f0ea3e6522f8661d1b42943baec98959bd701",
+        "8a006c50eaee416d4f46c0ad3fa5b5939c03e481",
+        "5335d969b7a2bc259f8f4d38f31442b4f87e73f6",
+        "281b869e955e969dca378c6bd865513750084a9b",
+        "d197eccbea7ac03ba0918ddb880f76265e72e57c",
+        "1f48df038e23abd2f3411e905558dd5656f8f0a6",
+        "e6030ae39e9e762e1a0411b17603e35e80d9c436",
+        "f33aec1bef5f9d396163960cb7a1272457317ed3",
+        "4136d87184f38a298564880999c2e2d0ecd39859",
+        "22d807e904e389b3f8c44f0f2979ade4d505a1f6",
+        "f3222caf2b205644cebb46c99ded49b06e67955c",
+        "a0b1b7e7abbaeffbc0160bc788aca9ecca15fd8a",
+        "edf98b16d49196a6c0d6e29d6d6a698fbfba6181",
+        "36266a8143705c152fa5f30b5cd28be7684e5db3",
+        "1cfab36cb2698f8fa1e9d7cedb06c54c38a836d2",
+        "03e9d51c3a7079398b8a46fd1a28830faf03c5f8",
+        "4f2c69da625d9ee6f050cfc608432675dd0ac9c8",
+        "e76cda27711bf7cefae61d8cd5cecbb98f3b13fc",
+        "14ea63a147453e75e6f9b2090c779a46e033c0ed",
+        "93c2f99a0ebe22f023dc27d0e4e209939a6ca1a0",
+        "390564909e292ccafa034a7810b9652bd70d50e4",
+        "4c5e184d461f4675c3c3d63d23c5974605879c66",
+        "24d7206182361549fcefed6a650b4030b77b0d8c",
+        "29c45b0ac31219aeb7c8d19e80e9240875ef2eb3",
+        "e4ca8bfbe9e8b339482c6a2f3d3222e409f39589",
+        "c8ff9174d226f6c07abe4e004a8f5ced3a1e7cfc",
+        "85bc267415658b1ce274a624be97503293194dc1",
+        "211ffb94ec41cd7b20211f130e6afbedfd3dacc5",
+        "1020ac9f54397416d940a5f251fc4f11606254d5",
+        "ad9aa246d82a77e080d6df0f80117c48ed65f2d2",
+        "aba6e8cc9e0167fd99d3000a3e7874957b063657",
+        "e09148c639bf96cd8549167b1dfb6c71f57ed9fd",
+        "f58899c9f6162d0dd9bbb4a51a52a175db70ca26",
+        "7336df4c0908aec1343ff73f0a2739f1eabd1541",
+        "e279be7573ac051f547c0b481ccfb616f8ce54ae",
+        "c0253d867eecc618a3a0105dcebf9e2aaa6f7c5f",
+        "757291c42f354284aff58793c3529d77f233d206",
+        "252d1e126cb9f6334986ff18d8fe1d3e4dafb5b4",
+        "35cf31a748c33aaacc3317a26f199401ef0d9995",
+        "ea1eb6a18455ec2c18e5497813ee2ed459ac8221",
+        "d6aecf85a578a9bad3a262f3ccc6c3378ad9947e",
+        "74ba11da9ae03e4e7b5a6b65f2931e969ad35fa1",
+        "c239e35eec6d0da4970a26f57dfc5ed0aaea4d55",
+        "754b75eec7204a2bc2c6d07161dfdb7f49ae857e",
+        "8fa6064e9a642ec299e96b5c4ff401e7c20e79d7",
+        "da534c301e07883d3d8f9af67760b881c9ffe973",
+        "35330fb3db5bfb94f76ed27926545c1231a1398e",
+        "7d604cb6abaff7700fa8bb0956276b1fc987f7e8",
+        "505ab2552efc21996bf693a1a038b25ea340b71f",
+        "7e4430598d25f619b58d21ac3c2fac6de5f63ba3",
+        "b87648791c2f3ba4f5eca82bae33ef2051edfa59",
+        "398f5aba81da77e0a050ddde8ad637ea08388add",
+        "29614a419fd86f24c278a43eb753b7d1c9675cd5",
+        "f3ae00775b9df98a31afdf19e68e3c3e81a49b95",
+        "206c7a45e63a435c65c41f62590846b8b42cb070",
+        "113accad681dda13af4188250eb8e371bb1efa4e",
+        "10ad16bfe46f7a86527932b97a225a3957fd3bae",
+        "67fd00de35c9184a6b3a2d8b81aebdbe6e74119e",
+        "622540b096e5155de09fb692741b14a103e8114f",
+        "028b1fbda0a919c2a5f69c2833b55d29dfceb0d8",
+        "ea5c88c289148296afa8986c5a6c3216fa83450b",
+        "6e904a7f7dca212be685932d55af041049ea227f",
+        "c2308a7f3eaca3d9734c8d988e0b03e3c5485402",
+        "d617b5da643fe8ed09f26416f4b9a07cad21c10b",
+        "193081414c16f194da7843ee31076860b39442b8",
+        "137ed5d6ef59d8d613c809c08b2dc9fc9bce9037",
+        "e1e819b5a7ef07e12daa3291591c3b2c11f5d69a",
+        "bd34b4f4287ed7241a5f5f2cc81be222a95a17ef",
+        "f9184748c48ecd386a9cb37c73757748bacc1c23",
+        "6fa3a23ae962d59639ac327bc83ae532322f5100",
+        "51279630789766cf93d1f23be3c08feb92a44fe6",
+        "1ce63009101afed47a8cfb5f2037b6dc16848555",
+        "a48606bd252b2f7e9eabfd70df3e6ec020457d36",
+        "63cd7c004c7636539c9ab3a46c9016c61abbf23c",
+        "dce6983255a0249a57ea2b5b172fb9644b361246",
+        "9a500bc2507c3cb84fb509a005bac0bba429be70",
+        "d71a6af443321151c67fe2cb521a6291c61536fd",
+        "f28decf221a1dd03c0f2b3e3e4dde3fed4846d9a",
+        "392084aff5b7b3652f97a31a06688feabf2d034d",
+        "7c73aae6bbe3f62bbf102ae4c97828ba1b852e34",
+        "6ca99bdf58f3d393228bce858488019dd2587651"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-13",
+      "items": [
+        "继续核对音乐跟谱的完整声部、录音时钟和原谱显示，保留各曲目的校对与发布记录。"
+      ],
+      "sources": [
+        "3c0cd525dd3185665b66ffc7c575d53fcc5684f2",
+        "92c405a5fee1e31c5896954809685c68d2e06988",
+        "b1c49f1307544da868e3e847084481693469b72b",
+        "e325bd21f4bc6798b7bc9d735021ce788444c887",
+        "b4b2588cf2215d8fce888595de6ecc37172d1403",
+        "d00d548f4021251f28b67f62eddb1b666ee6b0b3",
+        "dbc85429c0cab5c67104daad6c9805de8f8c1360",
+        "e541af838d4143d55d00c7a7441c66be2de0b6dc",
+        "1836b630942407069808d42b1079babb503be299",
+        "e59bc3785433d5f0e04e6458e89ad95779bf3d87",
+        "63faa897503b962f22802362a013ee1ab5697714",
+        "5a737e49485dc6aa237d2a0e03ed46ea67fd5c01",
+        "f2ab99fdee43f2e585c185fd89709b474cf1379e",
+        "b1646dd4f2c62a1c4e5e050574cb0b1e9fac096c",
+        "33ff91895d52b6b1d4d7939e1fc5bb697a97c82f",
+        "b23925f510528c38a0797c16afffcd9e8048d298",
+        "d6cf69b9f7fa75012888df94163fd34f250a6da3",
+        "37090d030dc925f3358b14597924498de7c8197b",
+        "c0d3d897711fed1b741086efe5408e367eb6b3e6",
+        "4dd2c8f4ff87ff9b9bc1450d9bde219947ea810f",
+        "a9c131a0a33b54fb2299b1145a787d2c38ab9bc2",
+        "07a9aef9f0ecdf7e4cb414cdfac2c6f34c21a72b",
+        "ab0050c998defaba4afb0e85e9d62fa36f48bc54",
+        "26d03ccc95a30352c8abfb71ad3df3c0ae9b161d",
+        "3c2946d9a6a130a1d95c47e3306ea69f9cb1fe0d",
+        "25ec3f09c1193941a7a4c192b02a648477e691b6",
+        "c834dc5c708022ac0310878e243675bea6672dc1",
+        "93d8a04a300068bc5caaedc3246e67668f76d465",
+        "5fb9641a43e8d1f730a887b7039b13a35b72d69d",
+        "c8baf664525c8dbe21b8518ea03d845c28e695a2",
+        "e45496d242a2215b799bea0c46db581cf3af4d53",
+        "c78923b9f17659887376ad1b532f2755a5b6f60b",
+        "2e2762ec93fc360ee2a0930f36b2f1ae153c42c8",
+        "e2b1a1dca51216b2a495817ff601db863089cbf7",
+        "61eb58426e330a0106ef3cf250b68e1bbfb2245b",
+        "cb65c5354df0e831bf92c4dce776eb7d1644d25d",
+        "292789bd3aeb705aa5552ec9c46640bb5d2e3b9f",
+        "a9f1c93a460cba983cd919da38e1a5c266caa66d",
+        "fbec36d0ffd5617939176d6bd8d71bd053314882",
+        "7123b3bea77c25dc6ed75ccb56298d7819d19911",
+        "8b589ae9e633e64d512e7664e56c57c015d33ad4",
+        "0947240aa3f225643e240bca76c684c054d733f2",
+        "349a429776747218a2f2b50119a659727b5d213e",
+        "b1ee1b7ae9fb1d729d411b337a7af94ece561d3e",
+        "45c1a2ae330ca8af3b5dc71e91bdb669ec60853f",
+        "f1cb13c004fd4a56d86db62b1ec1d0f937175e8c",
+        "46469472f6da4afcafd4af2c7ca0fa7e0fd8498d",
+        "1248f1130554d1f330b123b630ab298cbfe4866f",
+        "50e330e1a2003d7bb644969e8846acc0f9dbc94f",
+        "42a59aebbbaa482b5b415d2d6a274a583dbbe0b5",
+        "a31d97b755bd91779026d3117923f257b9c8c24a",
+        "7d5992211136b581fd686b3c9016ef5690196b0e",
+        "9a6d9f200432d3c375c8df8c26e57b97366050cd",
+        "148c23f457231d43c30f674e6075235954cac819",
+        "53099b27b88424e3a5e62e8b0ae26c67498b3091",
+        "50ae7bbc80690a329bf7ca83924dfd8aa8001930",
+        "04860d0e9d3dfaec3ca625b89ef3341a00112691",
+        "16a362f2e9ad66d5ad03dda77a63d2b775242a8e",
+        "1f98161ec10d3bab74c9bc93d627e5308f0bb99d",
+        "3f138b9405bb92a577e88549254b4925c6774f4d",
+        "7804b35db5d613f5dec1db0df325f1282d6ba1ff",
+        "13c2aae494bf18c6e615df4e458a9a6749a18e9e",
+        "28bec115695366b7050a0c4749e201f886657195",
+        "6e0093f3a65a543f3e9592888dcf95e12c3755b0",
+        "874ff852893f77ed721504eb59a97387e99d6921",
+        "9df338c6a112a3393f44a86aa40ca33ba051296e",
+        "ea60f3e644d226a3d25ab4c8035f59850c8ef0e5",
+        "492f16defd1c67187ac44c309ed4fedc90fdb9ae",
+        "b190fdf554a743b8c796b51aaae9120db093d5d4",
+        "a6ac49f1aff14a7388f5aa0e85277b5e4d2217fc",
+        "ae5da422f0537baaece405f4294ae0f3368f3584",
+        "8c5553d9a67861d216e09ebd346d588b32a94af9",
+        "a12dcff7e25a4005487d03001d75b60c23cb9444",
+        "0d9c236429d34fdb009a10e0ca6c084cffee66b1",
+        "7313084a8815cf49d7e9aa05c01b2f4d933125a2",
+        "6c14272301576637cca743348581ea0c636fc91f",
+        "812e20219caa801d0cb1a82426c68833eda85b2f",
+        "0ae84d9d198e676021c9a2c6dd6e737abe30432c"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-12",
+      "items": [
+        "改进音乐跟谱的原谱显示、音频定位与歌词对齐，逐曲核对发布结果。"
+      ],
+      "sources": [
+        "21ce43f5079700fc153759b8334443225bbd22d7",
+        "699cc8b8186fa55190e8633b98ab2c57ef720448",
+        "9509a657bf316008b685c399cee09d983c605a22",
+        "1b17b2979427dd765513ea83b888c35d1adfbea5",
+        "a4735b69971b2651de85b4336bd5a721b5331f48",
+        "54a7f0660a2896182e65270a7c3a085bbd018112",
+        "a49fb7ae84d6c89aae1fa3baa0a4759531c454a6",
+        "d5d73d209b6fb155d27031ad14b562b9dcb6fc9b",
+        "e84d8935dc43aa70044554d24169845046fffc53",
+        "05038fa75231f6eb55a1b4fc0b67bc49668bfd8d",
+        "c02beb15bbdeedc114bd319ace8945d98ea3e2a5",
+        "0b831d1b2f3658a11de1184eee5097653513a4e6",
+        "bc83b1b18ec54fb63b7aa5251b4d49cd7812b208",
+        "7f741fec78d9c466e4122ef89468393892a343a6",
+        "321b0525490c2d813bbc1902c6e82e1f7c0e3961",
+        "e6617bb30f579e0a4cc09998265c719af5a767bb",
+        "d26a87beaf0fbf5bd91dfe86510d0fed1a4fbdb1",
+        "313b4f6f38d50df9b1e7b78b6c069fa07dffcf45",
+        "9ac6ce6626b0267cf5b524ab41d7d0ddf0711928",
+        "149f48e71df5523ba06e04b68f2ca079ec7336a6",
+        "0ffbc2f1c6db410a2a5d3e674fb11739aecc8c78",
+        "f43535637e1d71c64ab296c62878eace293c0385",
+        "e36fe561957a35c74cb1f55b042389dccd0ceba4",
+        "ee3f2c96619c003072d9d7d2218904daf62fa195",
+        "e77e97da49496444a29e24db90d2b3b6e7edfa76",
+        "eba0ebd1491752bf62a4419070596bfb3a2ccc2e",
+        "d7c32b474886a27aad9a335d4f967c527dc13be0",
+        "14ffe0f76a2ea169d2b71f59bf63bcca51b3dc7f",
+        "b66f72b481e1c7212c63248e0afc240a2e288129",
+        "a26a9e3b512047e88295385149431f41d4e1c7e9",
+        "89d8a63f96ac47b79346ef0d80a3da498c71b659",
+        "bba4bd90e6544c2a655102c05aea4770e08e29b0",
+        "128990a68e7fa6913ac17af80af8b3313c9e0323",
+        "ca506631039011422bd9f6e22339de25f6aeb588",
+        "93df8954bdec561aa9bfc7269aa501153a4f2ed4",
+        "d00e8a016b51cb7f081fbed2f55b64fdb4de60ce",
+        "0151fad98a78dd9adfa250b7705feb8ed54742b7",
+        "51c4c38771fee10d0de6dacc1f57e2cba5100557",
+        "ed138300c8d2f52baa7a70cdfc8a00baa0a1997b",
+        "10aa20e5781ec2b56c1b02bf6f5900644d572670",
+        "0d5542f7c05f23d52d5c7d00b760cb716baa154d",
+        "30efeac3c8bddf82635ed729f94c531ec2e2d8fd",
+        "da249778ae78cbd201c43c30156ad5c05038069c",
+        "2e0efab394c96e233f3c20b8e41002f5eae5b4e4",
+        "006b019979faf7103109b38d35db2f19e039bf44",
+        "839322d3e0ce6b637f06346390bb584a3ffebcdb",
+        "a66b07c08ce46e34b2209b147f310acbc9c6177a",
+        "a40511167113371744ee43b4e22f7dd8f61f2b73",
+        "005f8d747ae2b9d9fbf540bd881c01f4f0ae5214",
+        "f22772e5ef0aac5a0734dde5724d6fd6841c651c",
+        "8ade5b18e1a558e848da0b708393ae20a53c4e4c",
+        "637517a0a6d4cc74ade00ade15946c3e07774f23",
+        "2541a80e724a60a9aac610574f2b65556d4ad47a",
+        "97f0b5970e12ac03c4ca0251b20ac3e662a4ffd0",
+        "ddc673e8045fafb109c85a174a6450e88fb12882",
+        "d3b59c2d8d6e67bbb31b201ed05129753f961d6a",
+        "6143d42b6a5aa3a0ad5ccf1c0c9cf855310da231",
+        "b51da88ae7414c0a79ba0a1fa0f866b5121cd987",
+        "16e81cc69334180ec155d630289c2ac4ac9282be",
+        "280349cff77e14cf83c9571ddf2b59bc9864a737",
+        "1b0c786c81dd1b4860cc05323c2dc8877cfc3d24",
+        "506c40f3a7fb614c31f9c932df93ea1dd329a4ce",
+        "9659b00498a0b4e1a9711c557cbc042766b38512",
+        "aca13d6426c9e63429e5a2c8f040341ee227788f",
+        "3828635ba8b5b7c8010e2ad0dabf5f7161e852d5",
+        "82c7af3fb71b553c376e4ef097ac37ff8e5dc68e",
+        "a6168d35fea27b2aeab80321fcba037c550ea9d5",
+        "a7c57ce10af4d6af898d14e43cc5dd92e33d2458",
+        "c46175bcc464c05ccfc876c10279ba33c406b91d",
+        "117e9fb39d56d0b30051f3e415210f508aa26ab9"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-11",
+      "items": [
+        "继续校对并发布音乐跟谱曲目，核对完整声部与播放时钟，保留发布和回滚验收记录。"
+      ],
+      "sources": [
+        "723b4edd5acdbd4a9088c7117b00e1eed537968b",
+        "e5ff1f82c8f758a4db30429bdf3c252fdac5893f",
+        "db650b6945c39bd63abf4956ff64528f5ffb5f82",
+        "e5e141fc96354c1e7e9909b0fd6ce6c5813e622e",
+        "76f2b938d97dc2286c6de30d2c476dd48f50563f",
+        "c51dad62a38c51558cf44c846fd5712086054af0",
+        "e4315099cea679952236088aa24b5616ca7c50f8",
+        "954f8338461dd2243459272dea7f410da8968c65",
+        "e1e03d26bababff316cc1e7e10656c0bbad33b48",
+        "127c7695c10bf993da3baaf311486529f570f73d",
+        "adcb30a0e5b6583a6f2167b51b040256d9308561",
+        "ae86ed7ef4ca87f7fc897e3bb763c8478c2cdaf1",
+        "80f534b9732574847df2fcebe54bc8a34b88d17b",
+        "8137129b973e3f3187a9841a8804571256308cc4",
+        "9f8cdfdbf5bfd6097426f7dfc7b8095330d1102c",
+        "f3a71ae0d57ca23ef44857766e92d01b62c1b838",
+        "349445b6b4406f3728693c25f28189593e502b52",
+        "fe05095806c4d6f93bdee9cefbe1e7dc8ffec4aa",
+        "344f57bf13a5b2da718d54b5b5a4365ebb37c834",
+        "2ce434837f82d9ad980889bc164e55f44ed26deb",
+        "2b653176198fd6eba7dc790c472154eb93f99d94",
+        "c0ecc69f7149b98c1cda376f65c277baa2b30467",
+        "3a9361804984d257e82b2a5a72e1e84197e3e5db",
+        "5a75a4e035cc7d2fc4d9e6786a460fc596f3116d",
+        "6010e7ec6db1f963491b781c98ee8ebe55c785bf",
+        "b39213079548a1bca0dbb7f16cdb0383daa25883",
+        "1305d313b45122aaac4455abca42094c9db69533",
+        "13fdc5b29a7c7b8f6ff10064024ceb56a75d9582",
+        "9a3c78614ce5e9702af2d42426e7701d03b1e4d8",
+        "0707a19fc0534bd938608ce9ecd61e2ccc0bbb2c",
+        "1ca8c6f256145f2e7706535514c23238a5ba4e02",
+        "ad1ce16925b60cc5bbf2395d0d1faf196dabaa13",
+        "ed2c8b504ee5221bfa93ae30192ea13f1f2ab820",
+        "f848d0ed265882ed33c5a39809bd23fecc649d2e",
+        "bb26f4513c70e570a05e049e460d3152e2a6e243",
+        "9bb4d041555340fdff2bcd9187bab93ad7165772",
+        "9c8881ce1150dff7058253da7279807ae090c920",
+        "637c8a038c2782744e41af90d87493c5912f2331",
+        "48214763a16356c60bf3c2302392ef248eb4c4bd",
+        "301c22ffbac100f91de2230bfca477cb1fcc8de1",
+        "bdc330c24591beb5b443e11cb391a054a52c3902",
+        "c1a93eb272a061a31926a3461eb5c76666117c47",
+        "ad09f9ca32cc919116a3ff1c8fec433de11d6494",
+        "05e47c927bb10db76dc4778a2abe2a168cafd363",
+        "09fdd77fb66d1ac73b106cbe5feb27b71c1fc461",
+        "cd2763411417e10faa87018b0af19c255d0f5fdc",
+        "33618e011ef4646bcd321bdaadaca3523cf239bb",
+        "135f548ec4a392e90f78ca41effb56c0f3ef8cf4",
+        "dc29fef56ad675c67af5b5d7d4eafdc2cee66f8c",
+        "0b1242886084562a3fcba0461a9019f2877564e3",
+        "d77faceaa604715de325212ccdd4c25d6edbd87e",
+        "ac271d6b4012697d9ecfdb69e3694587dc05b1af",
+        "4dd2918059c3008bd2578d6f0680a20035f8d016",
+        "9ada32d29e4946baf81ab48d29f1735e01eed3e5",
+        "78486d667e7f5fa990d56a77ca9e87def9c1e054",
+        "082041ad80f970f3f1c1d8259f879408d903c7c8",
+        "21146c8b5da45df50dbfd48442ea34e203e3c207",
+        "536dd0f68f76bfd6506072ef84f67a6f58bf40c3",
+        "a6d01e5231c61b04770873215b29448be5149e79",
+        "84c03261b1949d14a952b19bea4d9295190e024f",
+        "2d8f5eb2de450b5e764eaeb873f1d24e3db7f356",
+        "4edd03fea073074fbec2eccbd5b99eb9fc2e04fd",
+        "4b04afeed0a1536bc83f57a06c5d44b734531042",
+        "63c84a3e7cf0b5539cc17ce00f650bca1164c23d",
+        "98d082b2a7a24a8d1c4711cef1a54279f65e11cb",
+        "a87cb66b67f188a63fa05ef06bb9053508cd450b",
+        "774da4ff33050bc50e76aa691032370b3435351d",
+        "d0e80535fcb4987266198d71fa9592901e46d37e",
+        "d1a12dde568af6d5d3fb6d8334b9bcc9991119c6"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-10",
+      "items": [
+        "增加并校对音乐跟谱曲目，完善原谱、歌词与录音时钟之间的对应关系。"
+      ],
+      "sources": [
+        "65cc60d0c3bcd30fa1a5b8a0e3212f466eb353d9",
+        "3e875b245100829f2e1c4253b38a43eb3e6c8a98",
+        "2d4b5e0f131c17308231aa3ff481df472ed6d2a5",
+        "676033e1025dc37fe07c5f332b3dbde75d6f4cf0",
+        "7dd59a160b2b587317b291075ce8c7d383aec450",
+        "69f662d961a1bab0bfdfdd101f929e4ea1e43676",
+        "483e5529534312e6f47bd52de6d3dc69d99a3302",
+        "a3487520891846fb8fd3171a5e19318fae222519",
+        "96c1e033c5028970b099a84bcb61547c80984ff7",
+        "4a8b27cd1e32fd79a9d539d3c8356458299881c8",
+        "b672bf9183adfe80202b30b4cd47eff15b039bf1",
+        "5f2b8133d5fa5b1789627f3beae3c0d7ccf236d9",
+        "ea2fdc60d3e9a9245af96c5310dbfea753664a8c",
+        "af911e0458526b65d112f4b0d6627f13112d4c4b",
+        "034f61917d8da410be19f4aa6e2dda124575cf4e",
+        "dc9751964cc3c379275eb8711b6e8b2e4e902231",
+        "72b4552d44688347791f0eecf19cc8e3a858c0e6",
+        "a40084bbf03b388b1a37e1b981b2443ac484296c",
+        "937251f7f0528d42ed8cac4dbb4d8e093cb58aea"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-09",
+      "items": [
+        "完善音乐跟谱的发布校验、原谱渲染及歌词时钟，核对桌面与移动端播放。"
+      ],
+      "sources": [
+        "24678d6a1f40f708f9cac7257fed376f63384c88",
+        "1eed3e79073d4f95eefd0da4f71ae84f000843d1",
+        "d3b70350552ad28f21b7ca55c1f462fa944669d7",
+        "38992204d105f2d0ccfbf46d170e66759d61c876",
+        "7418b5de9e0bbcab6af90fcf8fbc4242bc1f4138",
+        "b31936af15088e2713915a7a58ce61e1eb306baa",
+        "a8e68b4d0ad99ccc2f144aefe6e712aeb42a4dd2",
+        "ea12259a3ae31ef08018413df7f241a4deb402c9",
+        "08bf32c9c5f09977e8e6d1421fdec70758820a0f",
+        "16608ca0901fd7c2491820b16254e54c4b0f4f48",
+        "f651ed7b709cf9fbfcbcadf79583674416a47d63",
+        "b8b544c59e452e1cf9d7560aa0799c4cb59d358b",
+        "8b10d6990ae5170e133f7f5502d3ea02badcaba5",
+        "8fafe2a2c88efd3918397d082ded8c0463da46be",
+        "ef1fbd4d98eeee3041c934c16d5f7dcc5c2ef4d8",
+        "0ffa461420e2501d65e70f4a842401f9b2b21842",
+        "6de2dd716ca9611b500c5b178957627548a938ba",
+        "8049f61685f9ce32444ebc2e49a39eefaa503ca3",
+        "07613680bb820fb9d1f95baf27db077223d02fe0",
+        "13dc5b70f7bf9272bf5da1707dedf7c91887a564",
+        "d6511af0d66a74b859682a60fa57e0b57f046127",
+        "78c35085e37026ff1cd861a3be4cf952f2f798f9",
+        "70ff8763f83f68a71978100919e1a58cf4639cdf",
+        "67825d83b34d0fd6f169007cdbf253966c1ea610",
+        "f9d43badef84829daf73c86c247fdd5a89933ed0",
+        "6ec0fff95228b5381c68682a812008dfd470ee01",
+        "692cc03af1951cac68625bb8eb8a5c8329e94b78",
+        "21600fb12ed12e458513ac8e653aa9f1d072b6fb",
+        "d8670880678ca758e30aab9acbe33a2bd365f95a"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-08",
+      "items": [
+        "增加音乐跟谱曲目并修正歌词、元数据与播放时钟，保留逐曲验收记录。"
+      ],
+      "sources": [
+        "9cdaa97dea78fd2d513b7e16a518703d3e613212",
+        "8a927eae6eebfd55722b059a23a4b81a37879127",
+        "db4d3b4f9e9959b053b235b832354c8801008916",
+        "b9c06f64442656d10131995c79c0fc7bd2aa0a26",
+        "252375ed0f96d7b485a2f9bb26ee8aa583e956ea",
+        "e89f8b2481ff0f207ccea2a958c5a6a7f5411be1",
+        "caac078949a9a4eb33725f3c8413e0ae1468dd3d",
+        "21e6d0bac8bfb9c5997d410bb4fe53f37b7018bb",
+        "7b76e014069b202acf5d32e1db774d75cec8a940",
+        "e86f6ea51fe4bb3205774d9c60cf2f4f1ea194b0",
+        "2662faeb6a514c37af757ac2dfc5bc2cfd58522b",
+        "35f4ce4f78a95292e0075277aaa4c5eb613a08ad",
+        "86ca1049a8f6f85f31107311b4f3ac531153008f",
+        "74e3f25dce819ff8edc336383195d81a89fd7a5f",
+        "969ffdb7c57b4b0f11ed8aaf0190b70825f648b6",
+        "024be85ccd6521834b3722c9b0b08f44ab81375e"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-07",
+      "items": [
+        "发布 Android 6.1.24：创造模式流式生成期间隐藏消息下方的复制、删除和重新生成按钮，正常完成或主动停止后恢复显示。"
+      ],
+      "sources": [
+        "517216d1fa8adff40397e4af15158374f2a886e6",
+        "15a4136714832e9794f304bf6e97cd48a77198bb",
+        "dd4ceb7a7f13589e480c20ce12d051bd66d65ae3",
+        "3dbbe757a8207c1bda331df82be3c87188f099f1",
+        "95b47249e95665ade0148274334e1419a719ccb1",
+        "cfd28d15866a4351e76568f83a1a3124ed11ddd6",
+        "622ce43fd58dc02b8d763e41cb1f96b6c93f5d28",
+        "24ab8b598eca8809bfd7e32cc32975b632d893c0",
+        "7aacd6d4b538a1c68545ccca0074e05eb63fe816",
+        "8ede22c4d3f419c47aab6290ee1afe9a032fd04d",
+        "701db29c8e63c9aee3c57c3b036eb2548924df30",
+        "7a791acc61139144412bb5251c190bde48a93124",
+        "efad7a47e71bd1da655bf12da1232a3d35edcb01",
+        "158167e0fc0e2abebefa55e381704e1e7d4ef604",
+        "d3e745e0706857cb3dc6cccd3094324c965e4c81",
+        "20f7b477f40ddfda593da86ae96b7ed9378d3e0f",
+        "15d42c84f362abb8c4469a67b4dc8e36e7b8599c",
+        "99ff3f4b1a5a31962e9819a638620e4dd698bf57",
+        "8dc25e78538f136be1e8ea3d1d23d2ed70fb1c6b",
+        "567193ebf0da25a02d656fed81f1b393fb108840"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-06",
+      "items": [
+        "发布 Android 6.1.23：创造模式主动停止后保留已生成内容，不再弹出生成中断或已停止提示；修复停止后再次点击回复下方重新生成时的自动滚动定位。"
+      ],
+      "sources": [
+        "01dacc1920a82a0a97614ade2b12f291f5438516",
+        "72d9dc9acbcafe67ff77e640045c60902fe6572f",
+        "776b06c7ceb66b958a1e2bad635a4c1295a4e680",
+        "5294f8c5460f7ff181b8e82870901c5f6a8ce33c",
+        "fe939b3bdd4a8c3e7b00459a1c21e35a1f7460d8",
+        "b9657329944cb09705ed03b9928df0c0b0d04460",
+        "cc47b51cbafedc786b263d88f2e17b8e34ae21a9",
+        "fc0a93cd05c66a24745ad24547b78b1fde7dda69",
+        "8f9fe143caa6d25acfcee67127f08b95b4e1ac9c",
+        "674c842ec4ec6df7035c595f973379b707a75baa"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-05",
+      "items": [
+        "发布 Android 6.1.22：统一点击页面和编辑弹窗空白处取消输入焦点、收起键盘；创造模式“已停止生成”和“正在显示本地缓存”改为弹窗，保留关闭和刷新会话操作。补充 App 焦点及退出即保存设计规范。",
+        "发布 Android 6.1.21：创造模式生成震动提升到每秒约 12 次，等待模型和显示骨架时保持安静，首段正文出现后才开始；停止或结束立即停止震动。",
+        "发布 Android 6.1.20：修复长公式流式更新时闪烁和阅读位置跳动；补充创造模式操作震动，生成期间每秒 4 次短震，结束即停止，不追加完成双短震。",
+        "发布 Android 6.1.17：将会话标题、创作指令和上下文合并到“创作设定”，用量显示在右上角，角色设定不再展示；精简系统提示词并设为只读。",
+        "发布 Android 6.1.18：兼容单美元符号包裹的行内公式，公式闭合后可在流式生成中直接渲染，代码、金额和未完成公式保持原样。",
+        "发布 Android 6.1.19（构建 445）：修复行内公式位置偏低，按正文基线对齐并保留分数和上下标空间；验证根号、求和、积分及矩阵等复杂公式。创作设定中的系统提示词仅保留名称和排序操作，不再展示具体内容。",
+        "创造模式使用本机 Gemma，普通对话、Agent 及后台记忆和摘要任务使用 DeepSeek。完成签名安装包发布、模拟器覆盖升级以及国内和官网公开下载校验。"
+      ],
+      "sources": [
+        "d6439db7d4f6372933bd67535f919014a9e11b90",
+        "96194ee9d7a93df966033fa15c2e71f5e7bfe350",
+        "44d4f67e20b7d731be4c8a1d24ccf9ad2b3b8302",
+        "fcde9e64bf74b3f0905a650506486e1951dac6d4",
+        "b7dbfcbd8e2cfef9a7a5d14292f7cf0cefdcc06f",
+        "405de256fcc2cc0c87c5f13dd2f3e6d816f37e09",
+        "6770b0c673dc14afe8fad200fdbabc8ec2f61c18",
+        "42f8eb1a7431735aa48e68e9dbf72a7fcbad114f",
+        "4991b5896d63f5276c727d163fdcbe4adf0afad7",
+        "a7a347cebc8c82140a31da6371e7cdd5e0cc4baa",
+        "74ff4adddf56969e83b117b043f2d01bd21686d6",
+        "b9091fd74631801bc2486dbca708bde5032b59f5",
+        "037a93f1ce455dc7cbe9ecc58da643296f2458b7",
+        "f3edc528b0e473f730e74443f46e3d4889b0a0eb",
+        "22f451aff51c1151852c98278a8da947864ff581",
+        "eb14c2ff5f2a9ad31582bdea8ab71a4d031fd280",
+        "3d361bfe82baa821b2cdb957669c1d0de46e0a98",
+        "167bef5059f828e5f85bdff9f42e11889857cae2",
+        "c14a99bd77f75b43922b9eae3e0168708be98893",
+        "f085c69a7fe2c6c043c58f28891209a1f810ccfd",
+        "9bc8453061481ed1f94165d860b405c62ade0291",
+        "5917d3cf6acb2bff6adb2ade6d829b34a3df1145",
+        "2a8e18cef7f817331e9d1fb0559f372b1223cd57",
+        "d00d92b8ae451bf2f5d75b38583e2da28ce6efb9",
+        "ee59b88f0e48f1d3de36c282a96fe0f8995f94e4",
+        "c23c9d485e21885307378b87a84eb9bcf6c9d646",
+        "69f6e6913e6a1c2fd6625e2d4651d9bc29f125a8",
+        "c8d2b81fcbf0551ef9ab86f011d09ed595779b9e",
+        "42bbc22c417a6b0167cc6dfe9574ca7aa9864d5d",
+        "7b8411f35e4b24f0a9da7f86e9959d22f0831c20"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-04",
+      "items": [
+        "发布 Android 6.1.8：创造模式表格和代码块先显示生成占位，完成后支持横向滚动，减少流式排版抖动。",
+        "新回复以动画定位到开头，生成时不再自动追随；最新角色消息支持半屏滑动生成或切换版本，并显示版本计数。",
+        "重试采用乐观处理，立即隐藏旧回复；上下文管理显示真实请求用量与实时模型上限，缺失数据以破折号显示。",
+        "完善创作历史删除、退出自动保存、键盘升降与消息位置交互。",
+        "发布 Android 6.1.10：创造模式加入手机本地缓存和对话显示设置，支持代码语法高亮，修复表格滑动后的输入聚焦与位置跳动；完善版本前后浏览、侧边滑动提示和重新生成时的顶部对齐。",
+        "发布 Android 6.1.11：统一创造模式设置按钮与普通对话的样式；移除消息左右滑动切换，改用消息右上角箭头浏览版本，到最新版本后点击右箭头生成，并修复首段正文出现时的顶部空隙。",
+        "发布 Android 6.1.12：创造模式支持 Mermaid 流程图离线渲染和缩放，语法错误时保留原代码；键盘仅在消息最底部避让，生成中保持阅读位置；点击消息收起表情和更多面板，并统一顶部操作图标颜色。",
+        "发布 Android 6.1.13：修复创造模式流程图长中文节点和分支文字被截断的问题，长文本自动换行并完整显示，保留离线渲染、整图预览和缩放查看。",
+        "发布 Android 6.1.14：修复快速退出角色对话后点击左上角头像时页面空白、无法恢复的问题，防止返回动画期间的旧页面重复返回误移除首页，覆盖创造模式、普通对话和设置等页面。",
+        "发布 Android 6.1.15：缩小创造模式回复下方的复制图标，使其与删除、重试图标的视觉大小一致。",
+        "发布 Android 6.1.16：修复创造模式发送消息后立即收起键盘时的闪动和回复位置回弹，生成期间保持消息区高度稳定，同步测量键盘与页面留白，并避免键盘预留区域覆盖聊天背景。"
+      ],
+      "sources": [
+        "05d21ced4cb6f8187d620cb4da9ef0e14bc903c1",
+        "ae08a4476f73601af8d0610188b27ffc3d4e896c",
+        "1c660d00b9ce7b20deb479672e44d3d3652baa75",
+        "a3a10930febc7cf7c099ef9d41b19e4644cdedc4",
+        "6381096e2dbd9c37d095e7fa464a238cbb03b3e5",
+        "c8a3b5b09b38ba40cbb3038261d0dbf7387a2167",
+        "43c1e840f90574c45cfe516422ac29862f79e9b2",
+        "fa90d71b880e03f29ae5ef390ca6c9d31feb0497",
+        "7c84f7f146f220a767483c2093e0ccc953560f21",
+        "89cd51147ff682e22e137aa9eae3a18596b2ded2",
+        "831124da0e505fe756a8675495b6d65d803affb7",
+        "b702b81198a2cf16dc1f6aa9738e7870fa047981",
+        "4ea1190f2303b9fb6478080e35e6c8f02ead9aec",
+        "d25aede6bbcbaac347cfeb10fccdb3c5b9c6d747",
+        "9deb31b4f9f4f9ef1cf39d8d051b9a6d243d37c9",
+        "46307d1695b4250b5cce274722fe07326d95945a",
+        "2b3182158b93ba686c9c893869a6580e5600dad7",
+        "888f72c75edcdaba8e0d3c2772618ce5d372c510",
+        "b481c75726f96e792762c3311f059dcf00b8be44",
+        "80ee7d48c8f5ed1a58fc6038c59f0bafe6e11cf1",
+        "00aa62cdce69ffe85b39993ec72cac019fa3aefd",
+        "1b41df84f22800d19654e0561d25bab1ee8b7785",
+        "616123b4b0caca9885cb49f1e996bbdc4d851ba3",
+        "198aa707cefd2c67e4990a23dbb8eaa8073c0c09",
+        "49a884f120b35092dd8a6c20a13bc58b63760684",
+        "c09a7a03ed77ffd976f2be9813b6f3162c6c9787",
+        "9924e76883e1d3c7b5d00a541c7c71c38e8c5ad1",
+        "b2e1745e7b8a5cfb2e02454cad1f5bbb2cb9c74f",
+        "341ea41b975310521dedd4bcbf869a1df5b3c696",
+        "cb51001a78df55aa81ab148f1f2544c70cff2a5c",
+        "2981007f68c43fcf2520aacb73dcbea40bfa7540",
+        "eae23bd50bcd85358767aafff974d33a0d61c19b",
+        "13e0b9f817e0d058554a8b4efad8e180fc7dff1e",
+        "403f196ad18c4d063b10e788721cbf6342dd5c54",
+        "4e4e34a55b856c3e5e8ce97ce8233627f1405947",
+        "4be18929c1c2e9a6856f65d8addecdd96e456f25",
+        "b76ff306c601a04242f515c959419d2a976def74",
+        "fd02c7bfcc75fcab45adbd5ee9590bafe2494b73",
+        "b1d3d3ccc6f1d258eae7c2d28905c151d47b2c8b",
+        "3f8854a8bebf3332daa5b1f1a7bbbd3ef9c5cce0",
+        "1441fba62a1faa49d04bc06e2ab15649b2928e7b",
+        "78615bb2243b89eb8b91cb544002df27206e9a22",
+        "7483bd98d18d5c2293b07263859c3478918cc94e",
+        "6f9d62880ab87b60f5031316c9b661dc1700e4a3",
+        "dad769001cb615121d6d316dcd4d3bee0fa2a847",
+        "1638644c0c64a2f2c5c6cea28e90949297fcba7e",
+        "6780b00a24c250b14bb5571dc4aca482b15d4e5f",
+        "98e95377ba499563a155026fcc8dd4a34b983447",
+        "a283e47372641db1fba513a2f430781dc7fa6067",
+        "769993995e3dc577b0e52d1b5f0268c33c59ba63",
+        "7592b47c9be919c776c4898d89c643081ee7593e",
+        "9e34fbbeb1a2093c823b7313719d3eaafbf68718",
+        "1e7dd6d3d62bd7eb7cfdba4931984978978d31ba",
+        "f109c9be696f3fb04e68fad28f7b66ed9276da10",
+        "ed937ba7606daa0a9f2f790f09e7571f6c28a3a3",
+        "16addfe9a253496f5948b73026083db0d31cc1d3",
+        "f687e84b0e6a9b188c20224cb24cc8894c8b1e67",
+        "7969f48ae5f08f63ca84294ee28355d3ff17d915",
+        "a65e114c26cc217a5460522caf1cd2d7d2cd1cc9",
+        "94e96c6b991ac531bf2bf585b330c93927c55585",
+        "514dcd273f4393d3b709c0456b77038984a679e2",
+        "7f718578543d03fd12177c87a187a87ffcef7ce5",
+        "37a628afa5d9894fef3887f0b28bc975391954df",
+        "8aea0f427437d65221cce22df656f26e01780744",
+        "b875f1158c951323a87ff2cc32198b4d68989680",
+        "ecbb20adef96f4c4af558e3d5864ed8e52028b4d",
+        "dfbd09119ebc1570f00b3733b6c8faa375ec6676",
+        "4973e1691703cddf8e03b7c0cea3b9a512b3dd73",
+        "cff03480723b735f45284434cc1a4c45b2e14c30",
+        "cf5884299d9321523e1b75c9e634629010c55d45",
+        "221b4d2c5c15573c5f66fe4398f0e69a7a90541d",
+        "dec20c8ceb2958b9da1a253b9afed295ab8527bf",
+        "5d0a3949475085bb87faecd3e357cd4800e8f5da",
+        "16cdedef745044a3f48cdfe0f6ff523dd2b95e74",
+        "dcb7841f3f4d6da3bbd6d2296a0980fabbc780c1",
+        "e15550521978f366e0d9ca6d8dd23bc38b5d2fe9",
+        "8667d57d848b941612f3e9f8b83eb1034ee038da",
+        "9ced45d8dd54b02e710b777175f8d55afff7666f",
+        "2cd5717ff723233f1bc3ba30397401ecb32b28c6",
+        "cefcfa3060d4680bd775ea91d22708216cd01808",
+        "fdea6371adadc13d3b2280d481dc8a5e29d0a4ff",
+        "a06e7349f3c10ce0c06d95fe798be3c25f7d915b"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-03",
+      "items": [
+        "上线创造模式，支持流式回复、自定义上下文排列和创作设定，统一角色消息与输入栏样式。"
+      ],
+      "sources": [
+        "6ecbfe170507246d72dfc0a75ec27ff7d89f61b9",
+        "44326211c3eb789e9795c86d86e852bc9ab7d93d",
+        "3846763d4176c2fc7f45c3330d11284e92a13ed3",
+        "f7e4d775ba1f5a4ce0c6afbcf5a2ce49d3edefbe",
+        "af774ae6d0df563869d53afe471a8d4641ff937e",
+        "6891af568b82a1dad1baf84399e6b56da35f6d66",
+        "20a677c9757d53d7534035a1b1acd432f0d480d7",
+        "963fc4f640ad8ae392df3dc2f556bb2195648d28",
+        "2fc935de44242259ccb34f36e2f5cb30fed96fb3",
+        "b7334a15ab373a7b57a165f4225a882f1fea4e5f",
+        "ea6eec19a69c6e68d59c381f71c77be47d05d2f4",
+        "21429d72d73d06101d0f911604b571fe92f8b335",
+        "d4a4f3bc351414e5f973a5d8d615a4e318afffdc",
+        "44e27119ee070fdf5cecc2da4884e0181d5aa455",
+        "6c93a8bc1556212b4aabd981d3f4cff12df9a2c9",
+        "9cf0c357e5254f2ddde40f4efa09694ea3a09037",
+        "8dd1e2d71ab247b0cfe9d909438883502d7754c7",
+        "d6f50d93961894ab84ff3be9dd0e319338f197eb",
+        "a67f47a152df3e8005eb728c4497e93f20feca68",
+        "0410c4867254155b97591b575a50ba9310a40118",
+        "cdf24f069bcb0ede1e11cab49182ad32e8eb9d61"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-02",
+      "items": [
+        "优化 Harness 常驻复用与提示前缀缓存，完成真实语音、找图、搜索回归及上线验收。",
+        "按语意拆分气泡并按剧情时间核对临时身体状态，清理过期物品，重置替换后的场景；保留仍未达标的慢回合记录。",
+        "新增角色列表与 Agent 状态加载骨架，发布 Android 6.0.40、6.0.41。",
+        "普通聊天注入近期与重要记忆碎片，修复死亡误判和灵魂回复交付，完成后端验收。",
+        "隔离测试角色创作、主动表达、语义去重及受限发声材料，完善发声场景与拖音符号草案。",
+        "官网将项目近况改为更新日志，整理早期记录与每日中文更新，并保留可切换的月度概览。"
+      ],
+      "sources": [
+        "d831e98efbcda44320f6f1acdbee3700a36ff8bf",
+        "fc73d2d0d8038c4db0d999aaa131166a8580a7a1",
+        "3c37f1a059f0b0a1eac1488f4baeb1cc554a5343",
+        "24a3a3b90b0370bfef152f942b1ecc9c0580ac7c",
+        "ab9caa45ba72888d2f099432efd821a85ab1ff23",
+        "1bd4f8730a47f175ce1b37bc19c1bee620fbd81a",
+        "c84e753dd06e93ec2091dc73dcf39465edb0d4d7",
+        "46b5b0663d76f038cf3b7cceb4ee5804d1c4fd89",
+        "42a5350318d47d1c9c436229460521ff65c399ea",
+        "b709ba2585df26bfba6701731cbdad35b36b5ccc",
+        "3caf2cd14a20632ed4ab9b9e72034cdbc0880023",
+        "9d8f613e944cc79f4cc0f989bd3d18d1cb6c65ab",
+        "0c36237211fa82c84ef59876115f4de91a8d8ca0",
+        "5510db525e4bbcf3ee1f45f01fafc54e30e412ba",
+        "61c9a1547860f88263abc21c6664dfa01f8a089b",
+        "89c63e305ea7bd71d251d49b94bda358482e6533",
+        "abe4947662e02cb40b654be74c1f4de544a39771",
+        "a80b73fd9f428b983b13b334a6949a3a1e6ebee7",
+        "1f46ee1b5a0ec0466ccdb75ba140a3ac115c7b5c",
+        "e0b3f280153658cc3a996d5e7f328c52ab39500d",
+        "339b817944c995a635efedbceb1b56aa668583a6",
+        "242dc07db3b2ae056f35358509f1f7d16ef7e9ed",
+        "5a0bc105720adca616fc1f99bceb2226d4ab8e97",
+        "ce81b5c5bda15406601692ab78a288de1d20c300",
+        "3f6dbcfe87504da50ab137e04204ad700de09ba3",
+        "c00c8619332aa4951e0888b2bf01e4c082c491d8",
+        "4561ad1dca1d2d05d47537b1198d44344b6828e8",
+        "a4245b1515e067d626f1d22aa54c51eb0968a665",
+        "1bb5d264d6869180cb8cc092e4200af83e7de9a7",
+        "dbc1fd1821f2dacfea98d7f21be195d200a600ed",
+        "4efb1bbd1bd9226336249ca9d49e9eb776fbfb1c",
+        "61793a188eed1cfc64f16fff584fb8419b37e4da",
+        "83d89e03a6d3207c416fda062600a3e70f9fd6b4",
+        "6c0644ba119e4f25775cb382890022b2bb922ca1",
+        "22e67e32915396c0ab97b805e0c769fc2f11aec3",
+        "50640cf6e9c46d541f13dea9abaaa66298068d56",
+        "c2c32fa13174f1e086ffa991bca9dfad1cb0ee53",
+        "1485ffa8cac74d2afa5230d9a1cbae95cbecfda9",
+        "e2436ff074fce6ba3cfdd2a19a0b0534be2c42ba",
+        "f4f43d155d00a310b5ce5f228eab56fa14c5334c",
+        "fce280fc4f3d9f2e07019ee49aa13761f8335d53",
+        "214963c887ede519c639a12d5b2ef48e5cadf64b",
+        "0cff84edbd24f869d33133b1422d6574d061c49d",
+        "cc1dc4d3cac052aad62ba87e9c574c42658ba75f",
+        "7663ae57dc47965f6fa8dd03ac249f95d2e76ff9",
+        "91ee6b87bcb7f445533599b260a9abf4bd681fe6",
+        "6d714829427b619098f5badd70bc1544eac831fb",
+        "bdb3151223d39cf0f9733a69e0439c834a35a384",
+        "0c1293757aa750ae659b7ef844e08981d593d6e2",
+        "2da2841e46c3995ddd39c8580552c7916d1ef7b1",
+        "754c48efce125e45e6e48f38b77f4a4b33c5772e",
+        "381818c94375ea60ef6d45fc47684fc7e9ebf494",
+        "b978b5a7221162cca5d93bfffe120c2a0bfd83b3",
+        "79623bad0ab1ed4fb35334eb71e8df03168afce1"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-10-01",
+      "items": [
+        "找图改为理解整句语义中的风格、物种、否定和修正，修复加载及官方风格标签，发布 Android 6.0.39。",
+        "引入常用的二百个图站标签作为翻译依据，完成目录和部署验证。",
+        "扩充认证角色设定与亲属背景，开展姓名指代、内容先行和逐气泡依据测试。",
+        "移除表达材料中的案例与示范台词，再次取消登录白名单并完成开放登录验收。",
+        "开展不同模型、直接接口与 Harness 链路对照，保留失败试验及停止记录，优化低压力表达、清理与首气泡测试。",
+        "清理重复图片和旧截图中间帧。"
+      ],
+      "sources": [
+        "578269170545665e08da999fadbec2620a2c279d",
+        "5c1efa3627948a43be231aa97ef60fe5c2d68703",
+        "068cccd113fb557177cf16b765d35b0f29f20a00",
+        "adb73913b8f9041f112beaffaebbb48eaddec1a3",
+        "6c7c44f7597187cdf88452387e140cf90628620f",
+        "dc31377a0b14e171c058282348afa26e2b21fc73",
+        "d1e5ab9d8de7818644cd28175bf51436a4883a38",
+        "2fd2161a90b9890c707715169af917be18f27067",
+        "99d373916cf391c88fb52b06e70b48d4950b0f75",
+        "8d7eab4ee4e0f92d368ddc98cbc5e2804e3001bd",
+        "aab0811c49dfee81150e160ee0187b58de798e69",
+        "2f66daccac684f44975a0490f5ebd2b7b46d0002",
+        "9db979b8d15a65cf654a9dbda39d599c37b32798",
+        "b89f1cc90151f8c7d5a6f9b0b5d68e33aa0cd8de",
+        "ed676d9d80f549d422c0d1dfda624e9a8a8e79c8",
+        "cadb1835e657a3b512b515db30ea329784f64f95",
+        "7571ff9516d6a59ab839c866da82d15dd251d9e0",
+        "a061da9edc46cee009348505a3ad1e43a07f7dd0",
+        "7cf70426bd2f17a6840ff326f3e7a563b34dbaaa"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-30",
+      "items": [
+        "上线由角色主导的表达技能，修正提示冲突与重复规则，保留不同关系历史的隔离对照。",
+        "减少危机援助对想念表达的误触发，恢复用户账号登录。",
+        "固定开启长期记忆，修复关系和场景刷新。",
+        "新增客户端更新内容提示，发布 Android 6.0.38 并验证更新说明；完善表达评分和验收资料。"
+      ],
+      "sources": [
+        "cd5a2136bcd416f269439d0f53c97b4ec5747d09",
+        "845ac5f7cdc9b60800e762f38d2f0a6bf61010ef",
+        "8131e18a2a6246274f75ee28382465cdcc6d4d22",
+        "990e530f8944342796457a60b575eaade6b7d227",
+        "83fc615bff5d59fbcc866206b096f142ee9cbd2c",
+        "f4807dba0a36777f29c1876d85801c7119bd760d",
+        "969d02aec4d69d073f4fa988c90230d20f61aad8",
+        "fffa1b709f876c79b7ca37f544b75ec13aa1c3fa",
+        "939a60dcb93e6dea21e757d3eb4f601a842988a8",
+        "658cca2c9cca90903608786a96be5871578a81af",
+        "74be055fdea0eb133b150a3b6a233c130bbb4faf",
+        "7e57b77bbe81b7a75f759c68281dbb4b37f63915",
+        "56a0b8df0ba192f3df67bf45c21e658100b0b256",
+        "57df469bd7a0b53901c9da9f5f0b2210dc5e3a9e",
+        "c01a63b8165ad1be65ac7a0e39215f5543041359",
+        "c6d36535e2794f15269f7c2f0dea76e6112a3004"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-29",
+      "items": [
+        "整合普通聊天提示约定、去重与长对话表达，让角色能休息并持续推进互动。",
+        "长期个人偏好改为仅通过设置手动修改。",
+        "聊天设置新增场景卡片，显示模式与客观参与者名称，优化复杂布局、间距和加载，发布 Android 6.0.36、6.0.37。",
+        "现实时间、位置与天气仅在即时通讯或尚未明确模式时注入，明确虚拟扮演后隐藏。",
+        "开展三角色三十回合与多种历史窗口的并发对照，记录提示版本及本机部署验收。"
+      ],
+      "sources": [
+        "6c1d35e1c0a15a57eee2b9b6546cee8bde7c2d03",
+        "5b50cabab53c1abc7f7c70c6fdd2ffb8d5d3c6b1",
+        "8f3a04a61add618bdee807bfce09dbc4d66df764",
+        "6021498df7301cb50385ec2aad6c2e6991bb98f1",
+        "10a6ac5e375bfafc2da1ed6658a13131d8842042",
+        "0b186cdf2cdb72027745d9deeeccb1e5618a8453",
+        "8d44d6c4a226338b1bec4c35072074ab3471b4c4",
+        "5bfc443415c22b3be6dc2d4db85772f9551d7905",
+        "880acf1362e8221ff1ba74b93bc522c071ea54b1",
+        "498365133b054e1f263aca7de8c6841b039875d7",
+        "1246960930f6d22f8b02894e470e05bcb4203bdc",
+        "fe31a73fd5693d07bbb2fd7f82cbd26e023233f2",
+        "584dccfee20b8a1ee8359232fd710e7bd7e0e791",
+        "f73cc59dc4dc2c6e3017bb5f1c779b550385b0c1",
+        "01a9c78715955068d0bda537126b6b6c6397e9ea",
+        "7421e7fae14ea5b572e5f4b90bbc7f5568751710",
+        "b1d26c1a1b5c9905532879f3cf89141951cc082b",
+        "786cd4323939f6de27e40090b3a572b8ef5705ee",
+        "4258f4ec465443b70d6d0761136a84042baa0293"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-28",
+      "items": [
+        "改善角色自然回复、当前情境下的性格表达和紫悦设定，补充亲密互动表达技能与双角色实测。",
+        "修复身体技能和首次交付，优化连贯表达、关系模式与持续剧情推进。",
+        "控制长期记忆条目长度，在五十字内保留更多细节，整理提示词编号与分区。",
+        "修复角色列表加载卡住及旧会话登出竞态，发布并验证 Android 6.0.35。",
+        "建立普通聊天固定场景评测基线，整理项目文档、源码归档和网盘页面结构。"
+      ],
+      "sources": [
+        "42a7e96bbc972c78571d081177e9be1380dbd846",
+        "9a764de5a73c813eff56eaa8137e71a36111436b",
+        "6f2eb2e7b4dd095df5a313de05b5bcb3e6ffd77e",
+        "7e2013a655a3bcd5dbcba4dfea8d46ebaea1fd18",
+        "a78013263e1eb751cd3e3c0b1a5e9b72a3bc5340",
+        "da21c27f6c8733f0b4c17e47c411dcc07006a308",
+        "891b2dd1d911751fae10abebc41cc6229cc6005f",
+        "51c28fbcef28e6ce0c29350220a141c1775e8782",
+        "42a54ccdf79d9d6d7f9428b3dfae415c1a8946b3",
+        "9e5a4afe28ad984dbf4bb39a270def2b2a74e512",
+        "686d2aa508d161ef185b34d76851366d297bd926",
+        "22dc2e0a884491ed695a996ef42dea020b1eafd2",
+        "52cf77649d92cd20b9491ce009fa5bd71fda06e4",
+        "835a999553a50776d0cbb552e36653823d871108",
+        "3e894ce38be202e289a93d140245e2db92d86e26",
+        "e0419c6f234f97a35e08d08c4b3a5c4ed5a9b720",
+        "723dd4a7164ca030d6b3c0c9af0856d72b6214b8"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-27",
+      "items": [
+        "明确聊天记忆与伴侣共同经历的优先级。"
+      ],
+      "sources": [
+        "fff79bdc4de9c7f852fecd87d23cd3cc6581b894"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-26",
+      "items": [
+        "优化角色回应选择和帮助能力边界，开展风筝与蛋糕场景测试。",
+        "新增受限计算技能并细化调用条件，改善复习对话去重并完成后端发布。",
+        "根据设定深度检索小马资料，改善别名、即时检索与来源优先级。",
+        "统一知识库名称为角色档案译名，核对六位主角名称并完成相关上线验收。"
+      ],
+      "sources": [
+        "18011ac0201d58aa909f647edb9bb505900c96a0",
+        "d9a02057470e5f49cd92a134ac83a1e38047beff",
+        "f6fddf8b41f7b6b50dd5e62ddc58eafc15bf3dc4",
+        "9bec6c1cc97012f0e30b6bce7f86ed8f96e9aea0",
+        "b9037af907f9e556be783e001bac05ee07920935",
+        "2079388055e0930490b0f4cd350bc78d17925291",
+        "c144613b219beb8b625e7cd154515d433d2a3de4",
+        "c4d7f5840d93c68eaa34c0873a564b627ab5a154",
+        "8a8559c24671f5d9757e57c810de4634d08962d0",
+        "c2965b36175adda391f31ec62c7846dbc1e905f8",
+        "0eb16d63130b2d89a7e7089f0f55ad758955a29a",
+        "581d0c8f962831588ac03565ccbe26c9c95fd294"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-25",
+      "items": [
+        "明确普通聊天是角色间消息交流，移除助手式语气和强制口语风格限制，改善回复依据。",
+        "完成三位角色的三十回合风格测试及角色自发话题对照，记录本机后端部署。"
+      ],
+      "sources": [
+        "891d663f44ecf286c7a33728d78557a34f4f3e6e",
+        "b9492e8817c97b8d91348c0542209fbd1fdd7c35",
+        "35ac301579f7dc314d1a98c9e47f30a7c9b1faf4",
+        "7e977a0f7f7f7002796a10dc8a971133641f8f42",
+        "6c5bd1bd52cf9a98daa4f888220742dab220188b",
+        "fec0887811528ce64d40093876d9858cf2a8fe5f",
+        "3b917a6c0b12d50d77c64f7ab9e94a64b30af2d2"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-19",
+      "items": [
+        "升级游戏 Agent 的依据范围和事务式复核，完成生产部署及验收。"
+      ],
+      "sources": [
+        "1fb59ddf2c41bb68be1a478b5db8147edfc8f45f",
+        "d11a3c46285379c243ad83bd669c3195e0aa7edc"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-16",
+      "items": [
+        "新增混合图站浏览与稳定媒体播放，移除结果卡的标签堆叠，降低预览带宽并延迟加载。",
+        "支持从自然语言推断图片分级，简化浏览流程并修复加载后分页继续。",
+        "修复点击空白处未收起搜索键盘，先后发布并验证 Android 6.0.30 至 6.0.34。"
+      ],
+      "sources": [
+        "44b44debb8c9cd459b102741fe8194c3fe03b1dc",
+        "2915dba2a869d5177686867bc5efd2fdc8ab86f3",
+        "ce8dc7aba01bf71fe777840325cd9103167e04e8",
+        "3ffc19aa5024ea71491e1d2d2895c72a7abb0bd1",
+        "e2337e2f8e3c6547d28879d186b6a990d84ec3be",
+        "c72083c217505f8ffdb4ef7b528c7441555672f4",
+        "52e274eef1df19c024a0e4fad642c025d57af3ed",
+        "735107f6d3fd6738c5994144032d3c421760311e",
+        "6bcaf72638faed3c360475bfcc648788bc3e7feb",
+        "14e9d3fac0c790f59e08ac03f502814186f3422b",
+        "cae2fe5cf58529ec882f591ddb78c879c31a7b9c",
+        "81578d2919f5a1f2c672567db38e4e4a369f305b",
+        "51d2201ab1f6ac74d3c10a39ebb4cb07a237c440",
+        "9cbe707b37a0619b5f628c7c9d3563b51e32723d"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-15",
+      "items": [
+        "修复进入其他页面或会话设置时键盘未收起，发布 Android 6.0.26、6.0.27。",
+        "恢复后台图片回执与历史图片重复接收，发布 Android 6.0.28、6.0.29。"
+      ],
+      "sources": [
+        "4746bae361caa4474d5a4f5ebae1e257e1f69e4e",
+        "842bc3d43434dc5260f741bbe2f02df1d4384143",
+        "98ee8e5d8a4cd1c99a93300e7bbb19d17fd60462",
+        "3fbea2ebdd5e7734333183f64c65220dd0180a1c"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-14",
+      "items": [
+        "限制记忆碎片长度并完善短重复片段统计，按分句边界和展示配额处理重复习惯词。",
+        "修复已有测试失败，调整默认非发声视角、客串实时输入与合并消息的断言。",
+        "移除失效参数与重复偏好注入，修复场景及偏好相关问题。",
+        "完善 Agent 各阶段时限与恢复，在探索预算结束后继续完成交付，并记录后端及 Android 发布验收。"
+      ],
+      "sources": [
+        "b02532c575a174686edbc58b1b4cadf787e09dff",
+        "c166e3ee9b7fcb3eab639f62fb119f9923f9f20c",
+        "8c15358545b4c401124093a7369ef4ab9da99f39",
+        "ab09cba96aa5025eadb1dd9bef4e2d832991a96b",
+        "3bc49d8e1ce86d6359b48e9be77c67afe9527c28",
+        "5830e7bf292bf5f0cc09481bfd949f17782a3d00",
+        "6faffa61180bf634bca35d8756c1202a4758d6a3",
+        "7272236e10715cefc87cc138470399f09349641e",
+        "5134898b027a786281d02ce9dcffc14f22a49135",
+        "6861dd87b9099c6ee44df18b4def4c0daeca4bca",
+        "e5dfcb80d8ffc737f1c6480991d50707583c365a",
+        "804683ae4cada5e960c6986b06f60b3d1b168277",
+        "fcb91c2a4ed10b7ac235d3e3d6f8879e20843111",
+        "a58dba93380cd0dc58d5bcde1752cf183c706393",
+        "3f47eff88ea52b1021ce9599f81b9280ba9764f8",
+        "816c31bbfbea6b41d87faf6743d5d1963ec4cf66",
+        "729715ff14db4029b842ce7eb46e35dc35565bce"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-13",
+      "items": [
+        "限定默认找图风格只作用于用户请求的主体，改善系统导航栏并发布 Android 6.0.22。",
+        "修复语音风格提示截断在单词中间的问题，补充词边界处理和证据驱动验收。",
+        "完善虚拟扮演、身体动作、发声和拖音符号，支持更丰富且符合当前状态的表达，并验证二十回合并发容量。",
+        "明确场景状态局部更新、互动授权、即时停止、关系修改、持续偏好和语音设置边界。",
+        "改善回复语言延续、历史图片重发、多图对应、网页检索失败处理、正剧与自定义设定的区分。",
+        "保留记忆事实日期，支持未知时间与撤回；完善提醒、主动跟进、交接和灵魂交付，支持可为空的工具参数类型。",
+        "修正表情包元数据与大陆译名，依据实际图片及标签生成反应，支持呆站标签搜索，并保留附件描述。",
+        "修复过期尝试完成导致 Agent 计时冻结，统一返回箭头，发布 Android 6.0.23；恢复历史图片和关系页下拉刷新。",
+        "将新联系人开场接入主 Agent，整理表达技能归属、去重与加载流程，清理旧策略及死提示词。",
+        "加强近期重复起头、习惯词和动作承接检查，允许专有名称合理重复，保留个人追求并减少无依据收尾。",
+        "开展多角色发声、表情包及重复历史测试，归档原始回复和验收记录，整理项目经验手册。"
+      ],
+      "sources": [
+        "1ba6b48615ae6c03c0d0d1af4688a7cd70b52d39",
+        "a54ec7af5db181f64453467701ec3d1d069a1da4",
+        "54be615a65742039ecf68cdfd05d934368997a27",
+        "fc14a878983f4c8076ff6ed6c34a95db52db079b",
+        "46a3d9500493930c2fafcf4dc5aeec02e1ce381c",
+        "e1e08f7dc97310cb6e36dbcd37c0a9652da13cf6",
+        "616e1d325db8d97a78b29b527328d4a233ee65a1",
+        "7128a26d67b6d8b3acd8bb1cdc61652d6bc62b4c",
+        "9441170a9745a6935ddb7f2f8a616e57d2c1c12e",
+        "f05094b94132ca9c872a3d8643c02950cfab6a6b",
+        "9fd3d02f8cc24bb9886da2da70cd9cf33aede5cf",
+        "78593b01d4c5fce98c4c41527d35ec2a6e67a13d",
+        "6f66df2aedfac45aeb41b7bd130ec2a466a3b6b6",
+        "8a17482bdc4b05501842159eee28ccf8aadb749f",
+        "6e56bb9d3152b471b55d590f21e039b2aa678376",
+        "2e13b7c9eedf159196efc7a7979035e2be847ffd",
+        "48743d25c2b861b6fb60d2494a54dfc432210e46",
+        "05377540d12ccf8ff73327dd2c864dccfc6aee96",
+        "c6d522dae1f16cea65d9d8f152f438b84e8708de",
+        "81ab17e21adf52fec4e718f8b7515b05d10fc61f",
+        "2ec391e9e9ecf3582711214f477049962c9a812a",
+        "57e7cbfd714b5c13aeac9aa31d674167de782503",
+        "4f98f8dc6a00dc6dd1458c52fef83ed3d7b3f5cf",
+        "9fa6429d9591c9da9fcb27a243bb495a42ab731d",
+        "7e108e1e23f3cd883ce8dc20f0a01427367fb507",
+        "1701bf478d1b5670273a035bf9f01bc1dc7aa8db",
+        "0e1d6122809d0d59ea9ed527e0c552982f36c720",
+        "f4b74998d445d12e48dfb4bcaf62392942666a33",
+        "da562db854b175c43113bde2c21aa16ca5da8f88",
+        "54ffd5af7e46ccbe8d800455cfaddb183cc8ba42",
+        "98653827ea9d1e1317266d63691fa47434e583c7",
+        "c46a3eff2c294cf01cebec11d76fb872401072a5",
+        "b0e7e0ee7bd272beda0197ea9f8e6668b8229bb8",
+        "eeb11ce06765135b52b472293524e74b9175d8fc",
+        "8b6b3f7c9a93c451e8248df7c0b782c07cb1f31c",
+        "fe6e4fe058aea83ce51153ae3f92ce1728611343",
+        "f5956fae6916a090cb8832ab1ec60eda0d78767c",
+        "e24766266edd7446e2219ed69d5fc71e745a0830",
+        "ec9e9fd216dc76f02672cd86c4c3c4743ae1b362",
+        "baa70b5c6a0e6f525ad2e20b10f1efca4cb1bde2",
+        "14754e277da2eccee8cfbc35ac7425bf87e54df9",
+        "73aae503d2509d84ebff382efefd732af3996915",
+        "cee80d0f71337283a1ab764305bea2cdae7fb14f",
+        "ad7bed6cc4de5f5dec91f1ca1273400ce93740ff",
+        "5dff16d12b1785d186b6149334b9223d7ef92526",
+        "186297aebcc935df9b9c03383b6bc1d68de6f0db",
+        "43bee9ec11b2cb01eaa795794c04851e224e9c89",
+        "6ab437b2188ecec2f9cc5d7f44e216526e2d09b2",
+        "b78b60538c79c43d50182026e420906eee56358e",
+        "e55e680cd3224a6b103b342751ab8cb493d09146",
+        "9ae7e7769cc31d9311bc081bdc2cb8e9bd87d6a7",
+        "5d42738aad9a682d0652abe8b8e49024ebb03d93",
+        "7a13520a2071f1e60cd34ac2999ffa67859ba30e",
+        "26ac9513579142a18b0f1349bde75b4864354d18",
+        "a4e2bbe3cc24f5ddf6300d1b4fd3e1567ed340ad",
+        "3835de3383989c591d8193d9a10820e64ae374a0",
+        "37e738971fd4f6f4f780089241da67960990f962",
+        "24cd43464a56813506cbe59743246f4fb312b719",
+        "499585344b72ac282060147b84f7ccad9599e2ee",
+        "5db36909f48359e0a8b7179d0f4f13029a44f6a5",
+        "1ac610b0b805d3d42fed2094f2dae56878ce3d6d",
+        "42ec106fa97d3bfd2244f810c25db762d1d8cf3f",
+        "59d79fa6b28825c46162943bf5e7c0a465ba8124",
+        "57720dc7de664c89c51fa43c2cdc3d4120a4d850",
+        "32c82dd66f822659c6fdd75b5238b28b106d3420",
+        "730870d3a5d1ab0467270fba2127df05924352e0",
+        "88eea46fb5ac8aeacac9ddc2955c1a6a69dddfa2",
+        "ddabc43b8f44d61df8e80ed020312e6479f8cb45",
+        "96d16f5377d82aaaad6bd78065d68c793f27f211",
+        "afbaffe93fdddfe45b1e701a6b196f5e9fc84e0d",
+        "c615f5212f2833f4bd20a97d58cce402c3304b9c",
+        "9df47da7d73a3b3aaaab3c0e6eac8f541191cfcb",
+        "3b0aa4dd3be79e6fa9b9cb0628d32cdf395edc7c",
+        "6517f27dbb23ebb8a85f8f63fef2e9211c02f624",
+        "5b70cf542c3a457392d8b7adb437f545b2d40fa4",
+        "c0c8d1840ecc592ca4916a4e91c574cfc1feb139",
+        "b258c22d8fa1c38c360187f3546881e2cff97644",
+        "ba571fb51568cebb04168e4dae4c8aee2fc947c5",
+        "f6e09006ef9ad74bbad6377e5694a9fdb54c31a4",
+        "881e59abd1daa6888bcfe9d44f9ac1bfde62ea7f",
+        "b2ecb6d49faf75ee1ce2e974bc3b9070d6b1bd4f",
+        "9b906e388d9105fd0691e637dfd63eee3ad172fd",
+        "66eca6def7bd8cb38d8aeb3927ffece0ba1e0d44",
+        "80ee234ab43c5443569b6df656bb7558e1708704",
+        "38efa1c70fb7e13b0456de122c60dcfe19355ff3",
+        "0942ca8c0d51a39bd173dd2c1dff5b2dc8cae72d"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-12",
+      "items": [
+        "集中提示技能文本、标题、索引与职责，移除旧兼容规则，并按优先级整理。",
+        "减少即时通讯中无必要的描写，区分台词、发声与动作，独立台词使用独立气泡，统一角色描写视角。",
+        "完善受限发声、临时无声和语音设置边界，加强结构化交付与原文复制，保留真实角色续聊及多场景测试。",
+        "支持动图搜索与原始动画交付，取消普通 Agent 工具次数限制并保留时间预算，使用模型最大输出预算。",
+        "修复回底后的自动跟随及恢复页面时打断手动历史阅读，发布并验证 Android 6.0.17、6.0.21。",
+        "完善图片预览主题、缓存图片搜索和可滑动历史图片预览，发布 Android 6.0.18、6.0.19、6.0.20。",
+        "修复记忆叙述视角，支持版本化再生成；首个回复前合并连续用户输入并立即确认收到，完成后端部署验收。"
+      ],
+      "sources": [
+        "d2a5dfefab44581513bb2d2d759d458ac48c9bd6",
+        "b2ce31dee28c6243833c9a5e21a126291dcdf57a",
+        "20b75a11a5168b14508c3032d4ed2de74bf12757",
+        "5e66f78397db89322172682014301569108b4a1c",
+        "ee26ae5e5d9eb6c25f1645a9da0e2065b682579c",
+        "473b051cb9648ab6006bfcedb9e4a9a3db0ffd78",
+        "028a4c7d97d3d41e2155a03b5b20bdabf7e93189",
+        "a8eed2f8e52dad823a69619648ecb3dfe2a1ddf1",
+        "ad3e0b510b8a0ab67f6a99f2fed0d66b6da3625b",
+        "4379a07cccf128ebcf5d57ca992fbeec2eead4ec",
+        "4845079f4ccdac3567f7f1a1583bc0012893efce",
+        "2bd3387544c0764f4e78fbb1df52ec1e739f3b79",
+        "fcf6baa2eecd4f1b1775d67a6bf2a9003f1c1328",
+        "a652f6be0f600d68bb548fa7af2672309c668791",
+        "a941e4de4b0663290cf836df437adb637f0bbb87",
+        "97d514f097a01ced5d0a77e65c84305d49558fda",
+        "0e78501a927eccdfaaf2778c338b37fed35dc90e",
+        "4c5de4195f9dd113bf3a7a89437d4d89161a487b",
+        "dab16ca96c1cbae764a4a3119bf6e0bf1edd1c03",
+        "e34f6041d2fe4141a63e897ba458c1461772e083",
+        "70fba111e44f56983da483b86a3ba9b7925e5c75",
+        "d348198294eeb561df3de7c81e20fd04bf13d3be",
+        "f2bc862636252ef9235fcea1f6e5079a12330084",
+        "89ee8c3d96d6565561dc06b1e7f7069c04713301",
+        "d4b099cdfc6730dcadd3b20b5c23d0c9174d6910",
+        "f9651a7323dcb28facbabd7fc8125c86594a3864",
+        "722bade359de74312dc9efe1501a5fcfab2d14b8",
+        "ac2f521daa3c85a535a147dc83f60542f132ffc9",
+        "ec9fe40ca86349defdb249b52c3955ffa829c423",
+        "9aebafa33cdeb821d861f6e0666dab09d2943aef",
+        "223aaf583678f33db716ae0792c7d1db31efe991",
+        "5888693d5085a1a06c12ab805e5904c36e20f4f7",
+        "47ce5aca37d793fce48c7988acbe1c5912fec029",
+        "fa8eb50445230ad4da383d0318cdbe029af65dce",
+        "2fbd67abfb4256adb1bcf79a4ba00662a3085839",
+        "800bc62850f239cf3755d1c624b18c40edb38e09",
+        "47d0b1eb875faf2fb3ef317245cbfcd0b6824681",
+        "77dfc0755ea0c96d2c3b75b3526e24d93501cd2a",
+        "e2fb4709ada280a69f33aa3560fcb881ab8f13b5",
+        "f526d069c522f00e308f3c82394c10eb35c46f37",
+        "b54d4ee3c9b30cd4d9a320c0b821aa171b993947",
+        "ff9ad2cf63be61cf4e9e3de7e5ea54150e8ec5cb",
+        "7d70c9d41c79ad18651ae292a5f7f74a9cd6f162",
+        "10e108cff54781ed3734d7d2e1cb28db4dd496e9",
+        "32ca60c5ff0f06b197879593151b5d5bcb409c4d",
+        "e1f1dc2bcc613c1ea742238b3961ab83b6e1ab88",
+        "2206225903c2d2dba5bdee7a0371a7f0ef83b48f",
+        "a6a498f99a850f73381106f7653d1971d996edb9",
+        "6bc06bc8b80c158c564db690b6316220a43585b2",
+        "9b94066ecb1aa0c634946e51c36319179be4d2db",
+        "cfe6ab3c7736479f315aa1e0a34846e93f4d9b46",
+        "72c2a164c0b49d4627ed99db63bdcaca3e64ca0d",
+        "4dfef2b9961fda9480bf7dbbc61ec1b56536c544",
+        "86fcf5f0790466b3038644f5ff985efd12a643a7"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-11",
+      "items": [
+        "恢复 Agent 记忆重要度评分与召回，保存已验收后端版本和证据保留式回填记录。",
+        "测试可切换的本地 Qwen 视觉模型及全局模型控制，随后回到 DeepSeek，并让状态页显示实际模型。",
+        "使用直接 Agent 回复流程，移除独立表达复核与未用的润色测试工具，统一技能标题并开展角色风格对照。",
+        "完善图片分级与关系语境、历史图片重发、重复来源处理和图片视觉路由。",
+        "修复息屏断线后的消息恢复，启用国内入口 HTTPS/WSS 加密，发布 Android 6.0.5、6.0.6。",
+        "将阻塞维护与记忆读写移出事件循环，优化递归证据查询、日志通知索引和正则处理卡顿。",
+        "修复角色排序振动与刷新手势冲突，发布 Android 6.0.7；关系更新改为静默刷新，发布 6.0.8。",
+        "新增会话活动卡和已提交的跟进计划，改善 Agent 状态按模式展示、卡片顺序和错误提示颜色，发布 6.0.10、6.0.12。",
+        "保持回复期间的历史阅读位置，支持分享预览图片，发布 6.0.13；新增消息类型筛选与三列图片历史，发布 6.0.14。",
+        "统一角色大陆译名，同时优先尊重用户明确采用的名称；修复物品归属与开场逐条交付，保留完整三十回合风格测试和上线验收。"
+      ],
+      "sources": [
+        "21b80369c81321acbbe3772d8fcfd4b3da0ce65f",
+        "16d310571ee757cb5a0a87c6b3587cf9dcac52d7",
+        "d293592f8c216af68833e757a8eb4a2eedcd0b8b",
+        "10d328bb70305a6986eda92311e88d4418d6617b",
+        "a6e84383526db487d80f88cbf0916ae4a31ec52b",
+        "396dce698421f6fb8d4adc61f2bd06219217d5e0",
+        "f0f98b92ef6f80387c13fe0aee6acd1f94e82763",
+        "cf1cb695950e9959c2297b29a31c5aa69bca13e8",
+        "33468d551d884ca5be14aee6e0cf816b1a71ca2f",
+        "325cf856a88f372fca13cd4b496dfd1e52722843",
+        "35f15ff464dfba8815a1055c17caa2f8488676b9",
+        "84790a7ccece5add967c225f61478887b0902b39",
+        "386fbc72735cb86c1acacf8ee478403d24baccfa",
+        "c4e6939e599d47d5f503e5f5767a96b8e0d1a3bf",
+        "429b4b27839f7f92b64eb4a4f2aa0dd08fb4910b",
+        "f30c31a4ac123f79ee279d3dc0f399464bbb0a17",
+        "c65534cb46d38f30122ddbeb74e62d9379a6e24b",
+        "53c22b08daf8d4944323e16d53ddb30c9f60a6e5",
+        "cd1df5b203df025d1dadd19ca2767b2a13fe2d87",
+        "bda4e6c089ddc0a3133749ee59cd62b59b1287bd",
+        "410aba7b8053f8d581b87f3caa70cea68aaf8f78",
+        "edf392cfad5a20f03e1b7f6f8ba157de69fd8cff",
+        "54fdae7a8b7a2c7239bdb9f296e84861656eaf2a",
+        "d4316f91cf9ed2bc7ce62b4872b9c7755e0385bb",
+        "13559550b9d88d03d544632fd72173f2fad8835b",
+        "384cf8724a3085308e4bd717c5005562151ceb0b",
+        "63bf651a297a66299e58881ffa3b55001b245185",
+        "2da48f4a7e99fad83fde0e6c92d5bdb75808b693",
+        "cfd85f2cf58a51e26a171f1ba8aed51dac2057be",
+        "5b682e9e8bc53bd6e061fb58495e517b5719458d",
+        "b3a9c3b08250b92634574cb4ce99ab7f878d03e2",
+        "31aba9acfdbf1b0d2b67bc7b20403d8d649599e3",
+        "f71f1d10cf8fa20c956407a2bd9c4575cba2229b",
+        "ee478d1150eeea93c7dfea39a34dd37bc555633c",
+        "d72d2d8615204e4b7cabd764a9b7263f78a1f8ca",
+        "eba34b1f16469d09b88d8db1b8c1f98441f665ea",
+        "1b2213fffc61dc596348e0ddea9407bae76c02f7",
+        "16c64a0e3bfb35ffa68a1e39fa2e13dbf00d6251",
+        "537c73ef4d0b93e8a1259650797509c3a85db94b",
+        "ddd0d3ff6f12b1392533184c115048ef815997e4",
+        "1a1bfe9704c6dc4403ffc8a61b21bc376c3c458e",
+        "99dc979954026bdca8fe6338a34aa94c9d8056bc",
+        "683af628ff35abaea601c2f6309b7ac1eb5dd919",
+        "8c7e5c54b99027120996ac763a6961082f980cb9",
+        "f66b2e524baabdde10585132b8a15944078e8295",
+        "6d722ed134cae94c2b3a1dca693ef9bde0b3d09c",
+        "518585cec4d5dcba34f591a3cc181d78dc148727",
+        "18ff672b8e4b048da44b7a7d255600c009f1b65c",
+        "14b843e8f6fb1156c2dab37785d0349da456b8ca",
+        "bfea7e7f3c4d78860aee7ca6d93a6816c46bb9a1",
+        "0a7a87d99a1fc56090fe587fb74838caac47d31b",
+        "cb3bd450bd0015b06f0f32034038335639309122",
+        "66f24a5a11ae80cdf6112458a790ca7e1e6ff464",
+        "2c710bb42ecf47e1f537d3337d6b51ec146bd18a",
+        "6379c5514d365fb3bc3ce279808e64fc557bd0ee",
+        "27ef130ddc095e00ab632c4494ad872a6416d6ec",
+        "91da796e2eafc336ccedb74ffcb2f33131983264",
+        "a2e4605aab21639a58a489012e6d8493ce6d7191",
+        "94e1960188da42626df5504c9c92b81ae8a801bd",
+        "b001f23be17f0b832bc56d0bdb58f45ffec6ed2f",
+        "dd9f52b809f4690cf5467db205ce89fafd937777",
+        "a0c68b9d0c4228263ce39cde5506eb2bad79e9a5",
+        "472f836c34442f0d6b4950f4ac0acc7886e2e5d2",
+        "4e598a7a1bac82fa05c82382338963c0b6f1941d",
+        "dadc282382dcb5fe31777f413b5a8ffa5b1fb1a6",
+        "f350217317fe63f854552d1b32ac82423233e8a3",
+        "47204fca5acb9a696f2cb182bf36c06032f76421",
+        "05570aceeb1944212723d1ee881f76a34c249e2a",
+        "6996d2149ffb4087047a58294694c0677e322f65",
+        "35f8e4c50dc142d4a387ef67bc662911a2b1e5c0",
+        "bd49665f98a840b59bb49f04e2938275da21330b",
+        "c61256d198562dc529e769d367e8090515416be1",
+        "49c2a17f2525af08461c72bc74ddef9f89e5d7f7",
+        "2501e2e8a746dacf0f67d139fda512f195dcd4f6",
+        "c6328d60c7abc23be068b9a8beb56a072e822d7e",
+        "dc6e662416ea200a92e1656bc6fdc5994a486254",
+        "826023f8d9c80cab0b65b269d4a62d4acdb408c0",
+        "72b9f86dc9dcd2624f35d6cdf3affd3fce0eadf9",
+        "ae76f586b066eb479d390ac9ded027bf2988489f",
+        "31d8968bee0747236e0549adc3ff4ba80771ac88",
+        "d3cc12f10faa9c0344f5a44ecceae994018cc2df",
+        "65920676c948068aa330b7e5f37517df807a2314",
+        "9146ee4940526481a473fc571279880989f85803",
+        "e4f658637ec500d91384d045419586720bc747a3",
+        "3fef3ccce3317b66dfc65d32d042764b1c38426f",
+        "c9e19a30949f9dc7bca3b244bade9977e56e556a",
+        "80cc9333ccdbd514eecf788f4c60af744d20acb0",
+        "c5c02b75bfaeb0421b578b581233784383e84205",
+        "b3fd414765bdcfeaf4edb8c3fe92f15c3e2dc9e4",
+        "c69504f54c51265d82f1fbe59cd71a36ba01cc13",
+        "9ab747b8506ed8aa03f0d8176183b4eb75045b50",
+        "9b4e0e92a108da074480979db95e0f151fe62c6f",
+        "f2172de3ef9e2b95137dfe4b64c720cd694250c8"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-10",
+      "items": [
+        "修复图片下载遇到虚拟 IP 的问题，改善关系刷新与加载，发布 Android 6.0.1。",
+        "完善图片分级、较高评分筛选和 G4 矢量风格默认值，尊重明确排除条件并交付最接近的匹配。",
+        "加强图片情境反应与角色语气，将图片交付与探索预算分开，并维持找图前后的回复语言。",
+        "保存用户优先的场景锚点，完善第一人称与第二人称指代和互动连续性。",
+        "区分现实支持与虚拟互动，允许符合性格的主动建议，将互动模式拆成按需技能。",
+        "集中运行提示与技能文本，完善小马身体、蹄部能力、跨物种互动和受限发声规则。",
+        "调整语言风格控制，恢复资料库读取，提高角色设定检索优先级，并迁移到 DeepSeek V4.1 Flash 正式调用名。",
+        "修复长偏好编辑时的键盘遮挡，发布 Android 6.0.3、6.0.4。",
+        "建立可回滚的本机后端部署工具，补充多角色表达、语言、动作、图片和真实调用对照，记录尚未确认及未继续改善的试验结果。"
+      ],
+      "sources": [
+        "7108422343b6caef33fb3d31392dda1bd1fae8c8",
+        "61fd8e72f074c915782e622bcd60d2468f2f75cc",
+        "9428ef6e921fc98db182f2763565de8c9e32c2ec",
+        "7c1d404122ba00a7760cab3db40f9ccc7bbebeb7",
+        "8da39fa4d5e0f63d2d96f34a5bf9fa1272297fb8",
+        "4e6f9913ce65bbdadca4b660a3636986f187b35b",
+        "6703e9cf1b9454903caf713e0f8cc76aed15850d",
+        "0f9f24b13aa3f5494a5a42b0ece5fd50ca693a4a",
+        "269cfb5aa236ec13a9908e71e60409c4b3c6221d",
+        "2e4712f761000ab1b6858d8fed572c727998af2d",
+        "b7cb6e9d9116c553e9c53600ef1a74f00203dc24",
+        "007672303a700175f00c96392eea344d4e3e2048",
+        "7507782d362f10f3ac5e879b67a114750989ec8a",
+        "843e4bef27df9f0f046981f7393f7a26fed6cae9",
+        "cdef0e4c403571fb0232ab714e43d03beee97c21",
+        "64354b54d26526e4e7e3cb5edfd1cfe09db95644",
+        "b2a262c2ce55cdd59454329630eb0cd859b19811",
+        "68cc5aa9e7aaf75ed9c750ea4c1e81d07cdae7b4",
+        "ed69c3aef8026718fa665246eec8c5358d739bc7",
+        "ca6b4f152d8059cf6f6c4a602eb1dcdbf7136d19",
+        "1def2800845a63e29909d6187adac00e04a045e1",
+        "26b578a66db14f09f8dcf6d9dcb26f492d7146fe",
+        "b95fd03f8d0560f8c99a31b7db3ed4ca2f276590",
+        "e26ea8831c8644186e2b9d92ef048577c78fd535",
+        "e60c9e922e17e511325edfd9ebc27a55ead0f593",
+        "72b63e9fc3be771e4da8895837a6fef270bdb28c",
+        "1eeb4a9f335a04f7873cb5cadd26bc98037990c1",
+        "18b8ac95777a1357cef5b21b57b688556cc853e4",
+        "d9a7ec267cfd2ebe369eec7376b4506b8df44881",
+        "f1f7f03a6fe7ad17d4c9addf539c3ad20d5a420e",
+        "ec48eef0d607c26816812b90507fc366b3410108",
+        "3a167554e219a2b3eaf28fbd48b1e3df6e33440f",
+        "51801af211f355b31d3bc13b35d0fd2161b111de",
+        "1860584e13b5309f4e6a5bd51df838279a4979fa",
+        "bacbee7c15255ed4215fb0ccb6718b1c09d213c3",
+        "67f1cf1f533366adc58201f7f550a7ad082e8094",
+        "f33ecece2144d6ab82a4f4747177442abc26735a",
+        "ca0688639e42835d86e50e6b61871c7426b5c8eb",
+        "1948838ce91458ba74a9fa450792638361e535e6",
+        "dab5c95f16fe8faebc2f01bc19fff25211a03389",
+        "25ef0f7d443b0c764f78dcc8b609aec7589afa0c",
+        "58a93dc320c2a245be4e2ef46943730db5228f5d",
+        "aa7470e7ad7ba7d7d99a82ba5f9a177f031ba649",
+        "ce98a0cdee44ddd2bbe3fd590cf887e15532b483",
+        "618c6499d59d65f6e9a3b3c7365b37b639ea25a0",
+        "0decc5a61a1fed6efb9dabd4a13988ba99bacacf",
+        "712f9f37e8bdfe9d817b3c969c04e946281718ee",
+        "94ca0762a9d8777a52657606d50ec857efc64a9e",
+        "0c0476fa19e375b97086a8d67bbc4935493cb553",
+        "811bcc7c4b0fdb3fe194f3e84373da0a51c73564",
+        "aaee4d3662b5f1d73fd8ff6e672742ecd77fe20e",
+        "dd6d8d6057d7f765355b5a0dff36af58e9e4f7b8",
+        "23555f77fcf1e748920e2f634e5bfb2aca816a40",
+        "9f39863638a6b4ae674b88ef7a22715ca24d5ed8",
+        "e25ae2d2499bdaf7ef3344394921fea5f7f82a73",
+        "983cc6968f65b4eea253ea4d3159ad3a732d5263",
+        "7564aaaabbdf66ba6eecba3ed1347b616a609de9",
+        "0f31fb33e454011d18efc82c2dd722c45ff420a1",
+        "e157360088ff11000f64ea46a3dd862152e0dd25",
+        "4dc3989963734997e0adc4f650631c9ad074196d",
+        "7a301444f3fb2d3c572b6316b7db4bb40a78fe76",
+        "0ac9bb3fc0a797e33ceba74dcd1d1c218ed9df63",
+        "27c75fb2a9e8da86a9ed227948db60bff27711d4",
+        "65e52da5f611858c4fd45f8e88601392b07c1ddd",
+        "f88a8c91614b5b994365231bef05f1ff776a9d65",
+        "7df57539cdab76917dde0b05c9e544ad68b801e9",
+        "cdf44f42332666017f293bd724edf5e2c3c44f6b",
+        "fb7155465381ddd2eac6579bfb83a97cc41440c6",
+        "196377e0e7138917b139b2a5b0edb1b5a39e48a0",
+        "92f6f178ca65c491626c10e60f9fbd65a915cabe",
+        "5405f1be1a1eed99db22c3ae2fc273de17b95209",
+        "1cb7f49c85d241d647c58fac407df3136820fb30",
+        "e8bbf16474144b6ff94d9fa8129bc695c1bdc20f",
+        "dbd254e79f34ce4ea6c99a58202f99bc1091ef8c",
+        "858736221cfb1a584e8bac1d310697de232b2fdf",
+        "bfc0753f3f655ca49fcf583ab832dae881052967",
+        "09db852988c1afecdb9fe8a35194991c479fd1ee",
+        "f65f32f2639b61d9120832cc51ab64593df9c544",
+        "b48c19f7aa9bceced8f273f13cac5c8954c91e18",
+        "a05aaa802b2fa6f56660415d052dfd566ec40951",
+        "d010596b92f60fa1fc266b765a6746468622cfd0",
+        "fae3374d8333320dece74143a9f86ea28637ea02",
+        "15d64e0d93bee7649fb061e64f3dcafc152984b9",
+        "b1abff40092cd8d0fafb92c238c32a94c1bfa909",
+        "3ccbed69282fb0a6dfcc21d5a41ba98eb38e7895",
+        "407c05e99d58f9ed9db3cb9f2377741fa9d80c38",
+        "fc810930b41bec2b4524555a60491ae466ecd770",
+        "baeae8b3dabe1ed71bf31dd795eb9c1de5d3e492",
+        "dd01ea6056609cfd17cc7393e1672c93a3a52178",
+        "b41e7111f5bc09bc0934d2e6f45ab9c23fab769c",
+        "7f2b4b5cea8f8728f074502c1cefeebca1828a19",
+        "180f25c5904973e3ebd768d4fe2d97adf16be42b",
+        "66bb4ceac4832dd6328878dc57e274e9397fd54d",
+        "b9cae94ff6e6a83d106507c7bf56fd4206501724",
+        "26e5104d99f454a5749f1edc8730859a3c35ed2b",
+        "bc3e383de2e0a4cee10fc414fb81cbf7a7bf94ab"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-09",
+      "items": [
+        "将后端迁到本机运行，通过国内公网入口转发；更新启动工具并保留清理日志时的知识数据。",
+        "新增只读 Agent 状态、单次调用积分、关系控制和调试设置，修复状态轮询重启风暴与超时。",
+        "支持网页图片搜索和手机回执清理，恢复客串经历并完善生命周期调度。",
+        "修复消息重置同步、误提示重新上传图片、聊天自动跟随、图片导航及快捷面板滚动。",
+        "恢复逐条回复节奏，在统一时限内重试失败回合，修复输出时保留已有证据及必要的角色检索。",
+        "完善关系页文案长度、游戏第一人称描写与对玩家的心理叙述，优化普通聊天气泡与收尾。",
+        "改善消息选中对比度，发布并验证 Android 5.6.29、5.6.32、5.6.33、5.6.35，保留提示和部署验收。"
+      ],
+      "sources": [
+        "9f072fe9229fccde6a9bf0d7dc787022c0e3945a",
+        "8617413267af2b1780ae5907d7a25b2b8504413f",
+        "212c7d38cb9bf667019dbf33e91ef372795ed4d7",
+        "c7df8351617d94bb71e14d41eab999d454bc89e3",
+        "a1aba7c77996c2dc96239b90f11c20f6eda366c6",
+        "dffd63f7a6e4f0c6711958ea118f19a95bba04e5",
+        "7633669855aa30dc2d37213c2be89d40af4737b0",
+        "7b44283899c65e425d187640b7a7996e50997a7f",
+        "8ac74f98953b363784bfc934e20c1366b7483ca2",
+        "5101e6e3fb5e496290ba5de9fc0b4a37f8a40154",
+        "e3f013b3a5527abd82a2578c1fb674b3040934b7",
+        "bfd05a1ab37d62730c40e9f9232672322056fdae",
+        "e44db34aa428b28d018a7659d4ee6c5a55e7fe36",
+        "3b6b9793e38ff0a93c109eab2c6a4e4dd7637e73",
+        "ee74beedc9ddc06f8cf033c14f2f3776725ed77a",
+        "6ca3be15231f5164f8361a63c7dc6f37602244fb",
+        "b26deb6c80575d31837b928ad628cdefd97aaebf",
+        "51912d4f168f92bdc9be72b331001c861fde5b2e",
+        "de2efe85d4d733be3fbdffcb0331be32b4dba112",
+        "4e3ea10683efb5d9c1bc0c40da79bdaa67ca1360",
+        "94b206bbb9761531c26da1db5dd58b1f2734b0e2",
+        "38127841ec61dddf0e5d719b42a8cbe4028f526c",
+        "e1fffbc7cdb04ed5526045b02fedf58fa8b6c6a2",
+        "293c9fe15020594c31f67ff6736016db2b6f672b",
+        "f69ea18ab1b40e8ef06f4d74d37db6a21ae28cb3",
+        "c769d4f3dc93e84bc166d84d9d4685a2d21c5169",
+        "78c97f8e38e1b7fec8a5b8b780fab2ef8d106c00",
+        "c26ca534d00f4b055b5f206aa2fb0eb27801daa8",
+        "d4b000918c40aaed0a240e3cf7c5b83bb3d10b1a",
+        "b12035b3e48da4e484624ba68a76a02ad18dadbb",
+        "24b772d2f8074ed2035a6e7099c214891f12b943",
+        "01f40c903a410951e9ecd4674e4095a7bdf2e5e4",
+        "d7808024bea35d2bfbde0d590602cd5d1a7f4113",
+        "6dd0bedac45deadec05379b2be297c7a7590da76"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-08",
+      "items": [
+        "修复断线、新输入及三种聊天模式的恢复，保留 Agent 已完成的工作，发布 Android 5.6.27。",
+        "完善游戏选项，移除内部视角提示，保留锁分终局快照并校正饮水等小事件的结算量级。",
+        "加强记忆主体归属、定向关系和局部事实更正，改善结构化回复的恢复交付。",
+        "优化主动性与技能按需加载，允许更多工具调用，并在预算用尽后完成交付。",
+        "减少角色扮演重复动作，澄清动作描写与亲密动机；保留完整角色回复对照、模型测试和上线验收。"
+      ],
+      "sources": [
+        "731ff0051ab1bf9129fccc307aa43f8e17a2db6e",
+        "f05ed6850a386f9de80272f9722ea2abbd9f6eb7",
+        "8bd71b7d08fcb99032f44fc404404b51174374cd",
+        "56c31c33c6e216230503282a441b3e2385bfd993",
+        "4a1d78ac0bc3e0fc1846797edd320cf631fc7031",
+        "9366f0bf3e6ff2b6c41ffb3a41d72addc12a9aca",
+        "73b3c948471ea80b5a0e5dba5a8210f715ae6cd1",
+        "985b77f69fd90c6f2384549e91d3671bf40487c0",
+        "31e0a6afea7a549fc6f4a64a3fccde84f910bce8",
+        "6ccc16ee5b5c1ba016d9e27569c0455fd32b76ce",
+        "b8007a7be42d3eccbc3fac05e8a39703c7fabcc5",
+        "271a54486c32fbb499ab1295fcc6b5d4fa5c79b9",
+        "d34a4a8c519cde63f98e3296bf5b0464dc723581",
+        "93de3870b772dcea51d8f18252e403bf4c5ddf3d",
+        "b1b3acb9e5ad225770dec2ee4dff6edc807024d5",
+        "33cc8b29d53199899775b4b264480d3878c5a010",
+        "a5ad252f1595a29eb766e3a7c1fd90fd4b4febdd",
+        "6f9fed915e69376d2ff8fad0d8e09f56b748c15c",
+        "cc4c73f9af2fa4db0912d049e8b5f222bc479dc7",
+        "fd27e9527c8d71ea85203308366c74815ac4fbee",
+        "4e776c929f2f449b9deeb132ab0e75411bfea3bd",
+        "05b9d58d21011d22770ae28e0c34d4c6410b0047"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-07",
+      "items": [
+        "将旧聊天流水线替换为 Agent，默认由 Agent 直接回复，同时保留可选的角色润色工具。",
+        "接入按需读取的提示技能、角色档案与角色生成工具，完善角色身份、行为边界和机械化表达。",
+        "增加按角色、按模式保存的个人偏好与编辑面板，退出时保存，发布 Android 5.6.21、5.6.22。",
+        "完善 Agent 日志、最终事件、模型用量统计、内存预算与并发测试，调整生产并发到四。",
+        "恢复认证角色的年龄、人格类型、家族背景，并限定正剧设定时间线。",
+        "修复语音事务锁、日志索引和流式日志显示，限制详情渲染规模，将完整日志导出移出主线程。",
+        "修复锁屏后角色恢复，支持手机侧历史图片重读与上下文选择，缺图提示采用角色自己的表达方式。",
+        "改善回复语言延续、临时纯文字例外、格式恢复与上下文压缩，保留标点和当前回合事实。",
+        "完善游戏及锁分状态的默认基准和完整输出校验，加强发言者连续性与语义去重。",
+        "新增聊天右滑进入角色主页，发布并验证 Android 5.6.23、5.6.25、5.6.26；开展多角色表达、工具与生产验收。",
+        "调整登录管控，将模拟器排除出设备运行模式，修复静态部署清单的命令长度问题。"
+      ],
+      "sources": [
+        "e907c9c4a5e8dcb311a3231782a3476579b77022",
+        "d917a6ca95ad2e58d37fe20b665bc3a78ea47293",
+        "082ab89360fe56c0ccc27617bcf096b962e6213c",
+        "bfc6a3009793a2b616b45b1fd62387013d33be37",
+        "027724f71e0468046de2c4ad9f3781d0b8441987",
+        "82f651c9e09a60016ddfec74d872e0e6f4217c2f",
+        "0e3431e43c1390ac2e9555054668e0bf4bb0f852",
+        "5762802f5dcf0d81e4b1d7541f1e1272d7afcd87",
+        "cfe499ac6af66ecfd57ac383f7b15b37036ad4d7",
+        "cc28f0cbf749639aff170d3c916f3e06062168ef",
+        "ee8bb093b2e607470aa63bae43d5dcf68672641b",
+        "0368c93db66614ad1af51e836ad981471a84ac51",
+        "90cfadef49184054b7d197e686d3fd9049ce646b",
+        "d70b05110e6b89f43657c4e77ea424f38e46629c",
+        "97f1a5e04fcf7c1efc27356ac67cc160b7f64b16",
+        "aacda56e738a33f36222a0a24ab3441cc6cdd4c1",
+        "94b2a99462176ab4e7a722a5c21713951e7b4651",
+        "93de42f9852a06221e28cb3f2305aa1565cefeb2",
+        "6f77b80e76e68bb9811e5f9bf544d87798f68b11",
+        "f9a5f832d762095e7853a7851627220dcfd8e809",
+        "657c255d52cb80967db9622547b4a708a48b525c",
+        "bb2bbd28f0357be9fb4505178beb1bc83e4f0759",
+        "fd21fb596c28a4772f72a8138108d9f6441f5258",
+        "e0b76ee16ed031aa92a5bc451a7ad705b05d66ad",
+        "622577f22fe361b032472f7ce0b4f769fc80aa6f",
+        "a5ccc33795c00ebc023ad82c7c047256dffcf215",
+        "372faad8f33e76e1047a3581d89d5ca64af758c6",
+        "e78beb97dcb04dfa5ca1c387853e8470c0b9d47f",
+        "f1dc1212bfc4b706046441a8cddcbe9f0fb388e6",
+        "9f2adcb42b0fbf4fd24c618a258ad36ef36056c6",
+        "77500252b697390d7f13b2a979a8d4212b624b1d",
+        "3f90334419533aeca0df704781f567e07f178cfb",
+        "fa5f1ec0a354dfecf21fd54c5823def452553c2b",
+        "f1a63eb5887c69f6f4474a942a653a2278be9eb7",
+        "43f106b211969df91bede1dd6a445381cb7dacfe",
+        "e9ef973708f2aa87ac534fb7b0506e15bfa478e0",
+        "3fa1bebbbf8f3b263679ae8fbc90f4fc4aa255a0",
+        "ec8ed181ab6feccf32bddcfa19e123cbb88bbe3c",
+        "3bb054a9dad49811647db3dd4602a5f4f7923603",
+        "8dc5c87060716b728bc91b98d8d815336381f4c6",
+        "7a3ab96b5e0989f6643103b0443e8661b1b319b5",
+        "66f7fc3dbf5848962f34d9b584d3138c2c9eaf3d",
+        "dad33fdaef80059e8fadb06a1d66eed40bf79a48",
+        "6e4ab6f21c7976f4432be32bc6a11e324770e7d7",
+        "be6d09be6c0d1e74923852f2e1e80ca7626ae43a",
+        "22dea056733491c780f72119779e0a1f8aa61c8b",
+        "1aba7f235858a620a8141d2b6a2761d7a88d7936",
+        "73232208f187f559c3bf7a9a95a37c885ddcad71",
+        "647319558eea052c081eac37ecb69088dbf77567",
+        "a03278120189d3d3d4098a399b08ac5b5fc24ca1",
+        "f23befb35e35943fb9b9c1275d334b8f7b49e925",
+        "a7c4d30e8333f6bc16481cb37a3e306d42de2a6f",
+        "9c1594be7166319b32c96334a3377511dd74049d",
+        "ef15c38c1105d9352a471d60db213511bc2bbb04",
+        "2fac11e5090d92d50cbc7f368e1cf2db17746e1f",
+        "2145d44107f80335c68d3afe7661de4352a2ef6e",
+        "04718a3877ce458ab55b047c647982541301afe6",
+        "8754f2913e4c16650a8f33b6889a927ce569cc20",
+        "f1a93a1e121d9e63e13e4851fca313858b882a7d",
+        "842f904d9a2d505841cb70f89f554653bd8194a0",
+        "93ef1a9b00d38dd4dfcbe0c6f431d97eb55a5500",
+        "385c118b10103f64c1910c2f76d5a664042ce010",
+        "fb916f2a966b70b9beadb820c1d4bd3066d58f6d",
+        "7d87eebd2a3d0def589edab053e8d54771fba45f",
+        "8817320cfad7be557e22e88131696f50ab3c5465",
+        "4b6d233e6f0c3d825488a697b978be0c31e1b423",
+        "371f35b4afbee34a299fbd00ab98f2f5e30d2304",
+        "c0acd85f30d67a90160c15de23a6c6b53a0615d9",
+        "c63a8b06de6a50ebd41cb05435f0904c5187a4bd",
+        "7e7ab2a0aa82fa1f25f57016106f4ee487b89582",
+        "62c21d20f40e844031efbb1bf1b5675142d3548b",
+        "843002f5f74a76bad6d101f3cf208cdd1e431d4a",
+        "6974547a79262ddf08c2805c28b59ce41dc5762f",
+        "8fab0e610093fb4e76db79ceb72360119d16c7f6",
+        "aa5161f61e65a3fc028493e91c9fa1b7a036ca27",
+        "9489f347b77910573678dd1bc88e9e12a483d859",
+        "d59f79364751ee3bb8fd5a28702c78f7737cfb86",
+        "458563ce50a6012f5326d413af12c79b07d3c594",
+        "67f4a033001e918c71205adb1cadef5000646911",
+        "7fee180c7989b702704505c6d125c72243f46840",
+        "26148da2fea24986a660e2ef194e8ad0a1fc8bb5",
+        "cc6f517fd40be4b335f899426cf55b61a5ae134a",
+        "dd5b2e77f2d953a6968c300f7936f7e4b1316bdb",
+        "6ef7ec91eac42268843ca854ad3c9c0227385c40",
+        "dc3d0f27f28f5e93c3d984d9724bd8924823a2a0",
+        "10ff97fe4a2ee5580a27da5bd4b58dfbd3c15e64",
+        "20ea7880b90c4915273dc9f43373c5852ad9f406",
+        "c789a9a0fa2c07a36023ed30dec3c106a7c9390e",
+        "2d93b979efb86aa8a0dbc79aa45502b9c60e3440",
+        "0f0258455f0247ec66c2ffacef074a5a2981a8d6"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-06",
+      "items": [
+        "引入普通聊天 Harness 引擎，升级长期记忆与游戏执行，恢复关系界面并调整并发容量。",
+        "恢复公开账号登录、官网下载与 Qwen3TTS 语音，发布 Android 5.6.17，并将最低登录版本调整到 5.6.19。",
+        "官网新增简体中文、繁体中文、英文和俄文，完善自动语言选择与自定义语言菜单。",
+        "接入私有联网搜索、日历记忆和百科摘要，验证多个搜索引擎，减少普通图片聊天中的无谓搜索。",
+        "修复纯图片与表情包理解，完善语音、语言、表情和贴图策略。",
+        "将事实依据自检并入回复 Agent，保留重试时的检索证据，完善格式恢复与审查协议处理。",
+        "修复同步记忆写入导致的聊天卡顿，优化自然分条节奏，将关系决策交给 Agent 并恢复关系上下文。",
+        "开展真实语音、图片、搜索、移动端时延及游戏并发验收，补齐历史日志并记录服务恢复。"
+      ],
+      "sources": [
+        "b61154303b69ca5e1b131e3fbf986e7d18a9743e",
+        "78697b7e7a5a97f6e7fe6cc6d7533f26d6d66086",
+        "36a74687de0b7acf3e16da7bf12db7cf39c5cab4",
+        "748cfa1067a75f7a92bfae833afbeedd5b445b35",
+        "c35905625ac3ea14f4e73d629f986030a4fac779",
+        "0cb1a9ef3629a3738566f4a2c088b342946440a2",
+        "2f2a263fd292d770201029008e7320bae044d58a",
+        "b37ff2688220106d1487879613f12ae7e3014c04",
+        "3d723bb189c2678c0e890992bd51b19bc57489d3",
+        "e2758329342b1c98163096b9324296b6e08fd0b0",
+        "f87a795bd145dffd879ec42d2a185e74dd939987",
+        "ecd1c4682d5a3e377298d80be13575a1a27a75df",
+        "652953503e6755808acfdad033fc5d876bba479e",
+        "0995c04225904b465142dabb660cb333d8478178",
+        "9088ecb53045bdec3809646734296b36b84f203a",
+        "73f699d0d87ff1a17bab030b5b64a53d50beb446",
+        "676f15f334bd951565ff88f91c7e283e8cb7a138",
+        "59cd57bde5639ba48f0857d79486fdaf30f30443",
+        "5263bbea0fc19df41820e70dbe16275bbcc9cc36",
+        "76191d6c9874970c760fc328c206936ddd09855c",
+        "9c32902d7239a670786fed2830ff32ce193514a7",
+        "8d970150c1e42d8c536afd0ebfea6fb85bfb1c0b",
+        "e969194ad73bff9db4ed318b3dc5e71347672eb9",
+        "5837148e0745307927f83236b8d96e8d25ec1913",
+        "b407e69497e5bcbc4b5cc6f08b8b6f2add53da1c",
+        "a2d207ddae1db5a2ba2b75e2f607d168ff783fd7",
+        "4b06bf472643ebc07124bf1713624b6cb3e415f4",
+        "164457fb07c233bab9a77a4d45ab749e38b68001",
+        "340f9c814c01f676a0c98b12b294c7ec72ce6440",
+        "fbda22078a46fe846366c613c7964fda8c3fb96a",
+        "255f17685d86395b0e6eb50884323878cb0a3dab",
+        "932a5a55fdf619cebae9bb2e1fe3ee70166c5d1c",
+        "e2bd4fb091127bd34f370d2849fbddd3df8b2153",
+        "fd824a595b8b7239643b9566b730e075ca6bcc8d",
+        "03e5ffc77ad270c96d26f125185631bdbcc18c7d",
+        "e4aeb6e01a8243b872ea984b755084666d6f4d3d",
+        "b8e056803e85cd6c06615bf9c7904f2173c569be",
+        "cccafd3a569872f89c52cbca73015c6be9eaade1",
+        "ef0a47849c2833e5c9cc557e74f7262be53ebab9",
+        "6b533d81287c075f541937f8036c593a6cfbba0c",
+        "ae8eda24d2f825f3b9e468a1406085cebfd957b0",
+        "283fb16d0c9dab486fc85e00e0d68d67b94f78cf",
+        "5d13b66232ef59ac2b6e8074a5b6926b37314db2",
+        "835c52c0bdceef2cc081a3551dc6c17438166c59",
+        "1ae493e223a14ec4bcc8a0ab680088455d1b739e"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-09-02",
+      "items": [
+        "更新美国服务器密钥目录的引用。"
+      ],
+      "sources": [
+        "a0a6d5a4b61a5cebfbcd87014864c078fcd2bb8a"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-29",
+      "items": [
+        "整理模型测试目录和成人内容测试集，完成 GLM 重放以及 Doubao、DeepSeek 的对比测试。"
+      ],
+      "sources": [
+        "3d5d78ed819b1df6e01577d8aa1d3805a81a280b",
+        "a233a78c9853ad89a2cc80f846054d66efb50823",
+        "b18ce899550f06d9738f0bd2752b5ad936148fd4"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-21",
+      "items": [
+        "适配 H618 新触摸屏方向，新增干净系统构建与 BL31 诊断工具。",
+        "增加 TF 卡状态及容量监看，将共享硬件内容迁出项目。"
+      ],
+      "sources": [
+        "7df481d2d926c8ec565893039f316a9616c5194b",
+        "9aae371b79f3d72c115d5a7918e8dbbaea045bdd",
+        "674aaa5f7e854936158c20ffc366c106b382a1ca",
+        "44d7467455f49ee03deae97fa6c365b050042fb4",
+        "65c5fb03f35b257d9f5619d4a8d356011c432934"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-14",
+      "items": [
+        "保留 Companion 预装签名，将外部聊天与角色普通对话统一。",
+        "修复外部聊天请求数组编码及 QQ 通知、前台半屏会话，发送后返回会话列表。",
+        "整理 Companion 文档并记录 H618 实机经验。"
+      ],
+      "sources": [
+        "fc83ab15d75ec01e07c06adc8aec265cb7f93878",
+        "22234a22be6944796e54094d15b77ac4c8a373e9",
+        "e11aa3cca7cca23008f213a216aac0060dd4acb3",
+        "ea49491b4a9b27c3876eaac9690cfba2e2e4e890",
+        "20e6c6d82e313545d94df974c0fbf014dbbd22cc",
+        "0fc842c30a84e23d337fac891733e8cc6d950076",
+        "1a4898c25f80ac213a4995989e370c78d0c6b832",
+        "278c38f5d7fef18a5fceaf83c155cb0cdc8a5635"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-13",
+      "items": [
+        "修复 H618 桌面显示与 HEVC 硬件解码，限制监看单实例。",
+        "推进无 Root 量产架构，接入共用产品签名，完善正式固件构建和默认服务自恢复检查。",
+        "默认启用 Companion 无障碍服务，在 H618 设备上执行 QQ 回复。"
+      ],
+      "sources": [
+        "9839bf6f6f4b50a0a6e1a7f18501a1cbc83a5273",
+        "968863a02ae0a82f29000e240e9e0f7c955b1fae",
+        "65caa8ceb4d754f7d76aec92ad42e8718c7bcbf0",
+        "1bc00665b0e1c8bd71435d834b64c6bb51ec4a31",
+        "2e0c7b2285a97022a87f3010e398dcd16c3fd451",
+        "aad7806105c8febfe2bc8eb12a75e1c02d51dee2",
+        "afa89c13b2f3edaac02698d9586c4474a54bc6f9",
+        "3fea5d9dd8c996ee2d4fb8853f4de64e1625eadd"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-12",
+      "items": [
+        "修复 H618 竖屏触摸映射，新增高清硬件监看界面与温度、GPU 实机采集。",
+        "完善量产监控与保留数据的 OTA 流程，记录硬件编码启动和升级恢复。",
+        "修复视频硬解和 QQ 后台私聊自动回复。"
+      ],
+      "sources": [
+        "22ecd6610a44892493468dd27b14c97d6b63a6cd",
+        "ff5347364d73bd5aa58101130f5cf1b5d57603ce",
+        "9b83952d767337036a3cbe4a9e341dbc0b81d502",
+        "ca5453d5ef5757bb0c6ec28ef9dc53720ba9d898",
+        "2f65bfbb81e1ac7fc248d056a88cf23533f46f79",
+        "0ac2c7798986d59a4aee207694b59c62b030c748",
+        "f4cd27d3121aefaeb97c81d9dd190a9e01b13985",
+        "e7856f54005742cb0eab609e811b2700c7d701eb",
+        "776c03dc2859f89af7e71bab0f69485c66469638"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-10",
+      "items": [
+        "补充 H618 固件安全验证说明。"
+      ],
+      "sources": [
+        "ee54941709254e9868618263720fe4de55d1c446"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-09",
+      "items": [
+        "适配 H618 开机常驻绑定与悬浮服务，完善角色切换和自主恢复。",
+        "修复伴侣会话隔离，强化安全门禁与 QQ 回复保护。",
+        "改善悬浮圆点、收起按钮和星形居中，修复 QQ 回复链路。",
+        "按路由拆分官网资源与前端大组件，盘点文档，补充 Companion 任务覆盖和验收清单。",
+        "记录 H618 硬件编码方案，将本地构建环境排除出版本管理。"
+      ],
+      "sources": [
+        "eebe339301ca57e8aed451a4a6eb80f9c6f22e51",
+        "067dca6ee76908b7155acd1db71de9cc1cbb483c",
+        "46c3190177bd783fd9c04bfa44013ed89c5f8703",
+        "af363e76f9114921543197817c0bd7edb62fa3de",
+        "04ad2707db36dc68cd47eb0c45729244d05c0005",
+        "f40e79ee2ad9d6908ec3b8520ec0c9f6a9db094b",
+        "90f388743aa47f6af5d6100037e9dd5798f77711",
+        "95047af26ed2e86536be596cc47b2a7932613d1f",
+        "6b2873eec02a2b6e908f66d6954aca6141637deb",
+        "12cd4fa68b86815d70553be0ffd6305d4a5fff73",
+        "6c56507f4664e81ea33c8053e351788e69e63405",
+        "193c37c2616a7e1f68371119922b8773f7b52f6b",
+        "dae0d8af35641ae9ac3fa09c4fab8c267b2f2435",
+        "4d39c91a5e4c01b8c77dac007b89139896038de4",
+        "f09a7f1843fa165788b6939f2c8541aaede2495f"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-08",
+      "items": [
+        "实现单 APK 设备模式与握手，增加返回大屏菜单。",
+        "完善悬浮控制、角色即时同步与会话持久化，支持 QQ 前台私聊角色回复和设备指令执行。",
+        "改用 Mobile MCP 执行 QQ 自动回复，支持联网查询并修复常用联系人识别。",
+        "增强任务失败恢复，区分用户触摸与控制器输入，确保用户操作优先；温度显示统一为摄氏度。"
+      ],
+      "sources": [
+        "7379d14dfcbb0d3bd3355c9fb50339841e18e815",
+        "12e494c305e9f9393426450e8c68f462f39237ee",
+        "a11d585de44318fda12220f6026250b566391288",
+        "ec2f2f5de66379fbee89b43f9f99246d3af5e571",
+        "802022ccb84583e38ceb1afa726494d1b69d5998",
+        "5ca851ea9c9d3fbdba9565433ab3335c3014b4b7",
+        "a8c7df5847c07e8fe2c79f4d1721a5a1529ebbc2",
+        "6ff2d14cc04c311a6e6ea61173af5867bc3c561c",
+        "7989066284c6ea9de82ce2429824aeed10460497",
+        "80e5ad1f7659e623585d6f6685b9417a193f04d2",
+        "155ee9cb1ab5c6a18ddc62f351a2ffa6fc78626d",
+        "655dc7608263ec55c15f53e9a0468ce880481145",
+        "7facd6367bea2eccac120996ae7a29d88e106013"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-07",
+      "items": [
+        "建立 PonyChat Companion 基础项目，接入手机控制与模型路由。",
+        "修复 QQ 自动发信链路，整合系统级 Companion 与角色记忆切换，并完善项目说明。"
+      ],
+      "sources": [
+        "3ece43854562b899ffc3eeb40f6ca575f80f12b1",
+        "0944e48f119b03562362c39e24737899d32d4860",
+        "520d58408ee3638ee37d0be9a0d0f4e582625c32",
+        "2378e37c9109b0271c336d62cd7780f46bb8a34c",
+        "46a605b367ae200b75bb704bec0c313212bc86d7"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-02",
+      "items": [
+        "让主动跟进内容保持独立完整，减少对前文隐含指代的依赖。"
+      ],
+      "sources": [
+        "143348838ee2dd6b27f9404e58d4619211872db0"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-08-01",
+      "items": [
+        "修复普通聊天图片识别的视觉路由。"
+      ],
+      "sources": [
+        "57f31f7a08bf93efac729785540e96448078e776"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-31",
+      "items": [
+        "强化附件、第三方旧事和主动跟进的事实依据，限制没有证据的外部事实创作。",
+        "改进旧记忆检索、事件时间仲裁和关键词证据，区分真实事件与问答记录。",
+        "隔离历史回放与上游预猜，排除错答之后更新的记忆和当前未完成场景，保留原始问题范围。",
+        "统一括号描写视角和小马体态提示，补充主动回复与记忆回放实测。",
+        "保留发送失败消息并支持点击重发；重置角色时清除关系页状态，发布 Android 5.6.16。"
+      ],
+      "sources": [
+        "8dcfcd40278b180ea9bd0ef6f3f6511ae7c62e19",
+        "1f235cbe3c17efac7a33a9652d9c4112e1de6f16",
+        "26e11e5cf8b90e97dc2d2551c613d79c21a2f93c",
+        "d142ff0bc0b623f37fd93b229ad8e3c7bd058e21",
+        "c31cb989f095bc440dc8f1993962d6af7b1af3b9",
+        "65d0fe240090fbd07bc970a9a521b7eec870dbe8",
+        "4466cc9c5c969beed7f312dd167397fa4f0b42f0",
+        "e956ab1ac7891fe666ac29658d6d34f65191c3bf",
+        "e67f4da7abe52e587d2c457845440575540fb427",
+        "1b1c0941c38baead345bada1ef6d1cb1051525d5",
+        "9c6466e1fe51437a70ba28d858f06ec3583da1e8",
+        "d9fa1049567e3388504eb61b32e0f35b73bda39b",
+        "1d2783fbe6a42bf6d2ca48d33c1b2e3e76af6c53",
+        "1a36b19530ca07a9fbfb79085c0260e3ed3f4a67",
+        "5ae3fecd5511689c0effad59542eef22f005518a",
+        "017ba551eb2ce2bcbb62640246eeffaf25d45b82",
+        "d8889bf0ea46125cfbdf89778089a59d848e6878",
+        "da2bdb453e367a213d54f48d6d7a53aeb4b3caf8",
+        "56681f9a593e036fe376fb821baea07eb11dc793",
+        "c4719f5824e44078afcd8cb9f0118a4ea9813c00",
+        "68d84ef4fbd183d3aecbf94f1c6b7b2f49252238",
+        "45542289e74a37c687d94c339e793a32e6ed1543",
+        "3a82526671de1328b0aaee2e231ebcf54d3fc199",
+        "b98fd35c68f853b3f5237c08bd19ad3f080a0b8e",
+        "aa8a27629e7b3e7cbb96854c385fc53188ecaf38",
+        "2e409b72ae5b4424c4012ec96c8f19f43d877735",
+        "3ac4795a959e23e4f918f7ae542a2629c32b5283",
+        "7d9c0d2dee2f96aacb77e372080dae1ed337fdc6",
+        "edd5475d85ca768f35d516e9d65b79096c3641a5",
+        "b6b0ec0d3cba6b300f1c6a3e0fe193072c4afa80",
+        "53766c5f68b7620018cf4d2c71586550b97ddc9e",
+        "8696ccf6924520892ea8a7decf2f9d860cd6a9a7",
+        "e09181232aa27683e4833d120a68fc596ac14873",
+        "785c9324b03a43efe53853343c8bc9a345680d40",
+        "6da77d932ac7562c3361c645cf3089bea4be0e31",
+        "617c435adbba0179264578b6d02523c4e486f550",
+        "5aded1e6ae8bdb3f3c51ae1a52950cbd1ba1e50f",
+        "ecf85a853c7d70006d364a49f94ad09625e1e803",
+        "26c61f9e61eef40a1632af3f8a9a5e6110d7fa38"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-30",
+      "items": [
+        "完善普通对话的事实与关系深度、因果回答和角色信息边界。",
+        "延长伴侣重聚上下文，修复重聚历史识别、歧义、久等表达和场景归属。",
+        "改进回复内容规划、气泡职责和显示节奏，优化低压力主动跟进。",
+        "修复空模型密钥请求头与角色更新时间，补全分步日志和异步测试依赖。",
+        "调整语音预热与健康检查，开展碧琪因果回答实测，发布 Android 5.6.14。"
+      ],
+      "sources": [
+        "b0f9900fe4f3e02aadf3b9348b79e185ab9b158a",
+        "290cc62a863eac825a76d3760f859565f55ba4e9",
+        "468bbdba3dc6659a6f9131cbaf14f958c8731274",
+        "01be9a43b7f8fb2a372ab46e713b4a85560d1c34",
+        "5a4428dcc41826965b56761f4b132265021f0249",
+        "c65bc17bdab51dd5bb65eb7eaca8e2e2327b9018",
+        "dbf46e4a70e08562706e6c842f879f79c7ff97c4",
+        "5c4dbde577c8069acf84c5a8080368487e6fe4f9",
+        "d4e4bf036cc903323a7dd90732ebb225b48b7483",
+        "b5af3b9e4e857827cc5ae79e2598ca5659b92d54",
+        "551c99b2f6a6c60482fcd9f8a3f38f721c732e55",
+        "646edb4bf99a2dd9c07412d026c4cd589ef6219d",
+        "039e4aab3246aaaaf751f75813ab42ec1ead491a",
+        "d561dc2a6ac4817b6bd0d41da990fcecdee4b1b6",
+        "48644eb47e84f6e33ebb214b5d852b0eda054acd",
+        "0142a7463b4554f7c6006e8a0ad3e0319e791415",
+        "863c4037dec68ab0b486112153b778de7e1e1b43",
+        "52811188b83ad4b8edda948feea98d07a59cf0aa",
+        "3a56ef822c3d549b2df85d6f22ca5b76e9b789c8",
+        "259eac9c48eb2fa2dbf6f82ebc8e42e93d663167",
+        "ce22fc4a1ee835d3be348a5ec36ea89336485384",
+        "a19182d9105a868bd9319944ab5dcc5f5a457ac3",
+        "249b18a71bf66d58191ecfe4499ee54d6021b1fc"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-15",
+      "items": [
+        "调整账号登录管控。"
+      ],
+      "sources": [
+        "3a8b8de31ff94ead2a3f7d9e32c44b6ec92ce53a"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-11",
+      "items": [
+        "调整主站及 MBTI 子站的前端构建依赖路径，清理部分旧依赖与第三方资源副本。"
+      ],
+      "sources": [
+        "74bae62f6bdf4b3a78b2df02055f6ae5060bddd0"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-06",
+      "items": [
+        "官网更新阶段性停更说明，整理文档并对配置脱敏。"
+      ],
+      "sources": [
+        "fa205025cf05a97ec8b363fb2dc93b6d890a7eaf",
+        "eee78c06281bf77fb0b8ebcdf2690da47d3a1706"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-04",
+      "items": [
+        "改善斗地主 AI 策略、计分与手牌显示顺序，修复四带对牌型识别。",
+        "更新服务器连接资料的目录引用。"
+      ],
+      "sources": [
+        "f1cd16b486632b027c6fd0a373545f86b30d7336",
+        "255901702bfbb13229878538a4813ce40387f4ca",
+        "305a908ed715da13209922be689e95a435464fe9",
+        "06e0ce82ae465e3042e8f3f79377da4b997a359a",
+        "47151bbaf2d04d730ce7177751f46201b926d188"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-03",
+      "items": [
+        "新增用户消息发送状态，修复接收确认和待发送指示清除时机。",
+        "修复主动消息打断导致普通回复被取消的问题，移除普通回复副标题。",
+        "完善象棋长程互动记忆与角色化提示，新增 Agent 隔离测试和无状态回合上下文测试。"
+      ],
+      "sources": [
+        "bfe11e4813b2731c172d8b7f85cc758075fcc1b6",
+        "4011c73bd88b25fc341a041ecbef8aa8f8c82b57",
+        "675d5106e6e3f0b038a312f1edb37ccb8363e1f0",
+        "55e8c987e2984da0f9c7a39384a269f1d931f3fb",
+        "38f45586c01bbd9290f72241baa4fcc227efbc65",
+        "fa25f1ddf4bb756d2494a0810460b849e62c8669",
+        "af29c0d05987d0cb5de1186b80153341ef867d25",
+        "9ba453889049df0c677e4645de8bd726a4df91d2",
+        "1d29fc787315c252c0630a916389f991605ab742",
+        "ba688fc00f3ef65f0e2efe484865257df8fc3598",
+        "564cb313abde41e04c111cc3aa310d992de1987e",
+        "fd3f27f35c886623203d3de279bf8a8b35b54249",
+        "89b72ceb4cc412820ada18fc3f7f6599787a8e30"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-02",
+      "items": [
+        "完善斗地主入口、牌桌布局、对手信息卡、手牌及结算展示，适配大字体按钮。",
+        "调整提示、倒计时、火力模式和牌局动画，统一出牌牌面。",
+        "接入斗地主音效，调整音量、发牌节奏和同类音效随机播放，更新 Android 版本。",
+        "象棋模型调用关闭思考模式，继续拆分大型模块和整理迁移后的实现路径。"
+      ],
+      "sources": [
+        "0ba54fd3996974fa66875800b00d6c9d33d67d43",
+        "54fa7ddc4d4d79b717bed760d0a32c8f85048f8b",
+        "43e2225550b800395bf36ede6bc2b7c79738e8a4",
+        "fda9bab272d9eef62fbefef2f95d8fef8087a854",
+        "f96a30a279ac2a30ab7f4dac0636e012bdca4bc3",
+        "7941fc3d2f017cd7a6465eaed7b0c4dacc2fd622",
+        "9bc80d1987e29bd6e76e5df90f4e570fc0e2037e",
+        "720c75bad28dd18c20630830242b25c770f34f5b",
+        "fd0a570e782714b9e095c233ae794a070975abeb",
+        "a31244d88ce4307b4f5854ff1da99f1452ca2b2b",
+        "86b909b33832f1d7a93de4b868133cb94fbd2c44",
+        "ae22c64c9e330c4e0a4b8ab561c2c850a676f42d",
+        "bda2a92cd8f0b215b1790a12b491ed89ff55748b",
+        "8032ab694844f279b692ba5e977cbfa925f6cafa",
+        "c6759e2c113b9db7a963dff2721369a9fbd770f9",
+        "228dedb4821b07f3ed13d2a837f35be126236d58",
+        "72c18b9f37602feb040bc7c263bfdcc2a190d8d4",
+        "cb65c05b72b1d5d8074eca32ac76c80ff414d11c",
+        "49d23763f534f5118099c67382bed770c6f8233d",
+        "a47b8032631604080fd5828d725370fcc7ffef59",
+        "3bfd96453da1d19ea8c51b83aee293c1d02401b5"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-07-01",
+      "items": [
+        "增强象棋对局流程与记忆，保留赌约细节，并保存小游戏流程快照。"
+      ],
+      "sources": [
+        "b8a3014156cdb5542274ab9223ca8af95d8b6b45",
+        "1f462ed5925a2dfd459c6dffae6b16422bccefa3",
+        "ce2124f67669bf43ac74cf392cb2953848abdf16"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-30",
+      "items": [
+        "拆分象棋页面及剩余超大代码文件，保存重构前后的开发快照。"
+      ],
+      "sources": [
+        "725026fa9c9e519f3e8768c1731c505af3a49bbd",
+        "369183a3b8ff203d1ca8b4e39dba94d469b54cfc",
+        "a47a3a9cb69fe3cfda8ab2b963dcb426ddd0c099",
+        "f386900f1510afeb32721c9c2e2660f220c3ba84"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-29",
+      "items": [
+        "新增小游戏与象棋体验，接入 EleEye 象棋引擎和角色棋风。",
+        "改善落子显示节奏、对局提示和终局音效，完善普通聊天验证。"
+      ],
+      "sources": [
+        "dc1152a07f6f6cc811d35257b15aa002e7c50c67",
+        "b549323d7aa94c407c79439113f1851edc76637f",
+        "1f98425d7e2069765cd3ed4edf692af98a4bfe88",
+        "af01927d02e7826e9249f9edc5fb1eebfe62b584",
+        "1457872eb75a4d85c5c0dfe29c41b69ef86c15f1"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-28",
+      "items": [
+        "完善注册、角色主页、头像、角色列表和聊天输入交互。",
+        "更新场景事实、图片上下文、语音及主动跟进运行逻辑，补充分层跟进测试。"
+      ],
+      "sources": [
+        "d3a3ebff72e0981ba8e7feef414b40480c1d28fa"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-27",
+      "items": [
+        "完善客户端待回复消息合并与会话运行管理。",
+        "调整普通聊天生命周期、事实依据和检索关键词，补充单会话及分步流程测试。"
+      ],
+      "sources": [
+        "605243de7bf188d982f66b170063c41de93527ef"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-26",
+      "items": [
+        "改进语音上传与客户端界面，允许管理员上传语音参考素材，保存部署前快照。"
+      ],
+      "sources": [
+        "60a71a9a00ad4dbd2828d755e39d7fdb0b96885b",
+        "3709e4453815451d1732a8a519d0f3c8d08129fa",
+        "fa07f20e44ba496ef9f3740b4a1010f9151867fe"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-25",
+      "items": [
+        "继续完善 Android 聊天布局、输入、同步连接和滚动行为。",
+        "更新识图上下文、场景状态、发言者、主动推进与语音处理，并完善后台用户统计。",
+        "补充主动场景、图片附件、回复语言与游戏滚动等测试和设计资料。"
+      ],
+      "sources": [
+        "876e138602a2030425f3ec79e119d5ce4c389d99"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-24",
+      "items": [
+        "完善个人网盘页面、样式和后端接口，调整网站路由配置。",
+        "更新 Android 聊天布局与自动滚动，补充滚动设计说明。"
+      ],
+      "sources": [
+        "5db2760b8dd861ca68b3b5d011b47f4038190519"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-23",
+      "items": [
+        "新增 PonyChat Drive 个人网盘。"
+      ],
+      "sources": [
+        "676c47f5661130e4580e389879829e79d41c1018"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-22",
+      "items": [
+        "完善定时聊天交付、主动消息流程与媒体显示，修复场景状态和关系面板。",
+        "补充滚动测试，保存关系与主动消息更新。"
+      ],
+      "sources": [
+        "70b3da8f931d17c49fe57bd0613523a96ba9ff06",
+        "79ec355cdd413742d6312e0dc62238c3de2793e5",
+        "c85190baa2e7c5b0b36f67a95eba0da611a4fb84",
+        "a44ab7d9a0eee129094302b1d1e813b12a91d5cd"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-20",
+      "items": [
+        "合并相邻括号描写，限制连续主动回复数量，保持剧情推进时的当前场景连续性。",
+        "保存近期开发快照。"
+      ],
+      "sources": [
+        "294bd598a28274eb0f464eaf1b3f01e056a2f990",
+        "aa1718fd35f7a6343624640e1cda6358557015c2",
+        "72f47a40dfe7d39dc5370361622e0b69a5d79df6",
+        "d34312a2b0a01e0e67c9df3279d96012a65c4515",
+        "5fb4bb0762f349ad0de8834ec4078f74842d3105"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-18",
+      "items": [
+        "拆分大型聊天模块并保留兼容接口，完善场景规划与测试。",
+        "后台会话支持显示游戏模式、渲染游戏预览和按模式重置，修复公开角色名称解析。",
+        "让回复气泡数量与选定的回复层级一致。"
+      ],
+      "sources": [
+        "8b6b4cef06a5bc45e89d06f43170d831114c9cc4",
+        "a1c3340be93d0fa22dd97a69c1ee33a28ba134c0",
+        "10d8b934ad1ccf592bfd3f68c915431c7b82f9d1",
+        "fe301b60595515302eb0971b27a2b3aa53fb2dc2",
+        "5b3d7e84dc0ad4c7e3e841722e3f8c9784ba0ac0",
+        "150c16b29c0a8000585d9624c1a3db9f68c5961f",
+        "2bad85486aa9cb728bae60da4e426325504272ab",
+        "3bce50136a102453f0f09d8fa40a8a810ce39339",
+        "622d909415071c825619abf12f423a9bed388503"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-17",
+      "items": [
+        "更新聊天路由与关系行为，修复任务完成后的剧情推进。"
+      ],
+      "sources": [
+        "b9f010c77534638102d6b4e59eb1a890fceb0d4a",
+        "e592cbf195e6dce262bc15e425024e8da85c9058",
+        "5ef9de7d20fb6716ab0d45ee8874e99d9e709ea0"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-16",
+      "items": [
+        "改善普通聊天场景连续性、群体回忆与状态仲裁，支持主角强制提及和灵魂回复。",
+        "修复面板收起、低信息续聊、输入手势和快捷消息的主体归属，打磨 Android 交互。"
+      ],
+      "sources": [
+        "38dd4fa06fdc5d833d5e76ce828eafcbd71e7179",
+        "382d20fbbfc3ab4f92fa732ac06f5257e20b74f7",
+        "ba2db5c85534584b7845785162d066e3d99f4e74",
+        "ab109bd55420699c334d27b6983176bcc2465e30",
+        "ab6407fc3144b24aad370ba471418310f367b459",
+        "e910ce8682716752519c63214345c93525cf5a44",
+        "9d2341dc3d8be097f35d768a74f5b6c657580ff4",
+        "3e922dd70e08d55be0887984f9eb456ad57ab121"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-15",
+      "items": [
+        "新增普通聊天角色交接，强化多人事实归属，避免第三方指控变成已确认事实。",
+        "改善误解处理、开场问候回退和当前动作承接，避免将角色设定混作事实判断依据。",
+        "调整普通回复的逐条显示延迟，保存后端及提示词更新。"
+      ],
+      "sources": [
+        "344a6a14a4a36e624e5aa4d82d88e08fdfa5f864",
+        "c565ed42cf734dcf7b9ea3d8bd27a6d28da72923",
+        "41df6ffa0cd41141d639a90a147660b0fbaf735e",
+        "cd788542f4bdaae9c420c05c11d10aa96065d4b6",
+        "9da35dc72eeb6a549bbca7341263071b00d81813",
+        "0018e984bdbabe2e306dc358850e07007a8d3e8b",
+        "c4d77903b85f6333d3008ee0ed3b2e122b1a04db",
+        "2cc54adc89f66959c0ff2207898618132bdf005a",
+        "271d9aeb0716a58d82533c814a103d8a4bde797e"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-14",
+      "items": [
+        "支持客串发言者聊天，修复客串历史与消息路由。",
+        "加强回复去重与上下文保护，完善输出结构、物种相关提示和内容清理。",
+        "新增 Android 消息振动开关，打磨聊天界面与媒体网格。"
+      ],
+      "sources": [
+        "d0d31105f98e3f18feaa1093abcef3c3eabea086",
+        "6b8cd7efdbb32be08de74bc339df99c221a38bcd",
+        "508abc7dfac26598c2b4d0f62d9ae6a537470efc",
+        "6903c54deed67cdf2be3f317601071ba9841e2f2",
+        "07a467a4041062c4a68a22e6f5ac1adeb0619009",
+        "5a6d345ea7c55ba8f85566e6b46833ca3f661803",
+        "70eb802d4313494cdde2de94754034c20ff0df9c",
+        "b2f9555e37164ba8a5664fe39f78ee968ad5bfbf",
+        "c5d95554567e4ef3cfe0a7cf6fc33cc9d415badb",
+        "c2fd19f850080f934b70cd0faf72550f2b4bc8a3",
+        "bd4f23f71f1919694d54c5bbfd3f038e60213800"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-13",
+      "items": [
+        "完善普通聊天规划与语音处理，增加主动任务入口和被动任务更新。",
+        "回复优先承接当前场景输入，按处理阶段判断新请求是否替换旧请求。",
+        "完善伴侣私密聚会场景与后续跟进规则，更新规划、定时跟进的测试和阶段快照。"
+      ],
+      "sources": [
+        "e3d664bdc476b3007b0146368e73d59692934e5e",
+        "e031ea10b0d3635461158117a0de5ec1f6f72a89",
+        "610246ae34dc3a92936796c70907140837966ee1",
+        "495ba9440c10b85ed849859e8dee56691fbeb848",
+        "b124518b61fb3416e4004ba15e702c4f330c1bf5",
+        "bfa0500c47177a5a2545adf385e8e3d9c3dee8f4",
+        "e0f22adfab4c15a61cd30bed6a4f37e5fcce2f9f",
+        "26afac2038506a8b8365b6defbd26b0587204ae0",
+        "dd8db53f9d794bc2f192b6a2136fbb6997418766",
+        "ce99ce266674f82cfeb07cf08cced6dcd1a42409",
+        "caf08b7b5fbdcf04cc157ea090afaa2d4b67728f"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-12",
+      "items": [
+        "将语音服务栈迁移到 CosyVoice。"
+      ],
+      "sources": [
+        "7e1392363a0078a55f22bbb647042f8f8f4ddc03"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-06",
+      "items": [
+        "修复普通聊天交付恢复时机，发送用户消息后滚动到底部，更新 Android 版本。"
+      ],
+      "sources": [
+        "66090e849b9c524d9b14744bfd655e23b619432a",
+        "2d1a6e68595580f068f540c2f8116c8bcdda0ba9",
+        "1aaa90001bc9e4bf62076ce2c8b95f831f68a3ff"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-05",
+      "items": [
+        "修复语音路径的数据库锁竞争、普通回复语言处理和语音回复多余气泡。",
+        "完善角色主页流程与 Android 顶栏，更新后端部署及客户端。"
+      ],
+      "sources": [
+        "1d6eec5e64c8570d4ea523b8a25d640cb5a34356",
+        "60f8cd1fe8333743fc1afada075b85190a8359e4",
+        "e60a649e28e42cda81aa91c658ad4ccedd754d46",
+        "b18bcf7a5346c2fee5fe502ebcd4400add08bbea",
+        "fec8e5e6fef1b2891a613b859a74eacaad462c1f"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-04",
+      "items": [
+        "新增个人数据导出，改善语音跟进和后台任务恢复。",
+        "加快手机语音音频交付，归一化克隆参考音频，让语音配方自包含，并避免参考文本泄漏到合成结果。",
+        "修复后台角色列表行处理及语音、数据库相关问题。"
+      ],
+      "sources": [
+        "0593768e12ea419682e24406a4a43e7d36287766",
+        "df489a553bdaac0b4b897164835892ad7ecc8956",
+        "0baec0b4286b85257fe55f0e4eea265d045d325c",
+        "496e0a349d4238e6c528709f2764d9f36b6d43eb",
+        "68bdb75a1bbce8856faaaa199719b663ca66668c",
+        "3c85542cc0cb81d61be6c7f6e0041a1f89e6cccd",
+        "f3b31a3178276b8d9ffd29d2a75ca17472259d21",
+        "4b3fb2e36c73af8545a699a5b2ebdc6501fcf9dc"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-03",
+      "items": [
+        "完善角色管理与语音界面，强化创建者编辑权限，官方角色创建者统一为系统账号。",
+        "增加自定义语音策略选择，使用角色编号关联官方音色，完成 Qwen3TTS 官方语音映射。",
+        "更新官网和项目说明。"
+      ],
+      "sources": [
+        "242036450899dd26e11676c2243e3f20559eb51c",
+        "74d4e5709c231978f10ce9bbda17ff86747125b6",
+        "9056c3b4362ff0dbb68c4249ab8ba0abf7b374d7",
+        "2ab58a4665a51520cf8a5b09741798f38d401b69",
+        "2d6807db231dacf585bf70bc1e5104b4ab2f432d",
+        "15301af61d8f4ddfaebe6a138f26875af6d6db7f",
+        "1569e31c069338d8aca2cb5f769c71a0ca19ef73",
+        "aeefb420e46bbfe6a09f22c4606950c4328534ba"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-02",
+      "items": [
+        "更新语音缓存与用量计费，优化媒体增量部署清单，并保存阶段性开发成果。"
+      ],
+      "sources": [
+        "9ad4cd858e63105362c9f0de120a251b405d712f",
+        "c2ff7fbc1ed252f6b8144a8b3834bf4a27b06ef5",
+        "b8a636a39ece327738e459e5f63ef5717cc2452d",
+        "7439ce64f5016f7fff09f3afef14aa81a2c66fc8"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-06-01",
+      "items": [
+        "更新语音实验功能，调整聊天滚动行为。"
+      ],
+      "sources": [
+        "fc581aa3e659691f15e2eb2db0062cd4e089a450"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-31",
+      "items": [
+        "修复普通回复对历史摘要的上下文使用，完善助手素材与聊天底部操作控件。"
+      ],
+      "sources": [
+        "94f1f1398080983a640775bf815c1e96f3eeaa3b",
+        "c79ec21de73ec291be6c982884d6215f24faed3e"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-30",
+      "items": [
+        "更新聊天历史同步和语音实验室说明，整理网站资源与后台标签。",
+        "归档产品路线规划，更新服务器域名说明。"
+      ],
+      "sources": [
+        "150dfdd6e14d9cb574a68f3a9a94411d6f85caab",
+        "f866a74a410f2bfac48067119d8a8fe9c99c0c64",
+        "6cfdca46ec0ba6e0ae7bd11fa1eeab5d20b5ce17"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-28",
+      "items": [
+        "新增 QwenTTS 语音实验室，继续调整普通聊天的环境与主题提示。"
+      ],
+      "sources": [
+        "613175e364d33ad58abc9e42a7b644d234de5f94",
+        "d62286c5c31a4ab0abf8188c82799453d0ab2060"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-27",
+      "items": [
+        "修复普通聊天重复追问、角色风格漂移和虚构记忆；调整称呼归属、括号描写与格式规则，支持规则热更新。",
+        "修复 Android 角色大厅同步崩溃，适配浅色主题菜单，发布 Android 4.2.3。",
+        "统一普通会话重置与缓存刷新行为，增加旧会话融合维护工具。",
+        "区分角色居住地与用户位置，修复天气、贴图搜索和环境上下文对用户城市的误判。",
+        "将模型生成参数交由后端管理，限制数据库备份数量，并在后台显示用户消息总数。"
+      ],
+      "sources": [
+        "ba96ac4d18481d161c68f904e01ba82e61a665a9",
+        "2ee1d2e060a88aaa9177675964ec50c4b85151c6",
+        "389e84060470d58493586372788f954d89dfa464",
+        "14eccd2db258a809d0ade609ddd400fea399f6b2",
+        "9c3cc57e5878a1f498f8dc69f8a5fff49b5ac678",
+        "3fb482c88615ddc533a9c003f041a7e7bbd18595",
+        "cfce3ceb17ec6ed30a41cfd2fa0b5a35a908f84c",
+        "e0ca40e6c914c01e8a60101cf9ba3db1003d2a4c",
+        "6d291ef865484593319519a7b861bc0b5bd32ca9",
+        "9d1576c59fca5fe8916659672116d929069559de",
+        "1169060aa8ccb13566f273d3d2c4c1f02caf2e08",
+        "164d32eeb7714fa598a5f568d2e98e7919e25664",
+        "66e6e3e4570416a6fa228b8f743d18a05bc58b2c",
+        "7d724ae47b65c34c970649a7b0624d9222ae7c62",
+        "e21d8de4bf82006a54b67d6ba4e10634788cec53",
+        "4b3093404db7c983f5e422751bde5b8f2489c734",
+        "a10cbf1ba1af54ca43f04d3b1de423d1c102b17e",
+        "57d93038f666a2ca173f86447e697f6b73e82b28",
+        "fa86b882d955ac39ab7b93215babafaf56ebf886"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-24",
+      "items": [
+        "改善聊天贴图与角色大厅的操作流程。"
+      ],
+      "sources": [
+        "ffa2a8e397d6b97f738abf14215eefe79e851963"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-22",
+      "items": [
+        "改善聊天附件、Android 网络连接与主动跟进的可靠性，打磨客户端交互并更新版本。",
+        "停用当时的陪玩面板操作入口。"
+      ],
+      "sources": [
+        "e459dd4e7aa53e227d68d6f610153dbc5ec2e590",
+        "040b91ee5ec405e95b022662327707db2b921c9c",
+        "e801d9ce3b17c9fb093975fe16c280db09e82c08",
+        "dc0ea9df0fcebbdf0ba2f7e65515d17294f29f93"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-21",
+      "items": [
+        "建立现有 Git 历史并保存项目初始快照，包含客户端、后端与网站等既有代码。",
+        "改善弱网条件下的聊天可靠性，调整普通聊天回复节奏与客户端版本准入。"
+      ],
+      "sources": [
+        "edd75358f78451561908ac64af043f7767dc1d16",
+        "546cc62d6fa7e93f44488b82223ed61623747e04",
+        "7009f8a1c3ab99ce7ea29f9339030a7d18d48c52"
+      ],
+      "earlySource": null
+    },
+    {
+      "date": "2026-05-18",
+      "items": [
+        "将后台网页角色管理整合到角色管理，保留旧入口兼容；完善素材管理与图片存储。",
+        "更正 Android、Galgame 和陪玩能力的文档，区分已有功能与尚未挂载的实时接口。"
+      ],
+      "sources": [],
+      "earlySource": {
+        "date": "2026-05-18",
+        "source": "change-log/20260518-change-log.md",
+        "topics": [
+          "文档与代码对齐",
+          "Android 与 Galgame 状态说明"
+        ],
+        "hash": "f866a74a410f2bfac48067119d8a8fe9c99c0c64"
+      }
+    },
+    {
+      "date": "2026-04-28",
+      "items": [
+        "完善 Galgame 与锁分模式回复去重、角色记忆写入，以及配套测试和诊断。"
+      ],
+      "sources": [],
+      "earlySource": {
+        "date": "2026-04-28",
+        "source": "change-log/20260428-change-log.md",
+        "topics": [
+          "Galgame / 锁分模式去重",
+          "Step 10 角色记忆",
+          "测试与诊断"
+        ],
+        "hash": "7009f8a1c3ab99ce7ea29f9339030a7d18d48c52"
+      }
+    },
+    {
+      "date": "2026-04-27",
+      "items": [
+        "对齐 Galgame 分步文档，改进普通聊天的识图上下文，并修正历史摘要。"
+      ],
+      "sources": [],
+      "earlySource": {
+        "date": "2026-04-27",
+        "source": "change-log/20260427-change-log.md",
+        "topics": [
+          "Galgame 分步文档对齐",
+          "普通聊天识图上下文",
+          "历史摘要修正"
+        ],
+        "hash": "f866a74a410f2bfac48067119d8a8fe9c99c0c64"
+      }
+    },
+    {
+      "date": "2026-04-26",
+      "items": [
+        "完善锁分模式体征与输出校验，增加部署版本识别。"
+      ],
+      "sources": [],
+      "earlySource": {
+        "date": "2026-04-26",
+        "source": "change-log/20260426-change-log.md",
+        "topics": [
+          "锁分体征与校验",
+          "部署版本识别"
+        ],
+        "hash": "f866a74a410f2bfac48067119d8a8fe9c99c0c64"
+      }
+    },
+    {
+      "date": "2026-04-21",
+      "items": [
+        "核对项目文档与仓库实际结构，更新相关说明。"
+      ],
+      "sources": [],
+      "earlySource": {
+        "date": "2026-04-21",
+        "source": "change-log/20260421-change-log.md",
+        "topics": [
+          "文档与仓库对齐"
+        ],
+        "hash": "f866a74a410f2bfac48067119d8a8fe9c99c0c64"
+      }
+    },
+    {
+      "date": "2026-04-20",
+      "items": [
+        "整理后端目录结构，统一模块组织与引用。"
+      ],
+      "sources": [],
+      "earlySource": {
+        "date": "2026-04-20",
+        "source": "change-log/20260420-change-log.md",
+        "topics": [
+          "Backend 目录整理"
+        ],
+        "hash": "f866a74a410f2bfac48067119d8a8fe9c99c0c64"
+      }
+    },
+    {
+      "date": "2026-04-11",
+      "items": [
+        "完善 Galgame 与锁分模式的分步生成，让环境、身体状态与心理描写按本轮需要选择内容和字数，并区分第三者台词与主角回复。",
+        "调整锁分模式的口渴自然积累、叙事档位和体征惩罚阈值，统一提示与结算规则。"
+      ],
+      "sources": [],
+      "earlySource": {
+        "date": "2026-04-11",
+        "source": "change-log/20260411-change-log.md",
+        "topics": [
+          "Galgame / 锁分分步与导演",
+          "锁分口渴 `thirst`"
+        ],
+        "hash": "f866a74a410f2bfac48067119d8a8fe9c99c0c64"
+      }
+    }
+  ]
+}

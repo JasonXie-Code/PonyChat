@@ -1,0 +1,174 @@
+.info-content
+{
+    max-width: 75%;
+    margin-left: auto;
+    margin-right: auto;
+}
+.pws-summary
+{
+    padding-top: 100px;
+    margin-bottom: 3%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.pws-summary-img
+{
+    max-width: 50%;
+    border: 2px solid #FBDAE8;
+    border-radius: 8px;
+    margin-bottom: auto;
+    min-width: 500px;
+}
+
+.pws-summary-text
+{
+    min-width: 350px;
+    direction: ltr;
+}
+
+.pws-text-left
+{
+    margin-right: 3%;
+}
+
+.pws-text-right
+{
+    margin-left: 3%;
+}
+
+@media screen and (max-width: 1200px) 
+{
+    .pws-summary
+    {
+        margin-left: -12%;
+        margin-right: -12%;
+    }
+    
+    .pws-summary-img
+    {
+        margin-left: auto;
+        margin-right: auto;
+        min-width: 350px
+    }
+    
+    .pws-summary-text
+    {
+        margin-left: auto;
+        margin-right: auto;
+        text-align: center;
+        max-width: 500px;
+    }
+}
+
+
+.characters
+{
+    margin-left: -9%;
+    margin-right: -9%;
+    margin-top: 7%;
+    #min-width: 500px;
+}
+
+.character
+{
+    #min-width: 350px;
+    padding-top: 20px;;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 25%;
+    min-width: 320px;
+    
+}
+
+.characters-set
+{
+    margin-bottom: 3%;
+}
+
+.character-pair
+{
+    #max-width: 50%;
+    margin: auto;
+}
+
+.character-name
+{
+    text-align: center;
+    max-width: 100%;
+    #min-width: 300px;
+}
+
+.character-image
+{
+    #margin-left: auto;
+    #min-height: 10%;
+    #max-height: 10%
+    #max-width: 50px;
+    margin-top: auto;
+    max-width: 45%;
+    min-width: 120px;
+}
+
+.character-text
+{
+    white-space: pre-line;
+    margin-left: 5%;
+    max-width: 50%;
+    #margin-bottom: auto;
+}
+
+@media screen and (max-width: 1200px) 
+{
+    .characters
+    {
+        margin-left: -18%;
+        margin-right: -18%;
+    }
+    .character
+    {
+        margin-left: auto;
+        margin-right: auto;
+        min-width: 378px;
+    }
+    
+    .character-image
+    {
+        max-width: 15%;
+        
+    }
+}
+
+.character-state
+{
+    margin-top: 2%;
+}
+
+.progress-icon
+{
+    margin-left: 2.5%;
+}
+
+.hourglass-icon
+{
+    max-width: 5.5%;
+    margin-bottom: 3.5%;
+}
+
+.hammer-icon
+{
+    max-width: 8%;
+    margin-left: 2.5%;
+    margin-bottom: 1.5%;
+}
+
+.heart-icon
+{
+    max-width: 13%;
+    transform: rotateZ(-25deg);
+}
+
+
+
+
+

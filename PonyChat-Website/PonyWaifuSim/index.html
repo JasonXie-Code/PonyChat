@@ -1,0 +1,210 @@
+﻿<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <!-- 全站标签 (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-125822841-3"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-125822841-3');
+    </script>
+    <title>Pony Waifu Sim</title>
+    <link rel="stylesheet" href="vendor/bootstrap.min.css">
+    <link rel="stylesheet" href="Css/Main.css">
+    <link rel="stylesheet" href="Css/Content.css">
+    <link rel="stylesheet" href="Css/Progress.css">
+    <link rel="stylesheet" href="Css/Downloads.css">
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+</head>
+<body>
+    <a class="cloud-pair">
+        <img class="fixed-top cloud-bg" src="Images/pws_cloud_bg.svg" />
+        <img class="fixed-top cloud-fg" src="Images/pws_cloud_fg.svg" />
+    </a>
+    <a class="cloud-pair">
+        <img class="fixed-top ml-auto cloud-bg flip-x" src="Images/pws_cloud_bg.svg" />
+        <img class="fixed-top ml-auto cloud-fg flip-x" src="Images/pws_cloud_fg.svg" />
+    </a>
+    <a class="cloud-pair">
+        <img class="fixed-bottom cloud-bg flip-y" src="Images/pws_cloud_bg.svg" />
+        <img class="fixed-bottom cloud-fg flip-y" src="Images/pws_cloud_fg.svg" />
+    </a>
+    <a class="cloud-pair">
+        <img class="fixed-bottom ml-auto cloud-bg flip-xy" src="Images/pws_cloud_bg.svg" />
+        <img class="fixed-bottom ml-auto cloud-fg flip-xy" src="Images/pws_cloud_fg.svg" />
+    </a>
+    <nav class="navbar navbar-expand-md fixed-top" id="top">
+        <button class="navbar-toggle ml-auto mr-auto" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Home<span class="sr-only"></span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#about">About<span class="sr-only"></span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://www.patreon.com/StudioWhy">Patreon</a>
+                </li>
+                <!-- <li class="nav-item"> -->
+                    <!-- <a class="nav-link" href="#progress">进度</a> -->
+                <!-- </li> -->
+                <li class="nav-item">
+                    <a class="nav-link" href="#downloads">Downloads</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="content">
+        <div class="heart-container ml-auto mr-auto d-flex flex-column">
+            <h2 class="ie-error">Internet Explorer not supported. Please use the download links on our <a href="https://www.patreon.com/StudioWhy">Patreon</a>.</h2>
+            <!--[if IE]>>
+        <h2 class="ie-error" style="display: inline-block;">Internet Explorer not supported. Please use the download links on our <a href="https://www.patreon.com/StudioWhy">Patreon</a>.</h2>
+    <![endif]-->
+            <div class="heart-bg d-flex pl-3 pr-3 ml-auto mr-auto no-select">
+                <div class="wing wing-left ml-auto no-select">
+                    <img class="wing-img no-select" src="Images/pws_wing.svg" />
+                </div>
+                <img class="heart no-select" src="Images/pws_heart.svg" />
+                <div class="wing wing-right mr-auto flip-x no-select">
+                    <img class="wing-img no-select" src="Images/pws_wing.svg" />
+                </div>
+            </div>
+            <div class="heart-fg d-flex flex-row ml-auto mr-auto no-select">
+                <img class="pony pony-left no-select ml-auto" src="Images/pws_pony.svg" />
+                <div class="pony-divider"></div>
+                <img class="pony pony-right flip-x no-select" src="Images/pws_pony.svg" />
+            </div>
+            <div class="buttons-menu d-flex flex-column ml-auto mr-auto no-select">
+                <img class="pws-title ml-auto mr-auto" src="Images/pws_title.svg" />
+                <div class="buttons-menu-list ml-auto mr-auto d-flex flex-column">
+                    <button class="menu-button button-play responsive-width" onclick="window.location.href = '#downloads';"><p>Play</p></button>
+                    <button class="menu-button button-pledge" onclick="window.location.href = 'https://www.patreon.com/StudioWhy';"><p>Pledge</p></button>
+                </div>
+            </div>
+        </div>
+        <div class="info-content">
+            <div class="pws-summary d-flex flex-column d-md-flex flex-xl-row" id="about">
+                <div class="pws-summary-text pws-text-left">
+                    <h1>Pony Waifu Sim</h1>
+                    <p>is a is a FREE adult Dating Sim/Visual Novel/Adventure Game.<br><br>You play as a human who travels across dimensions into a strange world full of magical talking ponies!</p>
+                </div>
+                <img class="pws-summary-img ml-auto" src="Images/Moona.png" alt="Princess Moona says: Pray tell, strange one; Who might you be?" />
+            </div>
+            <div class="pws-summary d-flex flex-column d-sm-flex flex-xl-row" style="direction: rtl;">
+                <div class="pws-summary-text pws-text-right">
+                    <h1>Date Your Waifu!</h1>
+                    <p>Spend time with your favourite equines. Learn more about them. Fall in love!<br><br>These wonderful waifus are waiting for you! Can you make them all fall in love with you?<br><br>
+                        What other adventures await you in this magical world?<br><br>Play and find out!
+                    </p>
+                </div>
+                <img class="pws-summary-img mr-auto" src="Images/Twiggy.png" alt="Purple Smart making an adorkable scrunchy face while sitting at the lunch table in front of you." />
+            </div>
+            <template id=character-template>
+                <div class="character d-flex flex-column">
+                    <h1 class="character-name">{{ name }}</h1>
+                    <div class="character-pair d-flex flex-row">
+                        <img class="character-image" src="{{ src }}" />
+                        <p class="character-text">{{ desc }}</p>
+                    </div>
+                    <div class="character-state d-flex flex-row">
+                        <p>{{ state }}</p>
+                        <img class="progress-icon {{ state_class }}" src="{{ state_img }}" />
+                    </div>
+                </div>
+            </template>
+
+            <div class="characters">
+                <div class="characters-set d-flex flex-column d-xl-flex flex-xl-row" id="characters-1">
+                </div>
+                <div class="characters-set d-flex flex-column d-xl-flex flex-xl-row" id="characters-2">
+                </div>
+            </div>
+            <template id="progress-bar-template">
+                <div class="mb-1">
+                    <div class="d-flex flex-row progress-bar-text-group"><p class="progress-bar-text ml-2">{{ label }}</p><p class="progress-bar-text ml-auto mr-2 text-align-right">{{ progress }}</p></div>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: {{ percentage }}%" aria-valuenow="{{ percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </template>
+            <template id="jira-epic-template">
+                <div class="jira-epic d-flex flex-column">
+                    <img class="jira-epic-heart" src="Images/pws_heart.svg" />
+                    <p class="jira-epic-version">{{ version }}</p>
+                    <p class="jira-epic-label">{{ label }}</p>
+                    <span class="jira-epic-connector" style="display:{{ display }};"></span>
+                </div>
+            </template>
+            <!-- <div class="game-progress" id="progress"> -->
+                <!-- <h1 class="game-progress-title">进度</h1> -->
+                <!-- <div class="game-progress-grp d-flex flex-column d-md-flex flex-xl-row"> -->
+                    <!-- <div class="jira-content d-flex flex-column"> -->
+                        <!-- <div class="task-bars d-flex flex-column" id="progrss-bar-parent"> -->
+                            <!-- <div class="progress-status-grp d-flex flex-row" id="progress-status-grp"> -->
+                                <!-- <p class="mb-1" id="version-title">正在加载进度数据...</p> -->
+                                <!-- <p class="mb-1 ml-auto" id="task-count"></p> -->
+                            <!-- </div> -->
+                        <!-- </div> -->
+                        <!-- <p class="mr-auto" id="tasks-updated"></p> -->
+                        <!-- <div class="jira-epics d-flex flex-column" id="jira-epics"> -->
+                        <!-- </div> -->
+                    <!-- </div> -->
+                    <!-- <div class="patreon-updates ml-3"> -->
+                    <!-- </div> -->
+                <!-- </div> -->
+            <!-- </div> -->
+            <div class="downloads" id="downloads">
+                <h1>Downloads</h1>
+                <h2 id="downloads-version-title">Alpha</h2>
+                <p id="errorText"></p>
+                <button class="download-button btn default" onclick="window.location.href='https://downloads.studiowhy.net/releases/PonyWaifuSim/PonyWaifuSim_Windows.zip'">Windows 64bit<br><img class="download-button-img" src="Images/FontAwesome/windows.svg" /></button>
+                <button class="download-button btn default" onclick="window.location.href='https://downloads.studiowhy.net/releases/PonyWaifuSim/PonyWaifuSim_Windows_32bit.zip'">Windows 32bit<br><img class="download-button-img" src="Images/FontAwesome/windows.svg" /></button>
+                <button class="download-button btn default" onclick="window.location.href='https://downloads.studiowhy.net/releases/PonyWaifuSim/PonyWaifuSim_Windows_ARM.zip'">Windows ARM<br><img class="download-button-img" src="Images/FontAwesome/windows.svg" /></button>
+                <button class="download-button btn default" onclick="window.location.href='https://downloads.studiowhy.net/releases/PonyWaifuSim/PonyWaifuSim_OSX.zip'">OSX<br><img class="download-button-img" src="Images/FontAwesome/apple.svg" /></button>
+                <button class="download-button btn default" onclick="window.location.href='https://downloads.studiowhy.net/releases/PonyWaifuSim/PonyWaifuSim_Linux.zip'">Linux<br><img class="download-button-img" src="Images/FontAwesome/linux.svg" /></button>
+                <button class="download-button btn default" onclick="window.location.href='https://downloads.studiowhy.net/releases/PonyWaifuSim/Pony%20Waifu%20Sim.apk'">Android<br><img class="download-button-img" src="Images/FontAwesome/android.svg" /></button>
+                <!-- <button class="download-button btn default" onclick="window.location = 'play';">WebGL<br><img class="download-button-img" src="Images/FontAwesome/html5.svg" /></button> -->
+            </div>
+        </div>
+    </div>
+    <div class="footer mt-5">
+        <div class="footer-content d-flex flex-row">
+            <a class="sw-logo" href="https://www.StudioWhy.net"><img class="sw-logo-img" src="Images/StudioWhy.svg" /></a>
+            <p class="copyright ml-auto">© 2025 StudioWhy LLC. All Rights Reserved</p>
+        </div>
+    </div>
+    <script src="vendor/jquery-3.4.1.min.js"></script>
+    <script src="vendor/popper.min.js"></script>
+    <script src="vendor/bootstrap.min.js"></script>
+
+    <script src="JavaScript/GlobalJS/lib/stamp.js"></script>
+    <script src="JavaScript/GlobalJS/lib/serializeObject.js"></script>
+    <script src="JavaScript/GlobalJS/lib/url-join.js"></script>
+    <script src="JavaScript/GlobalJS/GlobalJS.js"></script>
+    <script src="JavaScript/MainInterface.js"></script>
+    <script src="JavaScript/MainGlobals.js"></script>
+    <script src="JavaScript/Main.js"></script>
+    <script src="JavaScript/GeolocationBlocking.js"></script>
+    <script>
+        function getLatestVersionPath(fileName)
+        {
+            $.get('api/downloads/GetLatestVersionPath', { fileName: fileName }, function (data, status)
+            {
+                if (status == "success")
+                {
+                    window.location = data;
+                }
+                else
+                {
+                    $("#errorText").text("There was an error retrieving the file: " + fileName);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

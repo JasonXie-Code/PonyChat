@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.15",
+  "version_code": 440,
+  "package": "top.ponychat.webview",
+  "sha256": "2a4264a5de0bf2410764bccb82bdce87878a6e88ef9aa96e11f2f16873fd894e",
+  "bytes": 14781741,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.15-440-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "调整创造模式回复下方复制图标的大小，使它与删除、重试图标的视觉大小一致。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.15-440-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

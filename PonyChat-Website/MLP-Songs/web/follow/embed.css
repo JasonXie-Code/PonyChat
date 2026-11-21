@@ -1,0 +1,13 @@
+:root { --header-h: 0px; --player-h: 0px; --sidebar-w: 0px; }
+.top, .sidebar, .sidebar-overlay, .player, .bg-layer { display: none !important; }
+.shell.auto-shell { display: block; margin: 0; height: 100dvh; }
+.main.auto-main { height: 100%; margin: 0; padding: 0; width: 100%; }
+.auto-stage-head { padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
+.auto-stage-head h1 { display: none; }
+.auto-stage-head p { font-size: 11px; margin: 0; }
+.auto-now { flex-wrap: wrap; font-size: 11px; gap: 6px; }
+.auto-score-wrap { padding: 8px; }
+.auto-panel { height: 100%; display: flex; flex-direction: column; }
+.auto-score-wrap { flex: 1; min-height: 0; height: auto; }
+.auto-page { width: 100%; max-height: none; }
+@media (max-width: 768px) { .auto-stage-head { flex-direction: column; align-items: flex-start; } }

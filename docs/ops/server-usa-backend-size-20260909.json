@@ -1,0 +1,696 @@
+{
+  "host": "Server-USA",
+  "started_utc": "2026-09-09T11:01:26.110576+00:00",
+  "finished_utc": "2026-09-09T11:01:53.274471+00:00",
+  "method": "Single metadata traversal, lstat st_blocks*512 and st_size; include directory blocks; same-device; no symlink following; global device/inode deduplication; live service snapshot, not atomic. No file payloads read.",
+  "categories": {
+    "main_other": {
+      "allocated_bytes": 24576,
+      "apparent_bytes": 17361,
+      "regular_file_bytes": 977,
+      "files": 2,
+      "directories": 4,
+      "symlinks": 0
+    },
+    "main_python_environment": {
+      "allocated_bytes": 651907072,
+      "apparent_bytes": 630209396,
+      "regular_file_bytes": 625912659,
+      "files": 9361,
+      "directories": 1043,
+      "symlinks": 4
+    },
+    "main_deployment_backups": {
+      "allocated_bytes": 241664,
+      "apparent_bytes": 202292,
+      "regular_file_bytes": 181812,
+      "files": 14,
+      "directories": 5,
+      "symlinks": 0
+    },
+    "excluded_main_web_apk": {
+      "allocated_bytes": 2703724544,
+      "apparent_bytes": 2703303466,
+      "regular_file_bytes": 2703254314,
+      "files": 164,
+      "directories": 10,
+      "symlinks": 0
+    },
+    "main_backend_code": {
+      "allocated_bytes": 10801152,
+      "apparent_bytes": 9590386,
+      "regular_file_bytes": 9299570,
+      "files": 541,
+      "directories": 71,
+      "symlinks": 0
+    },
+    "main_live_database": {
+      "allocated_bytes": 1006620672,
+      "apparent_bytes": 1006603792,
+      "regular_file_bytes": 1006599696,
+      "files": 7,
+      "directories": 1,
+      "symlinks": 0
+    },
+    "main_database_backups": {
+      "allocated_bytes": 2927353856,
+      "apparent_bytes": 2927316136,
+      "regular_file_bytes": 2927291560,
+      "files": 13,
+      "directories": 6,
+      "symlinks": 0
+    },
+    "main_development_tests": {
+      "allocated_bytes": 109015040,
+      "apparent_bytes": 107897196,
+      "regular_file_bytes": 105439596,
+      "files": 1055,
+      "directories": 598,
+      "symlinks": 0
+    },
+    "main_knowledge_data": {
+      "allocated_bytes": 146460672,
+      "apparent_bytes": 131149852,
+      "regular_file_bytes": 130740252,
+      "files": 7574,
+      "directories": 21,
+      "symlinks": 0
+    },
+    "main_runtime_state": {
+      "allocated_bytes": 16023552,
+      "apparent_bytes": 15780066,
+      "regular_file_bytes": 15702242,
+      "files": 118,
+      "directories": 19,
+      "symlinks": 0
+    },
+    "main_service_logs": {
+      "allocated_bytes": 32768,
+      "apparent_bytes": 19665,
+      "regular_file_bytes": 11473,
+      "files": 4,
+      "directories": 2,
+      "symlinks": 0
+    },
+    "main_drive": {
+      "allocated_bytes": 241229824,
+      "apparent_bytes": 241135474,
+      "regular_file_bytes": 241106802,
+      "files": 42,
+      "directories": 7,
+      "symlinks": 0
+    },
+    "main_debug_logs": {
+      "allocated_bytes": 17464651776,
+      "apparent_bytes": 16065298398,
+      "regular_file_bytes": 15956160478,
+      "files": 648149,
+      "directories": 2285,
+      "symlinks": 0
+    },
+    "cosyvoice_backend": {
+      "allocated_bytes": 162512896,
+      "apparent_bytes": 157233468,
+      "regular_file_bytes": 155967771,
+      "files": 2288,
+      "directories": 307,
+      "symlinks": 4
+    },
+    "excluded_cosyvoice_web": {
+      "allocated_bytes": 1310720,
+      "apparent_bytes": 1283491,
+      "regular_file_bytes": 1271203,
+      "files": 13,
+      "directories": 3,
+      "symlinks": 0
+    },
+    "searxng_backend_with_bundled_dependencies": {
+      "allocated_bytes": 177803264,
+      "apparent_bytes": 161206120,
+      "regular_file_bytes": 158089026,
+      "files": 6835,
+      "directories": 745,
+      "symlinks": 5
+    },
+    "music_api_and_environment": {
+      "allocated_bytes": 55005184,
+      "apparent_bytes": 50544650,
+      "regular_file_bytes": 49401833,
+      "files": 1907,
+      "directories": 279,
+      "symlinks": 4
+    },
+    "music_media_data": {
+      "allocated_bytes": 3691876352,
+      "apparent_bytes": 3689574019,
+      "regular_file_bytes": 3689160323,
+      "files": 1135,
+      "directories": 93,
+      "symlinks": 0
+    },
+    "music_auto_api_and_environment": {
+      "allocated_bytes": 105693184,
+      "apparent_bytes": 98511017,
+      "regular_file_bytes": 96823432,
+      "files": 3040,
+      "directories": 412,
+      "symlinks": 4
+    },
+    "music_auto_data": {
+      "allocated_bytes": 43270144,
+      "apparent_bytes": 42561181,
+      "regular_file_bytes": 42499741,
+      "files": 346,
+      "directories": 15,
+      "symlinks": 0
+    },
+    "external_deployment_backups": {
+      "allocated_bytes": 16637030400,
+      "apparent_bytes": 16636082810,
+      "regular_file_bytes": 16635472506,
+      "files": 377,
+      "directories": 149,
+      "symlinks": 0
+    },
+    "excluded_apk_backup": {
+      "allocated_bytes": 24576,
+      "apparent_bytes": 18146,
+      "regular_file_bytes": 1762,
+      "files": 2,
+      "directories": 4,
+      "symlinks": 0
+    },
+    "backend_temporary_tests": {
+      "allocated_bytes": 169312256,
+      "apparent_bytes": 96741161,
+      "regular_file_bytes": 72693545,
+      "files": 20694,
+      "directories": 5827,
+      "symlinks": 0
+    },
+    "excluded_web_test_temporary": {
+      "allocated_bytes": 364544,
+      "apparent_bytes": 358522,
+      "regular_file_bytes": 358522,
+      "files": 2,
+      "directories": 0,
+      "symlinks": 0
+    },
+    "service_configuration": {
+      "allocated_bytes": 81920,
+      "apparent_bytes": 21306,
+      "regular_file_bytes": 4802,
+      "files": 16,
+      "directories": 5,
+      "symlinks": 0
+    },
+    "orphan_database_sidecars": {
+      "allocated_bytes": 32768,
+      "apparent_bytes": 32768,
+      "regular_file_bytes": 32768,
+      "files": 2,
+      "directories": 0,
+      "symlinks": 0
+    },
+    "volatile_memory_tests_excluded_from_disk": {
+      "allocated_bytes": 6975488,
+      "apparent_bytes": 906989,
+      "regular_file_bytes": 843529,
+      "files": 1668,
+      "directories": 502,
+      "symlinks": 0
+    }
+  },
+  "roots": [
+    "/opt/ponychat",
+    "/opt/ponychat-cosyvoice",
+    "/opt/ponychat-searxng",
+    "/opt/mlp-music",
+    "/data/mlp-music",
+    "/opt/mlp-music-auto",
+    "/data/mlp-music-auto",
+    "/var/backups/ponychat-concurrency10",
+    "/var/backups/ponychat-normal-wire",
+    "/var/backups/ponychat-concurrency4",
+    "/var/backups/ponychat-agent-reset",
+    "/var/backups/ponychat-search-context",
+    "/var/backups/ponychat-evidence",
+    "/var/backups/ponychat-concurrency8",
+    "/var/backups/ponychat-agent",
+    "/var/backups/ponychat-harness-pool",
+    "/var/backups/ponychat-personal-preferences",
+    "/var/backups/ponychat-concurrency4-retest",
+    "/var/backups/ponychat-agent-only",
+    "/var/backups/ponychat-preference-priority",
+    "/var/backups/ponychat-apk-version",
+    "/var/backups/ponychat-character-edits",
+    "/var/backups/ponychat-apk",
+    "/var/backups/ponychat-log-fixes",
+    "/var/backups/ponychat-agent-logging",
+    "/var/backups/ponychat-harness",
+    "/var/backups/ponychat-log-page",
+    "/var/backups/ponychat-recovery-20260906",
+    "/tmp/ponychat-history-images-20260907",
+    "/tmp/run_agent_voice_probe.py",
+    "/tmp/ponychat-harness-uwof0pwp",
+    "/tmp/ponychat-personal-preferences.tar.gz",
+    "/tmp/ponychat-evidence-acceptance-20260906.json",
+    "/tmp/ponychat-concurrency10-1",
+    "/tmp/ponychat-agent-media-debug2-20260906.json",
+    "/tmp/ponychat-agent-8fe5db3.tar.gz",
+    "/tmp/ponychat-evidence-real-20260906.json",
+    "/tmp/ponychat-mobile-availability-20260906.json",
+    "/tmp/ponychat-evidence-release-20260906.json",
+    "/tmp/ponychat-searxng-results.json",
+    "/tmp/ponychat-route-smoke-s9h76s7g",
+    "/tmp/ponychat-evidence-route-final-20260906.json",
+    "/tmp/ponychat-agent-voice-20260906.json",
+    "/tmp/ponychat-feeding-20260907",
+    "/tmp/ponychat-agent-media-release-20260906.json",
+    "/tmp/ponychat-harness-vneyfa2_",
+    "/tmp/ponychat-style-matrix-20260907",
+    "/tmp/ponychat-harness-d7cfj2cp",
+    "/tmp/ponychat-rainbow-surface-20260907",
+    "/tmp/ponychat-emulator-reset-runtime-20260909",
+    "/tmp/ponychat-pool-probe-final-20260907.json",
+    "/tmp/ponychat-agent-local-voice-20260906.json",
+    "/tmp/ponychat-evidence-route-20260906.json",
+    "/tmp/ponychat-agent-5f1fe23.tar.gz",
+    "/tmp/ponychat-harness-qxlpo_5u",
+    "/tmp/ponychat-voice-1788706659494312600",
+    "/tmp/ponychat-style-model-search-guard-20260907",
+    "/tmp/ponychat-agent-9a1e9b4.tar.gz",
+    "/tmp/ponychat-search-context-final.json",
+    "/tmp/ponychat-capacity-probe-ten.py",
+    "/tmp/ponychat-pool-probe.py",
+    "/tmp/ponychat-evidence-route-initiative-20260906.json",
+    "/tmp/ponychat-agent-selfcheck-structured-20260906.json",
+    "/tmp/systemd-private-f77d43ebfa9c45e289302820555118fa-ponychat-searxng.service-Z7qOaT",
+    "/tmp/ponychat-logs-20260907-124654-385c118b.tar.gz",
+    "/tmp/ponychat-behavior-20260907",
+    "/tmp/ponychat-evidence-latency-20260906.json",
+    "/tmp/ponychat-skills-release-20260907",
+    "/tmp/ponychat-agent-selfcheck-20260906.json",
+    "/tmp/ponychat-harness-_uxjkltc",
+    "/tmp/ponychat-evidence-turns-final-20260906.json",
+    "/tmp/ponychat-static-check-1788774455335724300.py",
+    "/tmp/voice-1788706659494312600.tar",
+    "/tmp/ponychat-selfcheck-mobile-20260906.json",
+    "/tmp/ponychat-actor-roleplay-ab-20260907",
+    "/tmp/ponychat-style-retrieval-alias-20260907",
+    "/tmp/ponychat-local-voice-health-20260906.json",
+    "/tmp/ponychat-agent-92e03de.tar.gz",
+    "/tmp/ponychat-agent-media-final-20260906.json",
+    "/tmp/ponychat-harness-pool-candidate-20260907",
+    "/tmp/ponychat-agent-selfcheck-final-20260906.json",
+    "/tmp/ponychat-full-load4-quiet-20260907.json",
+    "/tmp/ponychat-searxng-probe.py",
+    "/tmp/ponychat-actor-ab-20260907",
+    "/tmp/ponychat-evidence-route-verified-20260906.json",
+    "/tmp/searxng-engine-screening.json",
+    "/tmp/ponychat-evidence-real-final-20260906.json",
+    "/tmp/ponychat-agent-audio-validation-20260906.json",
+    "/tmp/ponychat-pool-probe-20260907.json",
+    "/tmp/ponychat-log-fixes-acceptance-20260907",
+    "/tmp/ponychat-static-check-1788774465777469100.py",
+    "/tmp/ponychat-harness-4irrn_u1",
+    "/tmp/ponychat-pool-probe-20260907.results.json",
+    "/tmp/ponychat-media-overlay",
+    "/tmp/ponychat-agent-media-fixed-20260906.json",
+    "/tmp/ponychat-style-skills-20260907",
+    "/tmp/ponychat-harness-gcr2xddx",
+    "/tmp/ponychat-logs-20260907-124654-385c118b",
+    "/tmp/ponychat-full-load4.py",
+    "/tmp/ponychat-actor-tool-e826dd32",
+    "/tmp/ponychat-pool-probe-final-20260907.results.json",
+    "/tmp/ponychat-harness-7p7mahov",
+    "/tmp/ponychat-node-timing-20260907",
+    "/tmp/ponychat-agent-voice-live-20260906.json",
+    "/tmp/ponychat-full-load4-quiet-20260907.results.json",
+    "/tmp/searxng-engine-finalists.json",
+    "/tmp/ponychat-evidence-route-final-v2-20260906.json",
+    "/tmp/ponychat-direct-release-20260907",
+    "/tmp/ponychat-route-smoke-qmye34o5",
+    "/tmp/ponychat-harness-k89ipivx",
+    "/tmp/ponychat-voice-acceptance-audio",
+    "/tmp/ponychat-harness-_jg8y4_p",
+    "/tmp/ponychat-evidence-route-acceptance-20260906.json",
+    "/tmp/benchmark-searxng-engines.py",
+    "/tmp/ponychat-agent-media-live-20260906.json",
+    "/tmp/ponychat-search-context-final-fixed.json",
+    "/tmp/ponychat-logs-20260907-125100-93ef1a9b.tar.gz",
+    "/tmp/ponychat-agent-media-20260906.json",
+    "/tmp/ponychat-harness-hw60te9w",
+    "/tmp/ponychat-media-1788705866178117400",
+    "/tmp/ponychat-punctuation-20260907",
+    "/tmp/ponychat-harness-q_i7fwdi",
+    "/tmp/ponychat-full-load8-20260907.json",
+    "/tmp/ponychat-evidence-latency-fixed-20260906.json",
+    "/tmp/ponychat-natural-style-20260907",
+    "/tmp/ponychat-search-context-acceptance.json",
+    "/tmp/ponychat-harness-0hjjiyeh",
+    "/tmp/ponychat-agent-selfcheck-release-20260906.json",
+    "/tmp/ponychat-full-load8.py",
+    "/tmp/ponychat-search-smoke.py",
+    "/tmp/ponychat-style-retrieval-20260907",
+    "/tmp/ponychat-media-1788705784810126700",
+    "/tmp/ponychat-emulator-reset-control-20260909",
+    "/tmp/ponychat-agent-6db5261.tar.gz",
+    "/tmp/ponychat-five-engine-tool.json",
+    "/tmp/ponychat-node-timing-candidate-20260907",
+    "/tmp/ponychat-capacity-probe-20260906.py",
+    "/tmp/run_agent_local_voice_probe.py",
+    "/tmp/ponychat-concurrency10-0",
+    "/tmp/ponychat-agent-media-debug-20260906.json",
+    "/tmp/ponychat-evidence-route-release-20260906.json",
+    "/tmp/ponychat-agent-media-live-final-20260906.json",
+    "/tmp/ponychat-style-model-search-20260907",
+    "/tmp/ponychat-restore-health.json",
+    "/tmp/ponychat-logs-20260907-125100-93ef1a9b",
+    "/tmp/ponychat-full-load4-20260907.json",
+    "/var/tmp/ponychat-game-style-20260909",
+    "/var/tmp/ponychat-expression-smoke-01f40c9.py",
+    "/var/tmp/ponychat-thoughts-perspective-20260909",
+    "/var/tmp/systemd-private-f77d43ebfa9c45e289302820555118fa-ponychat-searxng.service-JkqGEp",
+    "/var/tmp/ponychat-expression-smoke-01f40c9.json",
+    "/etc/ponychat",
+    "/var/lib/ponychat-model-pause",
+    "/etc/systemd/system/ponychat-cosyvoice.service.d",
+    "/etc/systemd/system/ponychat-cosyvoice.service",
+    "/etc/systemd/system/mlp-music.service",
+    "/etc/systemd/system/ponychat-backend.service",
+    "/etc/systemd/system/mlp-music-auto.service",
+    "/etc/systemd/system/ponychat-searxng.service",
+    "/etc/systemd/system/ponychat-backend.service.d",
+    "/run/systemd/system.control/ponychat-backend.service.d",
+    "/root/ponychat.db-wal",
+    "/root/ponychat.db-shm",
+    "/dev/shm/ponychat-harness-93ht_7wt"
+  ],
+  "services": {
+    "ponychat-backend": {
+      "MainPID": "1307504",
+      "EnvironmentFiles": "/opt/ponychat/.env (ignore_errors=yes)",
+      "WorkingDirectory": "/opt/ponychat",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/ponychat-backend.service",
+      "DropInPaths": "/etc/systemd/system/ponychat-backend.service.d/40-harness-capacity.conf /run/systemd/system.control/ponychat-backend.service.d/50-MemoryHigh.conf /run/systemd/system.control/ponychat-backend.service.d/50-MemoryMax.conf /run/systemd/system.control/ponychat-backend.service.d/50-MemorySwapMax.conf /run/systemd/system.control/ponychat-backend.service.d/50-TasksMax.conf /etc/systemd/system/ponychat-backend.service.d/90-model-pause.conf /etc/systemd/system/ponychat-backend.service.d/95-local-voice.conf"
+    },
+    "ponychat-cosyvoice": {
+      "MainPID": "688",
+      "EnvironmentFiles": "/etc/ponychat/cosyvoice.env (ignore_errors=yes)",
+      "WorkingDirectory": "/opt/ponychat-cosyvoice",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/ponychat-cosyvoice.service",
+      "DropInPaths": "/etc/systemd/system/ponychat-cosyvoice.service.d/90-model-pause.conf"
+    },
+    "ponychat-searxng": {
+      "MainPID": "977965",
+      "WorkingDirectory": "/opt/ponychat-searxng/source",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/ponychat-searxng.service",
+      "DropInPaths": ""
+    },
+    "mlp-music": {
+      "MainPID": "678",
+      "WorkingDirectory": "/opt/mlp-music/app",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/mlp-music.service",
+      "DropInPaths": ""
+    },
+    "mlp-music-auto": {
+      "MainPID": "676",
+      "WorkingDirectory": "/opt/mlp-music-auto/app",
+      "ActiveState": "active",
+      "SubState": "running",
+      "FragmentPath": "/etc/systemd/system/mlp-music-auto.service",
+      "DropInPaths": ""
+    }
+  },
+  "safe_backend_settings": {
+    "PONYCHAT_DB_PATH": "/opt/ponychat/Backend/database/ponychat.db",
+    "PONYCHAT_BACKUP_DIR": "/opt/ponychat/Backend/backups",
+    "PONYCHAT_TTS_PROVIDER": "voice_lab",
+    "PONYCHAT_COSYVOICE_BASE_URL": "https://voice.ponychat.org/cosyvoice",
+    "PONYCHAT_VOICE_LAB_BASE_URL": "http://127.0.0.1:18012",
+    "PONYCHAT_VOICE_LAB_DEFAULT_ENGINE": "qwen3tts"
+  },
+  "external_symlinks": [
+    {
+      "path": "/opt/ponychat/.venv/bin/python3.12",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat/.venv/bin/python3",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat/.venv/bin/python",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat-cosyvoice/.venv/bin/python3.12",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat-cosyvoice/.venv/bin/python3",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat-cosyvoice/.venv/bin/python",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat-searxng/venv/bin/python3.12",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat-searxng/venv/bin/python3",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/ponychat-searxng/venv/bin/python",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/mlp-music/venv/bin/python3.12",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/mlp-music/venv/bin/python3",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/mlp-music/venv/bin/python",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/mlp-music-auto/venv/bin/python3.12",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/mlp-music-auto/venv/bin/python3",
+      "resolved": "/usr/bin/python3.12"
+    },
+    {
+      "path": "/opt/mlp-music-auto/venv/bin/python",
+      "resolved": "/usr/bin/python3.12"
+    }
+  ],
+  "errors": [],
+  "totals": {
+    "chat_active": {
+      "allocated_bytes": 2413465600,
+      "GB": 2.413466,
+      "GiB": 2.247715,
+      "regular_file_bytes": 2343423797,
+      "regular_file_GB": 2.343424,
+      "categories": [
+        "main_other",
+        "main_python_environment",
+        "main_backend_code",
+        "main_live_database",
+        "main_knowledge_data",
+        "main_runtime_state",
+        "main_drive",
+        "cosyvoice_backend",
+        "searxng_backend_with_bundled_dependencies",
+        "service_configuration"
+      ]
+    },
+    "music_active": {
+      "allocated_bytes": 3895844864,
+      "GB": 3.895845,
+      "GiB": 3.628288,
+      "regular_file_bytes": 3877885329,
+      "regular_file_GB": 3.877885,
+      "categories": [
+        "music_api_and_environment",
+        "music_media_data",
+        "music_auto_api_and_environment",
+        "music_auto_data"
+      ]
+    },
+    "all_active": {
+      "allocated_bytes": 6309310464,
+      "GB": 6.30931,
+      "GiB": 5.876003,
+      "regular_file_bytes": 6221309126,
+      "regular_file_GB": 6.221309,
+      "categories": [
+        "main_other",
+        "main_python_environment",
+        "main_backend_code",
+        "main_live_database",
+        "main_knowledge_data",
+        "main_runtime_state",
+        "main_drive",
+        "cosyvoice_backend",
+        "searxng_backend_with_bundled_dependencies",
+        "service_configuration",
+        "music_api_and_environment",
+        "music_media_data",
+        "music_auto_api_and_environment",
+        "music_auto_data"
+      ]
+    },
+    "chat_all_related": {
+      "allocated_bytes": 39721136128,
+      "GB": 39.721136,
+      "GiB": 36.993191,
+      "regular_file_bytes": 38040707535,
+      "regular_file_GB": 38.040708,
+      "categories": [
+        "main_other",
+        "main_python_environment",
+        "main_deployment_backups",
+        "main_backend_code",
+        "main_live_database",
+        "main_database_backups",
+        "main_development_tests",
+        "main_knowledge_data",
+        "main_runtime_state",
+        "main_service_logs",
+        "main_drive",
+        "main_debug_logs",
+        "cosyvoice_backend",
+        "searxng_backend_with_bundled_dependencies",
+        "external_deployment_backups",
+        "backend_temporary_tests",
+        "service_configuration",
+        "orphan_database_sidecars"
+      ]
+    },
+    "all_related": {
+      "allocated_bytes": 43616980992,
+      "GB": 43.616981,
+      "GiB": 40.621479,
+      "regular_file_bytes": 41918592864,
+      "regular_file_GB": 41.918593,
+      "categories": [
+        "main_other",
+        "main_python_environment",
+        "main_deployment_backups",
+        "main_backend_code",
+        "main_live_database",
+        "main_database_backups",
+        "main_development_tests",
+        "main_knowledge_data",
+        "main_runtime_state",
+        "main_service_logs",
+        "main_drive",
+        "main_debug_logs",
+        "cosyvoice_backend",
+        "searxng_backend_with_bundled_dependencies",
+        "music_api_and_environment",
+        "music_media_data",
+        "music_auto_api_and_environment",
+        "music_auto_data",
+        "external_deployment_backups",
+        "backend_temporary_tests",
+        "service_configuration",
+        "orphan_database_sidecars"
+      ]
+    },
+    "main_all": {
+      "allocated_bytes": 22574362624,
+      "GB": 22.574363,
+      "GiB": 21.024014,
+      "regular_file_bytes": 21018447117,
+      "regular_file_GB": 21.018447,
+      "categories": [
+        "main_other",
+        "main_python_environment",
+        "main_deployment_backups",
+        "main_backend_code",
+        "main_live_database",
+        "main_database_backups",
+        "main_development_tests",
+        "main_knowledge_data",
+        "main_runtime_state",
+        "main_service_logs",
+        "main_drive",
+        "main_debug_logs"
+      ]
+    },
+    "backups": {
+      "allocated_bytes": 19564625920,
+      "GB": 19.564626,
+      "GiB": 18.220978,
+      "regular_file_bytes": 19562945878,
+      "regular_file_GB": 19.562946,
+      "categories": [
+        "main_database_backups",
+        "main_deployment_backups",
+        "external_deployment_backups"
+      ]
+    },
+    "development_and_tmp": {
+      "allocated_bytes": 278327296,
+      "GB": 0.278327,
+      "GiB": 0.259212,
+      "regular_file_bytes": 178133141,
+      "regular_file_GB": 0.178133,
+      "categories": [
+        "main_development_tests",
+        "backend_temporary_tests"
+      ]
+    },
+    "music_service": {
+      "allocated_bytes": 3746881536,
+      "GB": 3.746882,
+      "GiB": 3.489555,
+      "regular_file_bytes": 3738562156,
+      "regular_file_GB": 3.738562,
+      "categories": [
+        "music_api_and_environment",
+        "music_media_data"
+      ]
+    },
+    "music_auto_service": {
+      "allocated_bytes": 148963328,
+      "GB": 0.148963,
+      "GiB": 0.138733,
+      "regular_file_bytes": 139323173,
+      "regular_file_GB": 0.139323,
+      "categories": [
+        "music_auto_api_and_environment",
+        "music_auto_data"
+      ]
+    }
+  },
+  "scope_notes": [
+    "Measured Server-USA PonyChat dedicated backend directories, five systemd services, music media roots, dedicated configuration, identified deployment/database backups and related temporary tests.",
+    "Exclude PonyChat website/front-end roots and APK distribution; exclude CosyVoice static website; SearXNG bundled package resources retained as installed dependency files.",
+    "Exclude shared OS/Python interpreter, Nginx, Redis installation, common system journal and Nginx logs, package-manager caches, other applications and local Windows model files.",
+    "No symlinked external application data found in measured roots; all 15 outward symbolic links resolve to /usr/bin/python3.12. Shared interpreter is excluded.",
+    "Regular file bytes describe uncompressed payload length; allocated bytes describe Linux filesystem blocks including directory overhead. Neither is a measured archive or network-transfer size.",
+    "Services and deploy backups changed during broader inspection. Totals refer to 2026-09-09 19:01:26 to 19:01:53 Asia/Shanghai metadata scan and are not an atomic database backup.",
+    "Runtime-only totals omit historical debug logs, database/deployment backups, development/test artifacts and temporary test runtimes. Retain live database and runtime data; main database includes SQLite WAL/SHM at scan time.",
+    "No service stop, restart, file deletion, migration or provider model call performed by this inventory."
+  ]
+}

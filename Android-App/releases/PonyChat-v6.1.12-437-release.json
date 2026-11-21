@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.12",
+  "version_code": 437,
+  "package": "top.ponychat.webview",
+  "sha256": "3c3ff4cec01ea66593a55e5c13a95e17980d90a46f2ac91fcc23949c8f14d661",
+  "bytes": 14782085,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.12-437-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式支持 Mermaid 流程图离线渲染，可缩放查看；生成中显示占位，语法错误时保留原代码。\n键盘弹起仅在消息最底部避让，生成中的消息保持阅读位置。\n点击消息可收起表情和更多面板，保留长按选择与横向滚动。\n统一历史、新会话和设置按钮的图标颜色。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.12-437-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

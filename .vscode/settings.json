@@ -1,0 +1,9 @@
+{
+    "python.terminal.activateEnvironment":  false,
+    "java.configuration.updateBuildConfiguration":  "interactive",
+    "python.experiments.enabled":  false,
+    "python.analysis.autoSearchPaths":  false,
+    "python.defaultInterpreterPath": "${workspaceFolder}/misc/tools/python/python.exe",
+    "cursorpyright.analysis.autoSearchPaths": false,
+    "liveServer.settings.port": 5555
+}

@@ -1,0 +1,28 @@
+# Preserve exact browser-reviewed renderer bytes.
+style.css -text
+listening.css -text
+now-playing.css -text
+ambient.css -text
+scrollbars.css -text
+controls.css -text
+follow-badges.css -text
+controls.js -text
+ambient.js -text
+player.js -text
+analytics.js -text
+lyrics.js -text
+lyrics-clock.js -text
+library.js -text
+follow-badges.js -text
+app.js -text
+follow/auto.css -text
+follow-extensions/unified-cursor-v1.js -text
+follow-extensions/printed-lyrics-v1.js -text
+follow-extensions/unified-cursor-v1.css -text
+controls.js -text
+follow/notation.js -text
+follow/policy.js -text
+follow/app.js -text
+index.html -text whitespace=cr-at-eol
+follow/index.html -text whitespace=cr-at-eol
+follow-extensions/unified-cursor-systems-v1/laughter-song.json -text

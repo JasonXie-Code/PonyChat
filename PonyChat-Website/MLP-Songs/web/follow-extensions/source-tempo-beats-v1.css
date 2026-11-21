@@ -1,0 +1,15 @@
+.source-tempo-beat-notice {
+  flex-shrink: 0;
+  max-width: calc(100% - 24px);
+  margin: 2px 12px 6px;
+  padding: 6px 10px;
+  border: 1px solid #a78bfa26;
+  border-radius: 10px;
+  background: #a78bfa0b;
+  backdrop-filter: blur(12px);
+  color: #c7bddc;
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.jp-source-tempo-point { display: inline-block; max-width: 100%; }

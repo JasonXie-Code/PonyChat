@@ -1,0 +1,3 @@
+# Manifest:Ihover.css
+
+{"name":"ihover样式库","description":"朝思暮想的悬浮样式库又回来了,let's hover!","license":"MIT","version":"0.0.0","author":["User:SerGawen"],"page":{"Gadget:Ihover.css":"*","Gadget definition:Ihover.css":"*","Manifest:Ihover.css":"*","Html:Ihoverdemo":"*","Manifest:Ihover.css/doc":"*"},"map":{},"manifest_version":1,"release_date":"2017/05/23"}

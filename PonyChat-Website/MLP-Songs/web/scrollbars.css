@@ -1,0 +1,11 @@
+/* One PonyChat scrollbar treatment for every scrollable surface and iframe. */
+:root { color-scheme: dark; --scroll-thumb: rgba(167, 139, 250, .28); --scroll-thumb-hover: rgba(167, 139, 250, .5); }
+* { scrollbar-width: thin !important; scrollbar-color: var(--scroll-thumb) transparent !important; }
+*::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
+*::-webkit-scrollbar-track, *::-webkit-scrollbar-corner { background: transparent !important; }
+*::-webkit-scrollbar-thumb { background: var(--scroll-thumb) !important; border-radius: 999px !important; }
+*::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover) !important; }
+*::-webkit-scrollbar-button { display: none !important; width: 0 !important; height: 0 !important; }
+@supports selector(::-webkit-scrollbar) {
+  * { scrollbar-width: auto !important; scrollbar-color: auto !important; }
+}

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'">
+  <style>
+    html, body { margin: 0; background: transparent; font-family: sans-serif; }
+    #diagram { padding: 12px; width: max-content; min-width: calc(100% - 24px); }
+    #diagram > svg { display: block; margin: auto; max-width: none !important; }
+  </style>
+  <script src="mermaid.min.js"></script>
+</head>
+<body><div id="diagram">正在绘制流程图…</div>
+<script>
+  async function renderDiagram(source, dark) {
+    const target = document.getElementById('diagram');
+    try {
+      await document.fonts.ready;
+      mermaid.initialize({startOnLoad: false, securityLevel: 'strict', htmlLabels: false, theme: 'base',
+        themeVariables: {darkMode: dark, primaryColor: dark ? '#27244d' : '#eeecff',
+          primaryBorderColor: '#6366f1', primaryTextColor: dark ? '#e2e8f0' : '#202338',
+          lineColor: dark ? '#94a3b8' : '#667085', secondaryColor: dark ? '#1f2937' : '#f3f4ff',
+          tertiaryColor: dark ? '#262f42' : '#f8f8ff'},
+        suppressErrorRendering: true, maxTextSize: 50000, maxEdges: 500,
+        flowchart: {useMaxWidth: false, wrappingWidth: 220}, fontFamily: 'sans-serif'});
+      const result = await mermaid.render('ponyDiagram', source);
+      target.innerHTML = result.svg;
+      const svg = target.querySelector('svg');
+      const box = svg.viewBox.baseVal;
+      // Start with the whole diagram visible; native WebView zoom/pan reveals details.
+      const scale = Math.min(1, Math.max(innerWidth - 24, 1) / Math.max(box.width, 1), 456 / Math.max(box.height, 1));
+      svg.setAttribute('width', Math.max(box.width * scale, 1));
+      svg.setAttribute('height', Math.max(box.height * scale, 1));
+      document.body.dataset.rendered = 'true';
+      DiagramResult.complete(Math.ceil(box.height * scale + 24), true);
+    } catch (error) {
+      target.textContent = '';
+      document.body.dataset.rendered = 'error';
+      DiagramResult.complete(0, false);
+    }
+  }
+</script></body></html>

@@ -1,0 +1,45 @@
+{
+  "version_name": "6.1.24",
+  "version_code": 450,
+  "package": "top.ponychat.webview",
+  "sha256": "dc0c3f5ba1b60942a14402dd7af6c798fd7df0dfb64987f6748834bc4ca89ecf",
+  "bytes": 14792793,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.24-450-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式流式生成期间隐藏消息下方的复制、删除和重新生成按钮，生成结束或主动停止后恢复显示。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.24-450-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false,
+  "public_verification": {
+    "https://www.ponychat.org": {
+      "version": {
+        "version_name": "6.1.24",
+        "version_code": 450,
+        "download_url": "https://39.101.74.217/download/apk",
+        "release_notes": "创造模式流式生成期间隐藏消息下方的复制、删除和重新生成按钮，生成结束或主动停止后恢复显示。"
+      },
+      "sha256": "dc0c3f5ba1b60942a14402dd7af6c798fd7df0dfb64987f6748834bc4ca89ecf",
+      "bytes": 14792793,
+      "tls_verified": true
+    },
+    "https://39.101.74.217": {
+      "version": {
+        "version_name": "6.1.24",
+        "version_code": 450,
+        "download_url": "https://39.101.74.217/download/apk",
+        "release_notes": "创造模式流式生成期间隐藏消息下方的复制、删除和重新生成按钮，生成结束或主动停止后恢复显示。"
+      },
+      "sha256": "dc0c3f5ba1b60942a14402dd7af6c798fd7df0dfb64987f6748834bc4ca89ecf",
+      "bytes": 14792793,
+      "tls_verified": false
+    }
+  },
+  "public_sha256": "dc0c3f5ba1b60942a14402dd7af6c798fd7df0dfb64987f6748834bc4ca89ecf",
+  "public_bytes": 14792793,
+  "source_revision": "8dc25e78538f136be1e8ea3d1d23d2ed70fb1c6b"
+}

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Reviewed score-follow snapshot certificate",
+  "type": "object",
+  "required": ["schemaVersion", "status", "followId", "sourceSongId", "sourceScoreId", "gates", "bindings", "canonicalMusicxml"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "status": {"enum": ["pending-signature", "approved"]},
+    "followId": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+    "sourceSongId": {"type": "string"},
+    "sourceScoreId": {"type": "string"},
+    "reviewedBy": {"type": ["string", "null"]},
+    "signedAt": {"type": ["string", "null"]},
+    "canonicalMusicxml": {"type": "string"},
+    "gates": {
+      "type": "object",
+      "required": ["machine", "sourceScore", "audioIndependent", "visual"],
+      "additionalProperties": false,
+      "properties": {
+        "machine": {"type": "boolean"},
+        "sourceScore": {"type": "boolean"},
+        "audioIndependent": {"type": "boolean"},
+        "visual": {"type": "boolean"}
+      }
+    },
+    "bindings": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "required": ["kind", "path", "sha256"], "additionalProperties": false,
+        "properties": {
+          "kind": {"enum": ["follow", "media"]},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "reasons": {"type": "array", "items": {"type": "string"}}
+  },
+  "allOf": [{
+    "if": {"properties": {"status": {"const": "approved"}}},
+    "then": {
+      "required": ["reviewedBy", "signedAt"],
+      "properties": {
+        "reviewedBy": {"type": "string", "minLength": 1},
+        "signedAt": {"type": "string", "minLength": 1},
+        "gates": {"properties": {
+          "machine": {"const": true}, "sourceScore": {"const": true},
+          "audioIndependent": {"const": true}, "visual": {"const": true}
+        }}
+      }
+    }
+  }]
+}

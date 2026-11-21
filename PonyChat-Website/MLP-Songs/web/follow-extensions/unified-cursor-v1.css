@@ -1,0 +1,12 @@
+.has-unified-system .auto-cursor { visibility: hidden !important; }
+.has-unified-system .staff-row-band { background: transparent !important; }
+.unified-cursor-ended .auto-cursor { visibility: hidden !important; }
+.unified-cursor-ended .staff-row-band { background: transparent !important; }
+.unified-score-cursor { pointer-events: none; }
+.auto-page > .unified-score-cursor { position: absolute; width: 2px; transform: translateX(-1px); background: #7c3aed; box-shadow: 0 0 0 2px #a78bfa25; border-radius: 2px; }
+.jp-svg > .unified-score-cursor { stroke: #7c3aed; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.unified-cursor-enabled .jp-active .jp-bg, .unified-cursor-enabled .jp-row-active .jp-row-bg { fill: transparent; }
+.unified-cursor-enabled .jp-active .jp-digit, .unified-cursor-enabled .jp-active .jp-dot { fill: #242b3f; }
+.unified-cursor-enabled .jp-active .jp-lyric { fill: #536076; }
+.unified-cursor-enabled .jp-active .jp-progress { visibility: hidden; }
+.unified-cursor-enabled .jp-note:hover .jp-bg, .unified-cursor-enabled .jp-note:focus-visible .jp-bg { fill: #ddd6fe70; stroke: #a78bfa; stroke-width: 1; }

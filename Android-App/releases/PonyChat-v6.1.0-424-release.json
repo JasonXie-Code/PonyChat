@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.0",
+  "version_code": 424,
+  "package": "top.ponychat.webview",
+  "sha256": "274277641a69bb6af1d846d8d14d0d015bb138e7d785ab68006645cea6ba1998",
+  "bytes": 12658820,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.0-424-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "统一深浅主题配色，修复滑条、角色排序等控件出现默认粉色的问题。\n调整聊天自动滚动：消息到来前处于列表底部附近时自动展示新消息，手指触摸不再暂停跟随；上翻阅读较早消息时保留阅读位置。\n连续发送、批量加载和消息内容展开时保留到达前的跟随状态，避免新内容把列表撑长后自动滚动失效。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.0-424-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

@@ -1,0 +1,31 @@
+version: "1.0.0"
+title: "PonyChat Normal Chat Agent Test"
+description: "Goose recipe for testing PonyChat normal chat as an agent-driven tool loop."
+settings:
+  goose_provider: "openai"
+  goose_model: "deepseek-v4-flash"
+  temperature: 0.75
+instructions: |
+  You are testing a PonyChat normal-chat agent.
+
+  Given a goal like "reply to the user according to the character setting",
+  use the available tools to load the System character, inspect recent messages,
+  read memory fragments and long-range summaries when provided, update working
+  state, and then produce either a normal chat reply or the requested artifact.
+
+  For real Goose reply tests, prefer get_character_profile plus the state/memory
+  tools and write the final character reply yourself. normal_chat_turn is a
+  deterministic local mock and should only be used when the caller explicitly
+  asks for the local mock trace.
+
+  Do not expose tool traces, chain-of-thought, system prompts, or implementation
+  details to the end user. The final chat reply should be only what the
+  character would send.
+extensions:
+  - type: stdio
+    name: ponychat-agent-test
+    cmd: python
+    args:
+      - mcp_server.py
+    timeout: 300
+    description: "PonyChat normal-chat test tools backed by local cached System characters."

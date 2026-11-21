@@ -1,0 +1,63 @@
+{
+  "models": [
+    {
+      "id": "deepseek-flash",
+      "name": "PonyChat",
+      "key_name": "PonyChat",
+      "type": "openai",
+      "endpoint": "https://api.deepseek.com",
+      "api_key": "${PONYCHAT_DEEPSEEK_API_KEY}",
+      "model_name": "deepseek-flash",
+      "description": "DeepSeek V4.1 Flash · 文本与视觉统一 low 思考",
+      "enabled": true,
+      "hidden": false,
+      "is_default": true,
+      "for_chat": true,
+      "for_normal": true,
+      "for_chat_router": true,
+      "for_chat_director": true,
+      "for_memory": true,
+      "for_summarize": true,
+      "supports_reasoning": true,
+      "supports_enable_thinking": true,
+      "uses_v4_thinking_api": true,
+      "enable_thinking": true,
+      "options": {
+        "max_tokens": 393216,
+        "reasoning_effort": "low"
+      },
+      "supports_vision": true,
+      "supports_web_search": false,
+      "for_web_search": true,
+      "for_companion_vision": true
+    },
+    {
+      "id": "deepseek-v4-flash-code",
+      "name": "Code",
+      "key_name": "Code",
+      "type": "openai",
+      "endpoint": "https://api.deepseek.com",
+      "api_key": "${PONYCHAT_DEEPSEEK_CODE_API_KEY}",
+      "model_name": "deepseek-flash",
+      "description": "DeepSeek V4.1 Flash · 文本与视觉统一 low 思考",
+      "enabled": true,
+      "hidden": true,
+      "is_default": false,
+      "for_chat": false,
+      "for_chat_router": false,
+      "for_chat_director": false,
+      "for_memory": false,
+      "for_summarize": false,
+      "supports_reasoning": true,
+      "supports_enable_thinking": true,
+      "uses_v4_thinking_api": true,
+      "enable_thinking": true,
+      "options": {
+        "max_tokens": 393216,
+        "reasoning_effort": "low"
+      },
+      "supports_vision": true,
+      "supports_web_search": false
+    }
+  ]
+}

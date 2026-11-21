@@ -1,0 +1,20 @@
+/* Explicit occurrence helper only; no global selectors or native select. */
+.ensemble-occurrence-menu {
+  position: fixed; z-index: 10000; box-sizing: border-box;
+  min-width: 160px; max-width: calc(100vw - 24px); max-height: min(320px, 65vh);
+  overflow: auto; padding: 8px; border: 1px solid rgba(196, 177, 255, .28);
+  border-radius: 18px; background: rgba(25, 29, 51, .9); color: #eee8ff;
+  backdrop-filter: blur(22px) saturate(140%); -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, .32); scrollbar-width: thin;
+  scrollbar-color: #a78bda transparent;
+}
+.ensemble-occurrence-menu[hidden] { display: none; }
+.ensemble-occurrence-menu button {
+  display: block; width: 100%; border: 0; border-radius: 11px;
+  padding: 11px 14px; background: transparent; color: inherit; text-align: left;
+  font: inherit; cursor: pointer;
+}
+.ensemble-occurrence-menu button:hover,
+.ensemble-occurrence-menu button:focus-visible {
+  background: rgba(160, 124, 245, .24); outline: 2px solid #bda1ff; outline-offset: -2px;
+}

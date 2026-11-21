@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pony_primary">#6366F1</color>
+    <color name="pony_primary_dark">#4F46E5</color>
+    <color name="purple_500">#7C4DFF</color>
+    <color name="purple_700">#651FFF</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+</resources>

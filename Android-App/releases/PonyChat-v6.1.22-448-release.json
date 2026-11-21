@@ -1,0 +1,42 @@
+{
+  "version_name": "6.1.22",
+  "version_code": 448,
+  "package": "top.ponychat.webview",
+  "sha256": "d6ad8cb2fd2862bd08d221b3334044afdb52c6b5129c6d01990b57ea3b648e24",
+  "bytes": 14792721,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.22-448-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "统一输入体验：点击页面和编辑弹窗的空白处取消输入焦点并收起键盘，输入框切换及按钮操作保持正常。\n创造模式“已停止生成”和“正在显示本地缓存”统一改为弹窗，提供关闭和刷新会话操作，不再占用消息列表。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.22-448-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false,
+  "public_sha256": "d6ad8cb2fd2862bd08d221b3334044afdb52c6b5129c6d01990b57ea3b648e24",
+  "public_bytes": 14792721,
+  "public_verification": {
+    "https://www.ponychat.org": {
+      "version": {
+        "version_name": "6.1.22",
+        "version_code": 448,
+        "download_url": "https://39.101.74.217/download/apk",
+        "release_notes": "统一输入体验：点击页面和编辑弹窗的空白处取消输入焦点并收起键盘，输入框切换及按钮操作保持正常。\n创造模式“已停止生成”和“正在显示本地缓存”统一改为弹窗，提供关闭和刷新会话操作，不再占用消息列表。"
+      },
+      "sha256": "d6ad8cb2fd2862bd08d221b3334044afdb52c6b5129c6d01990b57ea3b648e24",
+      "bytes": 14792721
+    },
+    "https://39.101.74.217": {
+      "version": {
+        "version_name": "6.1.22",
+        "version_code": 448,
+        "download_url": "https://39.101.74.217/download/apk",
+        "release_notes": "统一输入体验：点击页面和编辑弹窗的空白处取消输入焦点并收起键盘，输入框切换及按钮操作保持正常。\n创造模式“已停止生成”和“正在显示本地缓存”统一改为弹窗，提供关闭和刷新会话操作，不再占用消息列表。"
+      },
+      "sha256": "d6ad8cb2fd2862bd08d221b3334044afdb52c6b5129c6d01990b57ea3b648e24",
+      "bytes": 14792721
+    }
+  }
+}

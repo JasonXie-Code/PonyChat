@@ -1,0 +1,48 @@
+{
+  "models": [
+    {
+      "id": "xai-grok-4-1-fast-reasoning",
+      "name": "xAI Grok 4.1 Fast (推理版)",
+      "type": "openai",
+      "endpoint": "https://api.x.ai/v1",
+      "api_key": "${PONYCHAT_XAI_API_KEY}",
+      "model_name": "grok-4-1-fast-reasoning",
+      "description": "xAI 官方 Grok 4.1 Fast - 深度推理版，2M上下文，支持工具调用",
+      "enabled": false,
+      "hidden": true,
+      "is_default": false,
+      "for_chat_director": false,
+      "supports_vision": true,
+      "supports_reasoning": true,
+      "supports_tools": true,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    },
+    {
+      "id": "xai-grok-4-1-fast-non-reasoning",
+      "name": "xAI Grok 4.1 Fast (极速版)",
+      "type": "openai",
+      "endpoint": "https://api.x.ai/v1",
+      "api_key": "${PONYCHAT_XAI_API_KEY}",
+      "model_name": "grok-4-1-fast-non-reasoning",
+      "description": "xAI 官方 Grok 4.1 Fast - 极速响应版，无Think过程",
+      "enabled": false,
+      "hidden": true,
+      "is_default": false,
+      "for_chat": false,
+      "for_chat_router": false,
+      "for_memory": false,
+      "for_summarize": false,
+      "supports_vision": true,
+      "supports_tools": true,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    }
+  ]
+}

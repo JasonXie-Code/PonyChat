@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+    <!-- ISRG Root X1 supports Android 7.0 devices whose system store predates it. -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">39.101.74.217</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/isrg_root_x1" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

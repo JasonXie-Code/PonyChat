@@ -1,0 +1,9 @@
+/* A dim coat-colored glow behind the listening page, without covering its controls. */
+.now-playing { isolation: isolate; }
+.now-playing > .now-head, .now-playing > .now-layout { position: relative; z-index: 1; }
+.now-playing > .now-head { z-index: 2; }
+.player-ambient { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; opacity: .55; transition: opacity 1.5s ease; }
+.player-ambient.is-playing { opacity: 1; }
+.player-glow { position: absolute; left: 12%; top: 5%; width: 76%; height: 90%; border-radius: 50%; background: radial-gradient(ellipse, rgba(var(--glow-rgb), var(--glow-alpha)) 0%, rgba(var(--glow-rgb), 0) 68%); will-change: transform; }
+@media (max-width: 768px) { .player-glow { left: -35%; top: 10%; width: 170%; height: 75%; } }
+@media (prefers-reduced-motion: reduce) { .player-ambient { transition: none; } .player-glow { will-change: auto; } }

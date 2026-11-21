@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.8",
+  "version_code": 433,
+  "package": "top.ponychat.webview",
+  "sha256": "c87f20660a7f36cf7861f18c0c3c468bcd38df7e15cfa71721025b6ff475f36e",
+  "bytes": 13189894,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.8-433-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式表格与代码块生成时先显示占位提示，完成后展示并支持横向滚动。\n新回复以动画定位到开头，生成过程中不再自动追随底部。\n最新角色消息支持半屏滑动生成新版本、查看历史版本，并显示版本计数。\n重试立即收起旧回复，失败时恢复。\n上下文管理显示上次请求的真实用量与实时上限，未知数据以破折号显示。\n修复发布版上下文用量数据被混淆导致计数无法显示的问题。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.8-433-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

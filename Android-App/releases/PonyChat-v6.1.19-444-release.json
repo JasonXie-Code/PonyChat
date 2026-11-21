@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.19",
+  "version_code": 444,
+  "package": "top.ponychat.webview",
+  "sha256": "5039a5554120a7681e2a02235b18db3b23de6931eed15babdf0c69c4e4a4b2d9",
+  "bytes": 14787745,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.19-444-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复创造模式中行内公式位置偏低的问题，让公式与正文按基线对齐。\n上下标和分数保留完整显示空间，继续兼容单美元符号公式。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.19-444-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

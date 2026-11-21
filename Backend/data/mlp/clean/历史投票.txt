@@ -1,0 +1,5 @@
+# 历史投票
+
+本界面用于存放本维基历史上进行过的投票。
+
+<pollembed id="1" title="官方漫画My Little Pony: FIENDship is Magic的名称应如何翻译?" />

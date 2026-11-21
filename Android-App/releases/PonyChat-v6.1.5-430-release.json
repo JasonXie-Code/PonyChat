@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.5",
+  "version_code": 430,
+  "package": "top.ponychat.webview",
+  "sha256": "514b2ad3028a725a1d8c6c668a69e754c05547cd27047a2d7f00d50f57a9fde1",
+  "bytes": 13170754,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.5-430-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式的创作设定、上下文管理和消息编辑改为返回时自动提交，无需点击保存按钮。\n启用底部加号，将上下文管理和创作设定移到更多面板，继续使用独立页面。\n新增回到底部按钮，浏览较早消息或超长回复时可快速回到最新消息。\n优化键盘避让：消息会被遮挡时上移，底部空白足够时保持原位。\n创造模式默认像角色发消息一样用自然纯文本回复，明确要求时仍支持 Markdown。\n创作历史新增会话删除按钮和确认弹窗，可清理不需要的会话。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.5-430-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

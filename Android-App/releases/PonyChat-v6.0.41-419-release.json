@@ -1,0 +1,18 @@
+{
+  "version_name": "6.0.41",
+  "version_code": 419,
+  "package": "top.ponychat.webview",
+  "sha256": "b87fdf0409b1596bed43a0d32f5bc293473310ef15aa1b4dfa07713eb07319d1",
+  "bytes": 12641804,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.0.41-419-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "补齐对话设置中 Agent 状态和对话动态的首次加载骨架动画，减少读取状态时卡片高度跳动。\n状态读取完成后平滑展示内容，读取失败或超时后停止骨架并显示提示；后续自动刷新保留已有状态。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.0.41-419-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

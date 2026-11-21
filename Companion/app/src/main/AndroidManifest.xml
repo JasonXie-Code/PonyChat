@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <permission
+        android:name="top.ponychat.companion.permission.BIND_RUNTIME"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".CompanionApplication"
+        android:allowBackup="false"
+        android:icon="@drawable/ic_companion"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.PonyChatCompanion">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="false" />
+
+        <service
+            android:name=".android.CompanionAccessibilityService"
+            android:description="@string/accessibility_service_description"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="@string/accessibility_service_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/companion_accessibility_service" />
+        </service>
+
+        <service
+            android:name=".ipc.CompanionRuntimeCapabilityService"
+            android:exported="true"
+            android:permission="top.ponychat.companion.permission.BIND_RUNTIME">
+            <intent-filter>
+                <action android:name="top.ponychat.companion.action.RUNTIME_CAPABILITIES" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".overlay.AgentStatusOverlayService"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            android:permission="top.ponychat.companion.permission.BIND_RUNTIME"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="persistent system-device agent status overlay" />
+        </service>
+
+        <service
+            android:name=".reply.QqPrivateReplyService"
+            android:directBootAware="true"
+            android:exported="true"
+            android:label="PonyChat 私聊回复"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".overlay.CompanionBootReceiver"
+            android:directBootAware="true"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.USER_UNLOCKED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".reply.QqReplyResultReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="top.ponychat.companion.action.QQ_REPLY_RESULT" />
+                <action android:name="top.ponychat.companion.action.AGENT_INPUT_BEGIN" />
+                <action android:name="top.ponychat.companion.action.AGENT_INPUT_END" />
+                <action android:name="top.ponychat.companion.action.PHYSICAL_TOUCH" />
+                <action android:name="top.ponychat.companion.action.QUERY_CONTROL" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

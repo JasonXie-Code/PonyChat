@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <title>PonyChat Qwen3TTS</title>
+  <link rel="icon" type="image/png" href="/logo/favicon.png">
+  <link rel="apple-touch-icon" href="/logo/favicon.png">
+  <link rel="stylesheet" href="/assets/voice.css?v=mobilemp3b">
+</head>
+<body data-api-base="/qwen3tts">
+  <div class="bg-layer" aria-hidden="true"></div>
+  <div class="shell">
+    <header class="site-header">
+      <a class="brand" href="/">
+        <img src="/logo/logoBK512.png" alt="" class="logo-img" width="44" height="44" decoding="async">
+        <span class="brand-text">PonyChat Qwen3TTS</span>
+      </a>
+      <nav class="header-nav" aria-label="页面导航">
+        <a href="/qwen3tts/">Voice Home</a>
+        <a href="https://ponychat.org/" target="_blank" rel="noopener noreferrer">PonyChat</a>
+      </nav>
+    </header>
+
+    <main class="voice-app">
+      <section class="app-head">
+        <div>
+          <p class="hero-eyebrow">QwenTTS Studio</p>
+          <h1>Qwen3TTS 语音克隆与音色设计</h1>
+        </div>
+        <div class="status-strip">
+          <span id="backendStatus">连接中</span>
+          <span id="speedStatus">RTX 4090 D</span>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <aside class="voice-rail" id="voices">
+          <div class="panel-head">
+            <h2>声音库</h2>
+            <button class="ghost-btn" id="refreshVoices" type="button">刷新</button>
+          </div>
+          <div id="voiceList" class="voice-list" aria-live="polite"></div>
+        </aside>
+
+        <section class="tool-panel">
+          <div class="tabs" role="tablist" aria-label="QwenTTS 工作区">
+            <button class="tab active" type="button" data-tab="synth">合成</button>
+            <button class="tab" type="button" data-tab="clone">克隆</button>
+            <button class="tab" type="button" data-tab="design">设计</button>
+            <button class="tab" type="button" data-tab="library">管理</button>
+          </div>
+
+          <form class="tab-pane active" id="synthPane" data-pane="synth">
+            <label>
+              <span>声音</span>
+              <select id="ttsVoice"></select>
+            </label>
+            <div class="seg-mode-bar">
+              <span>内容与情绪</span>
+              <button class="ghost-btn" type="button" id="segToggle" aria-pressed="false">分段情绪</button>
+            </div>
+            <div id="ttsSingleBlock">
+              <label>
+                <span>情绪 / 风格（可留空）</span>
+                <input id="ttsInstruct" type="text" placeholder="如：温柔地、语速稍快、带点俏皮（预置音色情绪最稳）">
+              </label>
+              <label>
+                <span>文本</span>
+                <textarea id="ttsText" rows="5">门后的影子，正在学你的呼吸。</textarea>
+              </label>
+            </div>
+            <div id="ttsSegmentsBlock" hidden>
+              <span class="seg-hint">每段配一个情绪，按顺序合成并拼接成一条音频。</span>
+              <div id="ttsSegments"></div>
+              <button class="secondary-btn" type="button" id="segAdd">+ 添加段落</button>
+            </div>
+            <div class="parameter-panel" data-parameter-panel="tts">
+              <div class="control-mode-bar">
+                <span>生成偏好</span>
+                <button class="ghost-btn parameter-mode-toggle" type="button" data-parameter-toggle="tts" aria-pressed="false">开发者</button>
+              </div>
+              <div class="control-grid compact friendly-controls">
+                <label>
+                  <span>采样风格</span>
+                  <select id="ttsTemperature">
+                    <option value="0.90" selected>官方复刻</option>
+                    <option value="0.45">稳定复刻</option>
+                    <option value="0.10">极稳声纹</option>
+                  </select>
+                </label>
+                <label>
+                  <span>候选宽度</span>
+                  <select id="ttsTopK">
+                    <option value="50" selected>官方宽度</option>
+                    <option value="20">收窄候选</option>
+                    <option value="10">极窄候选</option>
+                  </select>
+                </label>
+                <label>
+                  <span>采样范围</span>
+                  <select id="ttsTopP">
+                    <option value="1.00" selected>官方完整</option>
+                    <option value="0.90">自然范围</option>
+                    <option value="0.65">保守范围</option>
+                  </select>
+                </label>
+              </div>
+              <div class="control-grid compact developer-controls">
+                <label><span>温度</span><input id="ttsTemperatureRaw" type="number" min="0.1" max="1.5" step="0.05" value="0.9"></label>
+                <label><span>Top K</span><input id="ttsTopKRaw" type="number" min="1" max="100" value="50"></label>
+                <label><span>Top P</span><input id="ttsTopPRaw" type="number" min="0.1" max="1" step="0.05" value="1.0"></label>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary-btn" type="submit">生成语音</button>
+              <span class="run-meta" id="ttsMeta"></span>
+            </div>
+          </form>
+
+          <form class="tab-pane" id="clonePane" data-pane="clone">
+            <label>
+              <span>名称</span>
+              <input id="cloneName" type="text" placeholder="twilight-soft">
+            </label>
+            <label>
+              <span>参考音频</span>
+              <input id="cloneAudio" type="file" accept="audio/*">
+            </label>
+            <label>
+              <span>参考文本</span>
+              <textarea id="cloneRefText" rows="3">你终于来了。别害怕，今晚的故事才刚刚开始。</textarea>
+            </label>
+            <label>
+              <span>试音文本</span>
+              <textarea id="clonePreviewText" rows="3">今晚的风很轻，我会把你的名字留在星光里。</textarea>
+            </label>
+            <div class="actions">
+              <button class="primary-btn" type="submit">创建克隆声音</button>
+              <button class="secondary-btn" id="clonePreview" type="button">仅试音</button>
+              <span class="run-meta" id="cloneMeta"></span>
+            </div>
+          </form>
+
+          <form class="tab-pane" id="designPane" data-pane="design">
+            <label>
+              <span>名称</span>
+              <input id="designName" type="text" placeholder="mystic-narrator">
+            </label>
+            <label>
+              <span>音色指令</span>
+              <textarea id="designInstruct" rows="4">年轻女性旁白，声音温柔神秘，语速稍慢，适合奇幻角色扮演。</textarea>
+            </label>
+            <div class="sample-reference">
+              <span>系统样本文本</span>
+              <p>晨光落在旧城门上，我们用温柔而清晰的声音说：今天也要勇敢前行。Across the quiet sky, I keep my promise with a steady smile. 星の下で、君の名前をそっと呼びます。</p>
+            </div>
+            <div class="parameter-panel" data-parameter-panel="design">
+              <div class="control-mode-bar">
+                <span>生成偏好</span>
+                <button class="ghost-btn parameter-mode-toggle" type="button" data-parameter-toggle="design" aria-pressed="false">开发者</button>
+              </div>
+              <div class="control-grid two-controls friendly-controls">
+                <label>
+                  <span>稳定度</span>
+                  <select id="designTemperature">
+                    <option value="0.65">精准稳定</option>
+                    <option value="0.80" selected>自然均衡</option>
+                    <option value="1.05">随机表现</option>
+                  </select>
+                </label>
+                <label>
+                  <span>创意范围</span>
+                  <select id="designTopP">
+                    <option value="0.75">保守精准</option>
+                    <option value="0.90" selected>自然创意</option>
+                    <option value="0.98">大胆随机</option>
+                  </select>
+                </label>
+              </div>
+              <div class="control-grid two-controls developer-controls">
+                <label><span>温度</span><input id="designTemperatureRaw" type="number" min="0.1" max="1.5" step="0.05" value="0.80"></label>
+                <label><span>Top P</span><input id="designTopPRaw" type="number" min="0.1" max="1" step="0.05" value="0.90"></label>
+              </div>
+            </div>
+            <div class="actions">
+              <button class="primary-btn" type="submit">设计并保存</button>
+              <span class="run-meta" id="designMeta"></span>
+            </div>
+          </form>
+
+          <section class="tab-pane library-pane" data-pane="library">
+            <div class="panel-head">
+              <h2>声音管理</h2>
+              <button class="ghost-btn" id="libraryRefresh" type="button">刷新列表</button>
+            </div>
+            <div id="voiceTable" class="voice-table"></div>
+          </section>
+        </section>
+      </section>
+
+      <section class="player-panel">
+        <div>
+          <p class="hero-eyebrow">Output</p>
+          <h2 id="outputTitle">等待生成</h2>
+        </div>
+        <div class="voice-player" id="voicePlayer">
+          <button class="player-btn play-btn" id="playButton" type="button" aria-label="播放">
+            <span class="play-icon" aria-hidden="true"></span>
+          </button>
+          <div class="timeline">
+            <div class="time-row">
+              <span id="currentTime">0:00</span>
+              <span id="durationTime">0:00</span>
+            </div>
+            <input id="seekBar" class="range-control" type="range" min="0" max="1000" value="0" aria-label="播放进度">
+          </div>
+        </div>
+        <button class="mobile-effect-toggle" id="mobileMicToggle" type="button" aria-pressed="false">手机拾音模拟</button>
+        <audio id="audioPlayer" preload="auto"></audio>
+        <audio id="audioPlayerMobile" preload="auto"></audio>
+        <a class="download-link disabled" id="downloadLink" href="#" download="qwen-tts.wav">下载 WAV</a>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="/assets/voice.js?v=mobilemp3b" defer></script>
+</body>
+</html>

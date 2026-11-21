@@ -1,0 +1,25 @@
+# Manifest:Ihover.css/doc
+
+ihover是一套hover效果的预设样式库。关于使用方法可以前往ihover的git页面查阅
+
+注意
+
+由于MediaWiki解析器不允许直接输入a标签，因此通过a标签生效的ihover效果代码需要通过HTML模板来书写，以确保代码能够生效。这需要编辑者具有开发者权限
+
+demo
+
+Heading here
+
+Description goes here
+
+Heading here
+
+Description goes here
+
+参考
+
+以上仅是两个最简单的demo,更多酷炫效果请参考ihover原网的案例(见下)
+
+源链接地址:iHover.css @Github（有效果预览）
+
+代码库地址：github代码库

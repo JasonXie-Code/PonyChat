@@ -1,0 +1,8 @@
+Mermaid 12.1.0
+MIT license (see LICENSE)
+Source: https://github.com/mermaid-js/mermaid
+Distribution: https://cdn.jsdelivr.net/npm/mermaid@12.1.0/dist/mermaid.min.js
+Upstream SHA-256: 6484afc32872a3aa16cac9a76ba1816a1ed4cc870a6593cc2e17757750f518b2
+Bundled locally for offline rendering.
+Bundled SHA-256: 3b5e9f3d333b1e41962db58617f64a55b1c58a8421332d870ff6d96fd6d6dc96
+Minified with esbuild; template literals lowered to keep the bundled code below 1500 lines.

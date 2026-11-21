@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.6",
+  "version_code": 431,
+  "package": "top.ponychat.webview",
+  "sha256": "5d5c24d2510f1d2355a43ad21d16540a6be4a94ca3d93d22a82d7ccf12d50f1f",
+  "bytes": 13171410,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.6-431-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "修复创造模式键盘收起后消息没有随之下移的问题，键盘与底部面板展开、收起都会同步调整消息位置。\n底部空白足够时消息保持原位；浏览历史时按当前阅读位置避让，防止重复位移。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.6-431-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

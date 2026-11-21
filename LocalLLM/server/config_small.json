@@ -1,0 +1,21 @@
+{
+  "_comment": "CPU 小模型配置，常驻后台，用于游戏模式拒绝检测等语义分类任务。",
+  "host": "127.0.0.1",
+  "port": 8067,
+  "model": "models/Qwen3.5-2B-identifier-NoVision/Qwen3.5-2B-Q4_K_M.gguf",
+  "n_ctx": 2048,
+  "n_gpu_layers": 0,
+  "n_batch": 128,
+  "n_threads": 6,
+  "parallel": 2,
+  "cont_batching": true,
+  "n_predict": 16,
+  "_notes": {
+    "purpose": "语义分类 / 拒绝检测，不用于对话，n_predict 限制在 16 token 以内",
+    "vram": "0（纯 CPU 推理）",
+    "ram": "~1.5 GB（Q4_K_M 量化）",
+    "latency": "~0.5-1s（CPU 分类任务可接受）",
+    "n_threads": "按实际 CPU 核心数调整，建议 6-8",
+    "model_prev": "models/Qwen3.5-0.8B-NoVision/Huihui-Qwen3.5-0.8B-abliterated.Q3_K_M.gguf"
+  }
+}

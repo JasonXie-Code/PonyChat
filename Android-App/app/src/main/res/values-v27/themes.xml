@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 全屏主题（API 27+） -->
+    <style name="Theme.PonyChatApp.Fullscreen" parent="Theme.PonyChatApp">
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+</resources>

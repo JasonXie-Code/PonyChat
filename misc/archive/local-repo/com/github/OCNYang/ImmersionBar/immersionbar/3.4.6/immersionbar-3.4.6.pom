@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.github.OCNYang.ImmersionBar</groupId>
+  <artifactId>immersionbar</artifactId>
+  <version>3.4.6</version>
+  <packaging>aar</packaging>
+  <name>OCNYang/ImmersionBar</name>
+  <description>android 4.4以上沉浸式状态栏和沉浸式导航栏管理，适配横竖屏切换、刘海屏、软键盘弹出等问题，可以修改状态栏字体颜色和导航栏图标颜色，以及不可修改字体颜色手机的适配，适用于Activity、Fragment、DialogFragment、Dialog，PopupWindow，一句代码轻松实现，以及对bar的其他设置，详见README。</description>
+  <url>https://github.com/OCNYang/ImmersionBar</url>
+  <inceptionYear>2025</inceptionYear>
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>https://api.github.com/licenses/apache-2.0</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>OCNYang</id>
+      <name>OCNYang</name>
+      <email>ocnyang@gmail.com</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git://github.com/OCNYang/ImmersionBar.git</connection>
+    <developerConnection>scm:git://github.com/OCNYang/ImmersionBar.git</developerConnection>
+    <url>git://github.com/OCNYang/ImmersionBar.git</url>
+  </scm>
+</project>

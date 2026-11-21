@@ -1,0 +1,28 @@
+.changelog .eyebrow { color: var(--accent-mid); font-size: .75rem; letter-spacing: .16em; }
+.changelog .history-meta { display: flex; flex-wrap: wrap; gap: .5rem; font-size: .8rem; }
+.changelog .log-jumps { display: flex; flex-wrap: wrap; gap: .65rem; margin: 1.5rem 0 2.5rem; }
+.changelog .log-jumps a, .changelog .log-button { border: 1px solid var(--stroke); border-radius: .7rem; padding: .55rem .85rem; background: rgba(30, 41, 59, .7); color: #e0f2fe; text-decoration: none; font: inherit; }
+.changelog a { color: #c4b5fd; }
+.changelog .timeline { border-left: 1px solid var(--stroke-strong); margin-left: .4rem; padding-left: 1.5rem; }
+.changelog .period { position: relative; padding: .7rem 0 1rem; }
+.changelog .period::before { content: ''; position: absolute; left: -1.8rem; top: 1rem; width: .55rem; height: .55rem; border-radius: 50%; background: #a78bfa; box-shadow: 0 0 16px #8b5cf655; }
+.changelog .month-label { color: #a5b4fc; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.changelog .period h3 { margin-top: .4rem; color: #e0f2fe; }
+.changelog .log-filters { display: grid; grid-template-columns: 2fr 1fr; gap: .8rem; margin: 1.2rem 0; }
+.changelog .log-filters label { display: flex; flex-direction: column; gap: .4rem; font-size: .8rem; min-width: 0; }
+.changelog input, .changelog select { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--stroke-strong); border-radius: .6rem; padding: .7rem; color: #e0f2fe; background: #182134; font: inherit; }
+.changelog .daily-entry { overflow-wrap: anywhere; }
+.changelog .daily-entry h3 { font-variant-numeric: tabular-nums; }
+.changelog .log-button[aria-pressed="true"] { background: #6d4caa; border-color: #a78bfa; }
+.changelog .log-footnote { border-top: 1px solid var(--stroke); padding-top: 1rem; margin-top: 2rem; font-size: .8rem; }
+.changelog .pagination { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin: 1.5rem 0; }
+.changelog .log-button { cursor: pointer; }
+.changelog .log-button:disabled { opacity: .4; cursor: default; }
+.changelog :is(a, button, input, select):focus-visible { outline: 2px solid #a78bfa; outline-offset: 3px; }
+.changelog section[id] { scroll-margin-top: 1.5rem; }
+@media (max-width: 600px) {
+  .changelog .log-filters { grid-template-columns: 1fr; }
+  .changelog .log-filters label:first-child { grid-column: 1 / -1; }
+  .changelog .timeline { padding-left: 1rem; }
+  .changelog .period::before { left: -1.3rem; }
+}

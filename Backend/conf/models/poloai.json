@@ -1,0 +1,23 @@
+{
+  "models": [
+    {
+      "id": "gemini-3-flash-preview",
+      "name": "Gemini 3 Flash Preview",
+      "type": "openai",
+      "endpoint": "https://poloai.top/v1",
+      "api_key": "${PONYCHAT_POLOAI_API_KEY}",
+      "model_name": "gemini-3-flash-preview",
+      "description": "付费，效果很棒，速度快，无联网",
+      "enabled": true,
+      "hidden": true,
+      "is_default": false,
+      "supports_vision": true,
+      "supports_reasoning": true,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.21",
+  "version_code": 447,
+  "package": "top.ponychat.webview",
+  "sha256": "84929f7fb9cc44e9ed405fe5e4d545d51e20247d958fcb880bc338ce259ffe79",
+  "bytes": 14791897,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.21-447-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "创造模式流式生成震动提升为每秒约 12 次短震。\n等待模型回复和显示骨架动画时不震动，首段正文实际出现后才开始；生成结束、停止或出错时立即停止，不追加完成双短震。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.21-447-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}

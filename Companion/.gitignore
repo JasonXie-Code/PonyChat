@@ -1,0 +1,10 @@
+.gradle/
+.idea/
+build/
+**/build/
+local.properties
+*.iml
+signing/*.jks
+signing/*.keystore
+signing/keystore.properties
+!signing/keystore.properties.example

@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>中国象棋图标候选</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef3f8;
+      --panel: #ffffff;
+      --ink: #263244;
+      --muted: #738094;
+      --line: #dce4ee;
+      --red: #c9352c;
+      --red-soft: #fff1ee;
+      --black: #28323f;
+      --gold: #d79a38;
+      --green: #496a5f;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.86), rgba(238,243,248,.88)),
+        radial-gradient(circle at 12% 14%, rgba(201,53,44,.10), transparent 28%),
+        radial-gradient(circle at 88% 20%, rgba(73,106,95,.12), transparent 30%),
+        var(--bg);
+    }
+
+    main {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 34px 0 42px;
+    }
+
+    header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 22px;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 30px;
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    .intro {
+      max-width: 660px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .app-preview {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.76);
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .mini-shell {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 1px 4px rgba(34,45,61,.12);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 10px 28px rgba(38,50,68,.08);
+      overflow: hidden;
+    }
+
+    .art {
+      display: grid;
+      place-items: center;
+      min-height: 188px;
+      padding: 22px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.86), rgba(247,250,253,.92)),
+        repeating-linear-gradient(0deg, transparent 0 24px, rgba(38,50,68,.035) 24px 25px);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 14px 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .name {
+      margin: 0 0 4px;
+      font-size: 16px;
+      line-height: 1.35;
+      font-weight: 700;
+    }
+
+    .note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .tiny {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+    }
+
+    svg.icon {
+      width: 118px;
+      height: 118px;
+      overflow: visible;
+    }
+
+    .tiny svg.icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    .piece-fill {
+      fill: #fffaf2;
+      stroke: var(--red);
+      stroke-width: 5;
+    }
+
+    .piece-black {
+      fill: #f7fafc;
+      stroke: var(--black);
+      stroke-width: 5;
+    }
+
+    .char-red {
+      fill: var(--red);
+      font-size: 42px;
+      font-weight: 800;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+
+    .char-dark {
+      fill: var(--black);
+      font-size: 42px;
+      font-weight: 800;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+
+    .board-line {
+      stroke: var(--green);
+      stroke-width: 4;
+      stroke-linecap: round;
+      fill: none;
+    }
+
+    .river {
+      fill: var(--gold);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      dominant-baseline: middle;
+      text-anchor: middle;
+    }
+
+    @media (max-width: 980px) {
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      main {
+        width: min(100% - 24px, 1180px);
+        padding-top: 24px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <h1>中国象棋图标候选</h1>
+        <p class="intro">8 个方向都按 App 底部入口的“小卡片图标”来设计，右侧小框是 28px 缩略预览，优先看是否一眼能联想到中国象棋。</p>
+      </div>
+      <div class="app-preview">
+        <span>入口小尺寸参考</span>
+        <span class="mini-shell" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 120 120">
+            <circle class="piece-fill" cx="60" cy="60" r="42"></circle>
+            <text class="char-red" x="60" y="63">象</text>
+          </svg>
+        </span>
+      </div>
+    </header>
+
+    <section class="grid" aria-label="中国象棋图标候选列表">
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 1 楚河棋盘">
+            <rect x="20" y="18" width="80" height="84" rx="10" fill="#fffaf2" stroke="var(--green)" stroke-width="5"></rect>
+            <path class="board-line" d="M36 18v84M60 18v84M84 18v84M20 38h80M20 58h80M20 82h80"></path>
+            <rect x="24" y="48" width="72" height="20" rx="4" fill="#fff7e6"></rect>
+            <text class="river" x="60" y="59">楚河</text>
+            <circle cx="36" cy="82" r="8" fill="var(--red)"></circle>
+            <circle cx="84" cy="38" r="8" fill="var(--black)"></circle>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">1. 楚河棋盘</p>
+            <p class="note">最直观，保留棋盘和楚河识别点。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <rect x="20" y="18" width="80" height="84" rx="10" fill="#fffaf2" stroke="var(--green)" stroke-width="5"></rect>
+              <path class="board-line" d="M36 18v84M60 18v84M84 18v84M20 38h80M20 58h80M20 82h80"></path>
+              <circle cx="36" cy="82" r="8" fill="var(--red)"></circle>
+              <circle cx="84" cy="38" r="8" fill="var(--black)"></circle>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 2 红子象">
+            <circle class="piece-fill" cx="60" cy="60" r="44"></circle>
+            <circle cx="60" cy="60" r="34" fill="none" stroke="var(--red)" stroke-width="2.5"></circle>
+            <text class="char-red" x="60" y="63">象</text>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">2. 红子象</p>
+            <p class="note">最像真实棋子，和“象棋”文字强绑定。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <circle class="piece-fill" cx="60" cy="60" r="44"></circle>
+              <text class="char-red" x="60" y="63">象</text>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 3 将帅对峙">
+            <circle class="piece-black" cx="46" cy="50" r="30"></circle>
+            <text class="char-dark" x="46" y="53" style="font-size:31px">将</text>
+            <circle class="piece-fill" cx="74" cy="72" r="30"></circle>
+            <text class="char-red" x="74" y="75" style="font-size:31px">帅</text>
+            <path d="M24 92h72" stroke="var(--gold)" stroke-width="5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">3. 将帅对峙</p>
+            <p class="note">有对战感，适合“游戏入口”。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <circle class="piece-black" cx="46" cy="50" r="30"></circle>
+              <text class="char-dark" x="46" y="53" style="font-size:31px">将</text>
+              <circle class="piece-fill" cx="74" cy="72" r="30"></circle>
+              <text class="char-red" x="74" y="75" style="font-size:31px">帅</text>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 4 棋盘红兵">
+            <path class="board-line" d="M26 24h68M26 48h68M26 72h68M26 96h68M26 24v72M49 24v72M72 24v72M94 24v72"></path>
+            <circle class="piece-fill" cx="60" cy="72" r="32"></circle>
+            <text class="char-red" x="60" y="75" style="font-size:33px">兵</text>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">4. 棋盘红兵</p>
+            <p class="note">棋盘背景加单子，辨识稳定。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <path class="board-line" d="M26 24h68M26 48h68M26 72h68M26 96h68M26 24v72M49 24v72M72 24v72M94 24v72"></path>
+              <circle class="piece-fill" cx="60" cy="72" r="32"></circle>
+              <text class="char-red" x="60" y="75" style="font-size:33px">兵</text>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 5 马行日">
+            <rect x="28" y="24" width="64" height="64" rx="9" fill="#fffaf2" stroke="var(--green)" stroke-width="5"></rect>
+            <path d="M43 72V42h34v18H60v28" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+            <circle cx="60" cy="92" r="14" fill="var(--red)"></circle>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">5. 马行日</p>
+            <p class="note">用“马”的走法做符号，更活泼。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <rect x="28" y="24" width="64" height="64" rx="9" fill="#fffaf2" stroke="var(--green)" stroke-width="5"></rect>
+              <path d="M43 72V42h34v18H60v28" fill="none" stroke="var(--red)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+              <circle cx="60" cy="92" r="14" fill="var(--red)"></circle>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 6 帅旗">
+            <path d="M34 22v78" stroke="var(--black)" stroke-width="7" stroke-linecap="round"></path>
+            <path d="M38 24h56l-12 18 12 18H38z" fill="#fffaf2" stroke="var(--red)" stroke-width="5" stroke-linejoin="round"></path>
+            <text class="char-red" x="64" y="44" style="font-size:29px">帅</text>
+            <path d="M25 101h68" stroke="var(--gold)" stroke-width="6" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">6. 帅旗</p>
+            <p class="note">偏胜负/开局氛围，图形更有动势。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <path d="M34 22v78" stroke="var(--black)" stroke-width="7" stroke-linecap="round"></path>
+              <path d="M38 24h56l-12 18 12 18H38z" fill="#fffaf2" stroke="var(--red)" stroke-width="5" stroke-linejoin="round"></path>
+              <text class="char-red" x="64" y="44" style="font-size:29px">帅</text>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 7 楚汉双子">
+            <circle class="piece-fill" cx="46" cy="66" r="31"></circle>
+            <text class="char-red" x="46" y="69" style="font-size:30px">楚</text>
+            <circle class="piece-black" cx="74" cy="50" r="31"></circle>
+            <text class="char-dark" x="74" y="53" style="font-size:30px">汉</text>
+            <path d="M35 100h50" stroke="var(--green)" stroke-width="5" stroke-linecap="round"></path>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">7. 楚汉双子</p>
+            <p class="note">文化味最足，但小尺寸文字略密。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <circle class="piece-fill" cx="46" cy="66" r="31"></circle>
+              <text class="char-red" x="46" y="69" style="font-size:30px">楚</text>
+              <circle class="piece-black" cx="74" cy="50" r="31"></circle>
+              <text class="char-dark" x="74" y="53" style="font-size:30px">汉</text>
+            </svg>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="art">
+          <svg class="icon" viewBox="0 0 120 120" aria-label="候选 8 方印象棋">
+            <rect x="23" y="23" width="74" height="74" rx="16" fill="var(--red)" stroke="#8f241e" stroke-width="5"></rect>
+            <path d="M42 42h36M42 78h36M42 42v36M78 42v36" stroke="#fff7e8" stroke-width="5" stroke-linecap="round"></path>
+            <text x="60" y="63" fill="#fff7e8" font-size="31" font-weight="900" dominant-baseline="middle" text-anchor="middle">象</text>
+          </svg>
+        </div>
+        <div class="meta">
+          <div>
+            <p class="name">8. 方印象棋</p>
+            <p class="note">更像应用图标，和现有圆角卡片搭配稳。</p>
+          </div>
+          <div class="tiny">
+            <svg class="icon" viewBox="0 0 120 120">
+              <rect x="23" y="23" width="74" height="74" rx="16" fill="var(--red)" stroke="#8f241e" stroke-width="5"></rect>
+              <path d="M42 42h36M42 78h36M42 42v36M78 42v36" stroke="#fff7e8" stroke-width="5" stroke-linecap="round"></path>
+              <text x="60" y="63" fill="#fff7e8" font-size="31" font-weight="900" dominant-baseline="middle" text-anchor="middle">象</text>
+            </svg>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

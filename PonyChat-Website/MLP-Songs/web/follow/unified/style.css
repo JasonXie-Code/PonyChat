@@ -1,0 +1,33 @@
+/* Winter Wrap Up's shared paper, typography and controls for every recording. */
+.source-tempo-beat-notice { flex-shrink:0; max-width:calc(100% - 24px); margin:2px 12px 6px; padding:6px 10px; border:1px solid #a78bfa26; border-radius:10px; background:#a78bfa0b; backdrop-filter:blur(12px); color:#c7bddc; font-size:11px; line-height:1.6; overflow-wrap:anywhere; }
+#notationSizeLabel > span { display:none; }
+#sizeMenu { position:fixed; z-index:100; min-width:144px; padding:6px; background:#242d43f5; border:1px solid #a78bfa50; border-radius:12px; backdrop-filter:blur(18px); box-shadow:0 10px 35px #0005; }
+#sizeMenu button { display:block; width:100%; text-align:left; border:0; }
+#sizeMenu button[aria-checked=true] { background:#a78bfa28; }
+.jp-lane-label { font:10px Arial,"Microsoft YaHei",sans-serif; fill:#8b92a4; }
+.jp-chord { font:12px Arial,"Microsoft YaHei",sans-serif; fill:#647084; }
+.jp-direction { font:italic 12px Georgia,"Microsoft YaHei",serif; fill:#536076; }
+.jp-source-slur { fill:none; stroke:#3e465a; stroke-width:1.25; }
+.jp-source-extender { stroke:#536076; stroke-width:1; }
+.jp-source-staccato { fill:#242b3f; }
+.jp-source-parenthesis { fill:#242b3f; font-family:Georgia,serif; }
+.auto-page .auto-cursor { box-shadow:0 0 0 2px #a78bfa25; }
+.auto-cursor::before { display:none; }
+.staff-row-band { background:transparent; }
+.unified-score-cursor { stroke:#7c3aed; stroke-width:2; vector-effect:non-scaling-stroke; pointer-events:none; }
+.jp-active .jp-bg,.jp-row-active .jp-row-bg { fill:transparent; }
+.jp-active .jp-digit,.jp-active .jp-dot { fill:#242b3f; }
+.jp-active .jp-lyric { fill:#536076; }
+.jp-active .jp-progress { visibility:hidden; }
+.jp-note-reference .jp-bg { fill:#ddd6fe70; stroke:#8b5cf6; stroke-width:1.5; }
+.jp-harmony-reference .jp-bg { fill:#99f6e480; stroke:#0f766e; stroke-width:1.5; }
+.auto-harmony-reference { position:absolute; box-sizing:border-box; border-radius:50%; background:#2dd4bf59; outline:2px solid #0f766e; pointer-events:none; }
+.jp-note:focus-visible .jp-bg { stroke:#a78bfa; stroke-width:1; }
+.jp-section-seek { cursor:pointer; }
+.jp-section-seek rect { fill:transparent; }
+.jp-section-seek .jp-measure-number { fill:#b8a7ef; text-decoration:underline; }
+.jp-section-seek:hover rect, .jp-section-seek:focus-visible rect { fill:#a78bfa25; stroke:#a78bfa; }
+@media (max-width: 600px) {
+  #staffScore { align-items:flex-start; width:max-content; min-width:100%; }
+  #staffScore .auto-page { width:720px; max-width:none; }
+}

@@ -1,0 +1,67 @@
+{
+  "models": [
+    {
+      "id": "openrouter-free-router",
+      "name": "OpenRouter 免费路由 (openrouter/free)",
+      "type": "openai",
+      "endpoint": "https://openrouter.ai/api/v1",
+      "api_key": "${PONYCHAT_OPENROUTER_API_KEY}",
+      "model_name": "openrouter/free",
+      "description": "OpenRouter 官方免费模型路由器：按请求自动选用可用免费模型，流式响应可在 usage 中带推理 token 等统计（以实际路由到的模型为准）。",
+      "enabled": true,
+      "hidden": false,
+      "is_default": false,
+      "supports_vision": false,
+      "supports_reasoning": true,
+      "supports_web_search": false,
+      "supports_tools": false,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    },
+    {
+      "id": "openrouter-glm-45-air-free",
+      "name": "GLM 4.5 Air (OpenRouter 免费)",
+      "type": "openai",
+      "endpoint": "https://openrouter.ai/api/v1",
+      "api_key": "${PONYCHAT_OPENROUTER_API_KEY}",
+      "model_name": "z-ai/glm-4.5-air:free",
+      "description": "Z.AI GLM 4.5 Air 免费版（OpenRouter）；纯文本对话，无识图、无联网、无工具",
+      "enabled": true,
+      "hidden": false,
+      "is_default": false,
+      "supports_vision": false,
+      "supports_reasoning": false,
+      "supports_web_search": false,
+      "supports_tools": false,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    },
+    {
+      "id": "openrouter-nemotron-3-super-120b-free",
+      "name": "Nemotron 3 Super 120B A12B (OpenRouter 免费)",
+      "type": "openai",
+      "endpoint": "https://openrouter.ai/api/v1",
+      "api_key": "${PONYCHAT_OPENROUTER_API_KEY}",
+      "model_name": "nvidia/nemotron-3-super-120b-a12b:free",
+      "description": "NVIDIA Nemotron 3 Super 120B（MoE A12B 激活）免费版（OpenRouter）；支持推理 token 统计，无识图、无联网、无工具",
+      "enabled": true,
+      "hidden": false,
+      "is_default": false,
+      "supports_vision": false,
+      "supports_reasoning": true,
+      "supports_web_search": false,
+      "supports_tools": false,
+      "options": {
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "max_tokens": 8192
+      }
+    }
+  ]
+}

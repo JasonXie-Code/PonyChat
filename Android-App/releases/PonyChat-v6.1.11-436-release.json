@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.11",
+  "version_code": 436,
+  "package": "top.ponychat.webview",
+  "sha256": "c549ea2ab5ad4766915b8905d12baa208ee6d7ba23465b98df9de5f06385c743",
+  "bytes": 13199254,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.11-436-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "统一创造模式设置按钮与普通对话的样式。\n移除消息左右滑动切换，改用最新角色消息右上角的左右箭头浏览版本；到最新版本后点击右箭头生成新版本。\n修复骨架切换到首段正文时消息顶部重新出现空隙的问题。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.11-436-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}
