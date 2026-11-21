@@ -1,19 +1,19 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
-cd /d "%~dp0"
+cd /d "%~dp0.." || exit /b 1
 set "PYTHONUTF8=1"
-set "PYTHON_EXE=%~dp0.venv\Scripts\python.exe"
+set "PYTHON_EXE=%~dp0..\.venv\Scripts\python.exe"
 if not exist "%PYTHON_EXE%" set "PYTHON_EXE=P:\Tools\python\python.exe"
 if not exist "%PYTHON_EXE%" (
     echo [X] Python not found: .venv\Scripts\python.exe or P:\Tools\python\python.exe >&2
     exit /b 1
 )
-set "SCRIPT=%~dp0scripts\ops\root_launcher.py"
+set "SCRIPT=%~dp0ops\root_launcher.py"
 if not exist "%SCRIPT%" (
     echo [X] Launcher not found: %SCRIPT% >&2
     exit /b 1
 )
-"%PYTHON_EXE%" "%SCRIPT%" backend %*
+"%PYTHON_EXE%" "%SCRIPT%" emulator %*
 set "RESULT=%ERRORLEVEL%"
 if not "%RESULT%"=="0" if "%~1"=="" pause
 exit /b %RESULT%

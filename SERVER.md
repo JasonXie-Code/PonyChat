@@ -44,7 +44,7 @@ voice.ponychat.org/qwen3tts/*     → USA 回环 18012 → 本机 Qwen3TTS 8010
 
 ## 启动、停止与检查
 
-双击仓库根 `AAA启动后端.bat` 可在后台启动整套服务；单实例保护避免重复启动。重新登记任务：
+双击 `scripts/AAA启动后端.bat` 可在后台启动整套服务；单实例保护避免重复启动。重新登记任务：
 
 ```powershell
 .\scripts\ops\install_local_stack.ps1 -Start

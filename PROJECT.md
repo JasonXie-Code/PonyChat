@@ -139,7 +139,7 @@
 | `docs/plans/admin-refactor-plan.md` | 管理后台角色合并与素材管理记录；当前素材以 `media_assets.file_data` BLOB 存储，经 `/api/admin/assets/{id}/file` 返回 |
 | `Backend/deploy/` | 本机生产后端的部署与验收说明；`deploy_backend_server_usa.py` 是旧服务器部署脚本，仅供历史参考，不用于当前生产发布 |
 | `Backend/scripts/launch/` | 本地启动与便携部署：`AAA_launch_backend.py`、`AAA_install_debug_app.py`、`AAA_deploy_portable.bat` |
-| `AAA启动后端.bat`、`AAA安装调试App.bat` | 根目录快捷入口：调用便携 Python 与 `Backend/scripts/launch/` 中脚本 |
+| `scripts/AAA启动后端.bat`、`scripts/AAA安装调试App.bat`、`scripts/AAA_start_medium_perf_emulator.bat` | Windows 快捷入口：启动后端、安装调试 App 和启动模拟器 |
 | `PonyChat-Website/Main/frontend/` | 主站、轻量网页聊天、管理后台等 Web 前端（Vite + Vue）；构建产物由静态站部署 |
 | `PonyChat-Website/Main/deploy/server-usa/` | 主站生产部署脚本与 Nginx 配置（Server-USA `154.17.23.237`；详见 `SERVER.md`） |
 | `PonyChat-Website/Main/deploy/releases/` | 发布用 APK（`PonyChat.apk`），供 `GET /download/apk` |

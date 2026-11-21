@@ -10,7 +10,7 @@
 
 ## 启动与更新
 
-双击仓库根 `AAA启动后端.bat`；安装或恢复登录自启任务：
+双击 `scripts/AAA启动后端.bat`；安装或恢复登录自启任务：
 
 ```powershell
 .\scripts\ops\install_local_stack.ps1 -Start
