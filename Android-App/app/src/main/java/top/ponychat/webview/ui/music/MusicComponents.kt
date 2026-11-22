@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,11 +38,11 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -50,14 +51,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -66,14 +68,19 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -164,21 +171,49 @@ internal fun MusicArtwork(url: String?, modifier: Modifier = Modifier, corner: I
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 internal fun MusicMiniPlayer(model: MusicPlayerViewModel, openPlayer: () -> Unit) {
     val state by model.playerState.collectAsStateWithLifecycle()
     val item = state.item ?: return
     val duration = state.durationMs
-    var seekPreview by remember(item.id) { mutableStateOf<Float?>(null) }
+    val canSeek = state.canSeek && duration > 0
+    var seekPreview by remember(item.id, canSeek) { mutableStateOf<Float?>(null) }
+    var subtitleAtDragStart by remember(item.id) { mutableStateOf(item.album) }
     val progress = seekPreview ?: if (duration > 0) {
         (state.positionMs.toFloat() / duration).coerceIn(0f, 1f)
     } else 0f
-    val progressColor = MaterialTheme.colorScheme.primary
+    val subtitle = when {
+        state.error -> "播放失败"
+        state.buffering -> "正在缓冲"
+        else -> item.album
+    }
+    val latestSubtitle by rememberUpdatedState(subtitle)
+    val latestDuration by rememberUpdatedState(duration)
+    val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val seekGesture = if (!canSeek) Modifier else Modifier.pointerInput(item.id, rtl) {
+        val trackInset = 12.dp.toPx()
+        fun positionFor(x: Float): Float {
+            val trackWidth = (size.width - 2 * trackInset).coerceAtLeast(1f)
+            val fraction = ((x - trackInset) / trackWidth).coerceIn(0f, 1f)
+            return if (rtl) 1f - fraction else fraction
+        }
+        detectHorizontalDragGestures(
+            onDragStart = { offset ->
+                subtitleAtDragStart = latestSubtitle
+                seekPreview = positionFor(offset.x)
+            },
+            onHorizontalDrag = { change, _ -> seekPreview = positionFor(change.position.x) },
+            onDragEnd = {
+                seekPreview?.let { model.seekTrack(item.id, (it * latestDuration).toLong()) }
+                seekPreview = null
+            },
+            onDragCancel = { seekPreview = null },
+        )
+    }
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         shape = RoundedCornerShape(15.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 5.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 5.dp).then(seekGesture),
     ) {
         Column {
             Row(
@@ -189,21 +224,22 @@ internal fun MusicMiniPlayer(model: MusicPlayerViewModel, openPlayer: () -> Unit
                 MusicArtwork(item.artwork, Modifier.size(38.dp), corner = 8)
                 Column(Modifier.weight(1f)) {
                     Text(item.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    val subtitle = when {
-                        seekPreview != null -> {
+                    val subtitleStyle = MaterialTheme.typography.labelSmall
+                    Box(Modifier.fillMaxWidth()) {
+                        val scrubbing = seekPreview != null
+                        Text(
+                            if (scrubbing) subtitleAtDragStart else subtitle,
+                            modifier = if (scrubbing) Modifier.alpha(0f).clearAndSetSemantics {} else Modifier,
+                            style = subtitleStyle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (scrubbing) {
                             val current = formatMusicTime((progress * duration).toLong()).padStart(5, '0')
                             val total = formatMusicTime(duration).padStart(5, '0')
-                            "$current/$total"
+                            Text("$current/$total", Modifier.matchParentSize(), style = subtitleStyle, maxLines = 1)
                         }
-                        state.error -> "播放失败"
-                        state.buffering -> "正在缓冲"
-                        else -> item.album
                     }
-                    Text(
-                        subtitle, style = MaterialTheme.typography.labelSmall,
-                        fontWeight = if (seekPreview != null) FontWeight.SemiBold else null,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    )
                 }
                 IconButton(onClick = model::toggle) {
                     if (state.buffering) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -218,39 +254,17 @@ internal fun MusicMiniPlayer(model: MusicPlayerViewModel, openPlayer: () -> Unit
                     contentDescription = "下一首",
                 )
             }
-            if (state.durationMs > 0) {
-                key(item.id) {
-                    Slider(
-                        value = progress,
-                        enabled = state.canSeek,
-                        onValueChange = { seekPreview = it },
-                        onValueChangeFinished = {
-                            seekPreview?.let { model.seekTrack(item.id, (it * duration).toLong()) }
-                            seekPreview = null
-                        },
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).height(24.dp)
-                            .semantics { contentDescription = "迷你播放器播放进度" },
-                        thumb = {
-                            Box(Modifier.size(12.dp), contentAlignment = Alignment.Center) {
-                                Box(
-                                    Modifier.size(if (seekPreview != null) 12.dp else 8.dp)
-                                        .background(progressColor, CircleShape)
-                                )
-                            }
-                        },
-                        track = { slider ->
-                            Box(
-                                Modifier.fillMaxWidth().height(4.dp).clip(CircleShape)
-                                    .background(progressColor.copy(alpha = 0.24f))
-                            ) {
-                                Box(
-                                    Modifier.fillMaxWidth(slider.value).height(4.dp)
-                                        .background(progressColor, CircleShape)
-                                )
-                            }
-                        },
-                    )
-                }
+            if (duration > 0) {
+                LinearProgressIndicator(
+                    progress = { progress },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).semantics {
+                        contentDescription = "迷你播放器播放进度"
+                        if (canSeek) setProgress { value ->
+                            model.seekTrack(item.id, (value.coerceIn(0f, 1f) * duration).toLong())
+                            true
+                        }
+                    },
+                )
             }
         }
     }

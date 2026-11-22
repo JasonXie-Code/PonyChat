@@ -167,8 +167,15 @@ internal fun MusicScreen(
     val album = catalog?.albumsById?.get(page)
     val colors = MaterialTheme.colorScheme
     val albumArtwork = album?.let { MusicSite.mediaUri(it.cover)?.toString() }
-    val background = if (album == null) Modifier else {
-        val tint = MusicArtworkTint(albumArtwork, colors.surfaceVariant)
+    val favoriteCover = library?.favorites?.firstOrNull()
+        ?.let { catalog?.songsById?.get(it) }
+        ?.let { catalog?.albumsById?.get(it.albumId)?.cover }
+    val favoritesPage = page == FAVORITES
+    val favoriteArtwork = MusicSite.mediaUri(favoriteCover)?.toString()
+    val collectionArtwork = if (favoritesPage) favoriteArtwork else albumArtwork
+    val showCollectionBackground = album != null || (favoritesPage && collectionArtwork != null)
+    val background = if (!showCollectionBackground) Modifier else {
+        val tint = MusicArtworkTint(collectionArtwork, colors.surfaceVariant)
         Modifier.background(
             Brush.verticalGradient(
                 0f to tint,
@@ -243,10 +250,20 @@ internal fun MusicScreen(
         albumParent = null
     }
 
+    fun queueNext(song: MusicSong) {
+        model.playNext(song, catalog?.albumsById?.get(song.albumId)) { message ->
+            scope.launch {
+                if (playbackMessages.currentSnackbarData?.visuals?.message != message) {
+                    playbackMessages.showSnackbar(message)
+                }
+            }
+        }
+    }
+
     BackHandler(page != null) { goBack() }
     Scaffold(
         modifier = background,
-        containerColor = if (album != null) Color.Transparent else colors.background,
+        containerColor = if (showCollectionBackground) Color.Transparent else colors.background,
         contentColor = colors.onBackground,
         topBar = {
             Column(Modifier.statusBarsPadding().padding(horizontal = 18.dp)) {
@@ -276,7 +293,7 @@ internal fun MusicScreen(
                         )
                         Text(
                             album?.let { "专辑" } ?: playlist?.name
-                                ?: page.orEmpty().takeIf { it in setOf(ALBUMS, RECENT, FAVORITES, FAVORITE_ALBUMS) }.orEmpty(),
+                                ?: page.orEmpty().takeIf { it in setOf(ALBUMS, RECENT, FAVORITE_ALBUMS) }.orEmpty(),
                             style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f),
                             maxLines = 1, overflow = TextOverflow.Ellipsis,
                         )
@@ -410,8 +427,8 @@ internal fun MusicScreen(
                                     }
                                     item {
                                         MusicCollectionRow(
-                                            FAVORITES, "${library.favorites.size} 首",
-                                            catalog?.collectionCover(library.favorites),
+                                            FAVORITES, "${library.favorites.size} 首", favoriteCover,
+                                            blankCoverIfMissing = true,
                                         ) { page = FAVORITES }
                                     }
                                     item {
@@ -510,15 +527,7 @@ internal fun MusicScreen(
                                 add = { addSong = it },
                                 showTrackNumbers = true,
                                 activeTrack = activeTrack,
-                                onPlayNext = { song ->
-                                    model.playNext(song, album) { message ->
-                                        scope.launch {
-                                            if (playbackMessages.currentSnackbarData?.visuals?.message != message) {
-                                                playbackMessages.showSnackbar(message)
-                                            }
-                                        }
-                                    }
-                                },
+                                onPlayNext = ::queueNext,
                             )
                         }
                         page == RECENT -> {
@@ -543,20 +552,44 @@ internal fun MusicScreen(
                                 )
                             }
                         }
-                        page == FAVORITES || playlist != null -> {
-                            val ids = if (page == FAVORITES) favoriteSongIds else playlist?.songIds.orEmpty()
-                            if (ids.isEmpty()) item { MusicMessage(if (page == FAVORITES) "还没有收藏的歌曲" else "歌单里还没有歌曲") }
+                        favoritesPage -> {
+                            item {
+                                MusicCollectionHeader(
+                                    title = FAVORITES,
+                                    artwork = favoriteArtwork,
+                                    metadata = library?.let { "${it.favorites.size} 首" }.orEmpty(),
+                                    compactCover = true,
+                                    blankCoverIfMissing = true,
+                                )
+                            }
+                            when {
+                                library == null -> item { MusicMessage("正在同步收藏…") }
+                                favoriteSongIds.isEmpty() -> item { MusicMessage("还没有收藏的歌曲") }
+                                catalog == null -> catalogFeedback(state, model)
+                                else -> {
+                                    item { PlayMusicCollection(favoriteSongIds.mapNotNull(catalog.songsById::get), catalog, model) }
+                                    musicSongs(
+                                        favoriteSongIds, catalog, library, model, focus,
+                                        add = { addSong = it },
+                                        remove = { model.updateLibrary(MusicCommand("favorite", songId = it, enabled = false)) },
+                                        showTrackNumbers = true,
+                                        activeTrack = activeTrack,
+                                        onPlayNext = ::queueNext,
+                                    )
+                                }
+                            }
+                        }
+                        playlist != null -> {
+                            val ids = playlist.songIds
+                            if (ids.isEmpty()) item { MusicMessage("歌单里还没有歌曲") }
                             if (catalog == null) catalogFeedback(state, model)
                             else {
                                 item { PlayMusicCollection(ids.mapNotNull { catalog.songsById[it] }, catalog, model) }
                                 musicSongs(
                                     ids, catalog, library, model, focus, add = { addSong = it },
-                                    remove = { id ->
-                                        if (playlist != null) model.updateLibrary(MusicCommand("removeSong", songId = id, playlistId = playlist.id))
-                                        else model.updateLibrary(MusicCommand("favorite", songId = id, enabled = false))
-                                    },
-                                    move = playlist?.let { entry ->
-                                        { id, direction -> model.updateLibrary(MusicCommand("moveSong", songId = id, playlistId = entry.id, direction = direction)) }
+                                    remove = { id -> model.updateLibrary(MusicCommand("removeSong", songId = id, playlistId = playlist.id)) },
+                                    move = { id, direction ->
+                                        model.updateLibrary(MusicCommand("moveSong", songId = id, playlistId = playlist.id, direction = direction))
                                     },
                                 )
                             }
@@ -1014,13 +1047,24 @@ private fun MusicCatalog.collectionCover(ids: List<String>): String? = ids.first
 }
 
 @Composable
-private fun MusicCollectionRow(title: String, subtitle: String, cover: String?, open: (() -> Unit)?) {
+private fun MusicCollectionRow(
+    title: String,
+    subtitle: String,
+    cover: String?,
+    blankCoverIfMissing: Boolean = false,
+    open: (() -> Unit)?,
+) {
     Row(
         Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable(enabled = open != null) { open?.invoke() }.padding(vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        MusicArtwork(MusicSite.mediaUri(cover)?.toString(), Modifier.size(64.dp), corner = 12)
+        val artwork = MusicSite.mediaUri(cover)?.toString()
+        if (blankCoverIfMissing && artwork == null) {
+            Box(Modifier.size(64.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)))
+        } else {
+            MusicArtwork(artwork, Modifier.size(64.dp), corner = 12)
+        }
         Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1030,29 +1074,45 @@ private fun MusicCollectionRow(title: String, subtitle: String, cover: String?, 
 
 @Composable
 private fun AlbumHeader(album: MusicAlbum, artwork: String?, tracks: List<MusicSong>) {
-    val colors = MaterialTheme.colorScheme
     val artist = tracks.mapNotNull { it.artist?.takeIf(String::isNotBlank) }.distinct().singleOrNull()
     val metadata = listOfNotNull(artist, album.releaseDate?.takeIf(String::isNotBlank)).joinToString(" · ")
+    MusicCollectionHeader(album.title, artwork, metadata)
+}
+
+@Composable
+private fun MusicCollectionHeader(
+    title: String,
+    artwork: String?,
+    metadata: String,
+    compactCover: Boolean = false,
+    blankCoverIfMissing: Boolean = false,
+) {
+    val colors = MaterialTheme.colorScheme
     Column(Modifier.fillMaxWidth().padding(top = 2.dp, bottom = 9.dp)) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val coverSize = (maxWidth * 0.60f).coerceAtMost(228.dp)
+            val coverSize = if (compactCover) (maxWidth * 0.44f).coerceAtMost(176.dp)
+                else (maxWidth * 0.60f).coerceAtMost(228.dp)
             val stageSize = minOf(maxWidth, coverSize + 38.dp)
             Box(Modifier.fillMaxWidth().height(coverSize + 38.dp), contentAlignment = Alignment.Center) {
-                Box(
-                    Modifier.size(stageSize).clip(CircleShape).background(
-                        Brush.radialGradient(listOf(colors.onBackground.copy(alpha = 0.16f), Color.Transparent))
+                if (blankCoverIfMissing && artwork == null) {
+                    Box(Modifier.size(coverSize).background(colors.surfaceVariant, RoundedCornerShape(18.dp)))
+                } else {
+                    Box(
+                        Modifier.size(stageSize).clip(CircleShape).background(
+                            Brush.radialGradient(listOf(colors.onBackground.copy(alpha = 0.16f), Color.Transparent))
+                        )
                     )
-                )
-                MusicArtwork(
-                    artwork,
-                    Modifier.size(coverSize).shadow(12.dp, RoundedCornerShape(18.dp)),
-                    corner = 18,
-                )
+                    MusicArtwork(
+                        artwork,
+                        Modifier.size(coverSize).shadow(12.dp, RoundedCornerShape(18.dp)),
+                        corner = 18,
+                    )
+                }
             }
         }
         Spacer(Modifier.height(16.dp))
         Text(
-            album.title,
+            title,
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold,
             color = colors.onBackground,
