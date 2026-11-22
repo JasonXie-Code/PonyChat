@@ -150,7 +150,6 @@ fun CharacterListScreen(
     onNavigateToDeviceHome: () -> Unit = {},
     onNavigateToGames: () -> Unit = {},
     onNavigateToMusic: () -> Unit = {},
-    musicMiniPlayer: @Composable () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -371,7 +370,6 @@ fun CharacterListScreen(
                 openChatList = {},
                 openGames = onNavigateToGames,
                 openMusic = onNavigateToMusic,
-                miniPlayer = musicMiniPlayer,
             )
         },
     ) { paddingValues ->

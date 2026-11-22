@@ -26,13 +26,11 @@ internal fun PonyHomeBottomBar(
     openChatList: () -> Unit,
     openGames: () -> Unit,
     openMusic: () -> Unit,
-    miniPlayer: @Composable () -> Unit = {},
 ) {
     val color = MaterialTheme.colorScheme.surface
     SystemNavigationBarColorEffect(color = color, useDarkIcons = color.luminance() > 0.5f)
     Surface(color = color, shadowElevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.navigationBarsPadding()) {
-            miniPlayer()
             Row(
                 Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 14.dp, vertical = 2.dp).selectableGroup(),
                 horizontalArrangement = Arrangement.SpaceEvenly,

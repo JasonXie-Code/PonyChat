@@ -79,7 +79,6 @@ import top.ponychat.webview.ui.character.CharacterProfileScreen
 import top.ponychat.webview.ui.character.CharacterListScreen
 import top.ponychat.webview.ui.character.CharacterViewModel
 import top.ponychat.webview.ui.common.PonyHomeBottomBar
-import top.ponychat.webview.ui.music.MusicMiniPlayer
 import top.ponychat.webview.ui.music.MusicPlayerScreen
 import top.ponychat.webview.ui.music.MusicSearchScreen
 import top.ponychat.webview.ui.music.MusicPlayerViewModel
@@ -590,7 +589,6 @@ fun AppNavigation(
                 prefs = prefs,
                 onNavigateToGames = ::openGames,
                 onNavigateToMusic = ::openMusic,
-                musicMiniPlayer = { MusicMiniPlayer(musicModel, ::openPlayer) },
                 onCharacterSelected = { character, _ -> openChat(character) },
                 onNavigateToSettings = {
                     navController.navigate(Routes.SETTINGS)

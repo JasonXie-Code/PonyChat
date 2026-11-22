@@ -37,11 +37,11 @@ import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
@@ -50,6 +50,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -163,9 +164,16 @@ internal fun MusicArtwork(url: String?, modifier: Modifier = Modifier, corner: I
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 internal fun MusicMiniPlayer(model: MusicPlayerViewModel, openPlayer: () -> Unit) {
     val state by model.playerState.collectAsStateWithLifecycle()
     val item = state.item ?: return
+    val duration = state.durationMs
+    var seekPreview by remember(item.id) { mutableStateOf<Float?>(null) }
+    val progress = seekPreview ?: if (duration > 0) {
+        (state.positionMs.toFloat() / duration).coerceIn(0f, 1f)
+    } else 0f
+    val progressColor = MaterialTheme.colorScheme.primary
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -182,11 +190,20 @@ internal fun MusicMiniPlayer(model: MusicPlayerViewModel, openPlayer: () -> Unit
                 Column(Modifier.weight(1f)) {
                     Text(item.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     val subtitle = when {
+                        seekPreview != null -> {
+                            val current = formatMusicTime((progress * duration).toLong()).padStart(5, '0')
+                            val total = formatMusicTime(duration).padStart(5, '0')
+                            "$current/$total"
+                        }
                         state.error -> "播放失败"
                         state.buffering -> "正在缓冲"
                         else -> item.album
                     }
-                    Text(subtitle, style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        subtitle, style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (seekPreview != null) FontWeight.SemiBold else null,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
                 }
                 IconButton(onClick = model::toggle) {
                     if (state.buffering) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
@@ -202,10 +219,38 @@ internal fun MusicMiniPlayer(model: MusicPlayerViewModel, openPlayer: () -> Unit
                 )
             }
             if (state.durationMs > 0) {
-                LinearProgressIndicator(
-                    progress = { (state.positionMs.toFloat() / state.durationMs).coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                )
+                key(item.id) {
+                    Slider(
+                        value = progress,
+                        enabled = state.canSeek,
+                        onValueChange = { seekPreview = it },
+                        onValueChangeFinished = {
+                            seekPreview?.let { model.seekTrack(item.id, (it * duration).toLong()) }
+                            seekPreview = null
+                        },
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).height(24.dp)
+                            .semantics { contentDescription = "迷你播放器播放进度" },
+                        thumb = {
+                            Box(Modifier.size(12.dp), contentAlignment = Alignment.Center) {
+                                Box(
+                                    Modifier.size(if (seekPreview != null) 12.dp else 8.dp)
+                                        .background(progressColor, CircleShape)
+                                )
+                            }
+                        },
+                        track = { slider ->
+                            Box(
+                                Modifier.fillMaxWidth().height(4.dp).clip(CircleShape)
+                                    .background(progressColor.copy(alpha = 0.24f))
+                            ) {
+                                Box(
+                                    Modifier.fillMaxWidth(slider.value).height(4.dp)
+                                        .background(progressColor, CircleShape)
+                                )
+                            }
+                        },
+                    )
+                }
             }
         }
     }

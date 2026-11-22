@@ -399,6 +399,16 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
     }
 
     fun seek(positionMs: Long) { controller?.seekTo(positionMs.coerceAtLeast(0)) }
+
+    fun seekTrack(trackId: String, positionMs: Long) {
+        val player = controller ?: return
+        if (player.currentMediaItem?.mediaId == trackId && player.isCurrentMediaItemSeekable &&
+            player.isCommandAvailable(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+        ) {
+            seek(positionMs)
+        }
+    }
+
     fun cyclePlaybackMode(): MusicPlaybackMode? {
         val active = controller ?: return null
         val mode = MusicPlaybackMode.fromPlayer(active.shuffleModeEnabled, active.repeatMode).next()

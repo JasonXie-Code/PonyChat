@@ -38,8 +38,8 @@ android {
         applicationId = "top.ponychat.webview"
         minSdk = 24
         targetSdk = 34
-        versionCode = 454
-        versionName = "6.1.28"
+        versionCode = 455
+        versionName = "6.1.29"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
