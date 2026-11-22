@@ -20,6 +20,10 @@ def read_json(path, default):
     return json.loads(path.read_text("utf-8")) if path.is_file() else default
 
 
+def is_pony_town_soundtrack(song):
+    return song["albumId"].startswith("soundtracks-pony-town-")
+
+
 def load_index(*, include_follows=True):
     data = read_json(DATA / "index.json", {"albums": [], "songs": [], "scores": []})
     catalog = read_json(DATA / "catalog.json", {})
@@ -34,6 +38,8 @@ def load_index(*, include_follows=True):
         song.update(catalog.get(song["id"], {}))
         song["lyricsStatus"] = lyrics.get(song["id"], {}).get("status", "missing")
         song["bilingual"] = lyrics.get(song["id"], {}).get("bilingual", False)
+        if is_pony_town_soundtrack(song):
+            song.update(instrumental=True, lyricsStatus="instrumental", bilingual=False)
         song.pop("followId", None)
         song.pop("followViewPath", None)
         if song["id"] in follows:
@@ -46,8 +52,11 @@ def load_index(*, include_follows=True):
 
 
 def lyrics_for(song_id):
-    if not any(s["id"] == song_id for s in load_index(include_follows=False)["songs"]):
+    song = next((s for s in load_index(include_follows=False)["songs"] if s["id"] == song_id), None)
+    if song is None:
         raise HTTPException(404, "Song not found")
+    if is_pony_town_soundtrack(song):
+        return {"songId": song_id, "status": "instrumental", "lines": []}
     key = hashlib.sha256(song_id.encode()).hexdigest()[:24]
     result = read_json(DATA / "lyrics" / (key + ".json"), {"songId": song_id, "status": "missing", "lines": []})
     return public_lyrics_payload(result)
@@ -151,6 +160,8 @@ def search_songs(query, versions=False):
         hay = " ".join(str(x) for x in [song["title"], song.get("alias", ""), albums.get(song["albumId"], ""), song.get("episode", ""), *song.get("characters", [])]).casefold()
         if all(t in hay for t in terms):
             results.append({"id": song["id"]})
+            continue
+        if is_pony_town_soundtrack(song):
             continue
         key = hashlib.sha256(song["id"].encode()).hexdigest()[:24]
         lyrics = read_json(DATA / "lyrics" / (key + ".json"), {})

@@ -16,6 +16,10 @@ class AppPreferences(context: Context) {
         get() = prefs.getBoolean("music_album_grid", false)
         set(value) = prefs.edit { putBoolean("music_album_grid", value) }
 
+    internal var musicPlayerLandscape: Boolean
+        get() = prefs.getBoolean("music_player_landscape", false)
+        set(value) = prefs.edit { putBoolean("music_player_landscape", value) }
+
     internal var musicResumeSnapshot: String?
         get() = prefs.getString("music_resume_snapshot", null)
         set(value) = prefs.edit { putString("music_resume_snapshot", value) }

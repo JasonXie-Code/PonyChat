@@ -45,8 +45,36 @@ internal data class MusicSong(
     val lyricsStatus: String?,
     val duration: Double?,
     val releaseDate: String? = null,
+    val instrumental: Boolean? = null,
+    val versionKind: String? = null,
 ) {
     val isDefault get() = supersededBy.isNullOrBlank() && (releaseKind == "official" || showByDefault == true)
+
+    val resolvedLyricsStatus: MusicLyricsStatus
+        get() {
+            if (MusicAlbumCategory.forAlbum(albumId) == MusicAlbumCategory.PONY_TOWN) {
+                return MusicLyricsStatus.INSTRUMENTAL
+            }
+            val status = MusicLyricsStatus.fromApi(lyricsStatus)
+            // The music site treats instrumental versions without published lyrics as pure music.
+            return if (status != MusicLyricsStatus.AVAILABLE &&
+                (instrumental == true || versionKind == "instrumental")
+            ) MusicLyricsStatus.INSTRUMENTAL else status
+        }
+}
+
+internal enum class MusicLyricsStatus(val apiValue: String, val notice: String? = null) {
+    AVAILABLE("available"),
+    INSTRUMENTAL("instrumental", "纯音乐，请欣赏"),
+    MISSING("missing", "这首歌的歌词正在补充"),
+    EXCLUDED("excluded", "此版本不提供歌词，歌词仅用于正式发行的人声版本"),
+    NO_VOCALS("no-vocals-detected", "暂未识别到可靠的人声歌词"),
+    LOW_CONFIDENCE("low-confidence", "这版音频的歌词识别仍需校对");
+
+    companion object {
+        fun fromApi(value: String?): MusicLyricsStatus =
+            entries.firstOrNull { it.apiValue == value } ?: MISSING
+    }
 }
 
 @Keep
@@ -63,7 +91,18 @@ internal data class MusicSearchHit(val id: String, val lyricSnippet: String?)
 @Keep
 internal data class MusicSearch(val songs: List<MusicSearchHit> = emptyList())
 @Keep
-internal data class MusicLyrics(val lines: List<MusicLyric> = emptyList())
+internal data class MusicLyrics(
+    val lines: List<MusicLyric> = emptyList(),
+    val status: String? = null,
+) {
+    val resolvedStatus: MusicLyricsStatus
+        get() {
+            val reported = status?.let { MusicLyricsStatus.fromApi(it) } ?: MusicLyricsStatus.AVAILABLE
+            return if (reported == MusicLyricsStatus.AVAILABLE && lines.orEmpty().none { it.originalText.isNotBlank() }) {
+                MusicLyricsStatus.MISSING
+            } else reported
+        }
+}
 @Keep
 internal data class MusicLyric(val start: Double, val end: Double, val en: String?, val zh: String?) {
     val startMs get() = (start * 1000).toLong()

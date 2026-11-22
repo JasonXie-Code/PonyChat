@@ -38,6 +38,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,6 +82,7 @@ internal fun MusicLyricsPage(
     item: MusicItem,
     lines: List<MusicLyric>?,
     active: Int,
+    notice: String?,
     error: Boolean,
     retry: () -> Unit,
     favorite: Boolean,
@@ -94,57 +96,7 @@ internal fun MusicLyricsPage(
 ) {
     val colors = MaterialTheme.colorScheme
     key(item.id) {
-        val list = rememberLazyListState()
         var browsing by remember { mutableStateOf(false) }
-        var positioned by remember { mutableStateOf(false) }
-        var requestedLine by remember { mutableStateOf<Int?>(null) }
-        var settledLine by remember { mutableStateOf<Int?>(null) }
-        var focusOffset by remember { mutableIntStateOf(0) }
-        val selectedLine by remember {
-            derivedStateOf {
-                val layout = list.layoutInfo
-                val focus = layout.viewportStartOffset + focusOffset
-                layout.visibleItemsInfo.minByOrNull { lyric -> abs(lyric.offset + lyric.size / 2f - focus) }?.index
-            }
-        }
-        val scroll = remember {
-            object : NestedScrollConnection {
-                override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    if (source == NestedScrollSource.UserInput && available.y != 0f) browsing = true
-                    return Offset.Zero
-                }
-            }
-        }
-        LaunchedEffect(browsing, list.isScrollInProgress) {
-            // Anchor the selected line before adding its time button so text reflow can't move the selection.
-            settledLine = if (browsing && !list.isScrollInProgress) selectedLine else null
-        }
-        fun jumpToLine(index: Int) {
-            val lyric = lines?.getOrNull(index) ?: return
-            if (!state.canSeek) return
-            requestedLine = index
-            browsing = false
-            seek(lyric.startMs)
-        }
-
-        val targetLine = requestedLine ?: active.coerceAtLeast(0)
-        LaunchedEffect(browsing, targetLine, lines?.size, focusOffset) {
-            if (browsing || lines.isNullOrEmpty() || focusOffset == 0) return@LaunchedEffect
-            if (positioned) list.animateScrollToItem(targetLine)
-            else {
-                list.scrollToItem(targetLine)
-                positioned = true
-            }
-        }
-        LaunchedEffect(active, requestedLine) {
-            if (requestedLine != null && requestedLine == active) requestedLine = null
-        }
-        LaunchedEffect(requestedLine) {
-            if (requestedLine != null) {
-                delay(1600)
-                requestedLine = null
-            }
-        }
 
         Column(
             modifier.fillMaxSize().padding(horizontal = 22.dp),
@@ -159,52 +111,18 @@ internal fun MusicLyricsPage(
                 )
             }
             LyricsTrackHeader(state, item, togglePlayback)
-            BoxWithConstraints(
-                Modifier.weight(1f).fillMaxWidth().onGloballyPositioned { coordinates ->
-                    val height = coordinates.size.height
-                    val screenFocus = coordinates.findRootCoordinates().size.height * LYRIC_FOCUS_FRACTION
-                    focusOffset = (screenFocus - coordinates.positionInRoot().y)
-                        .coerceIn(height * 0.15f, height * 0.5f)
-                        .roundToInt()
-                },
-            ) {
-                when {
-                    error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        MusicMessage("歌词加载失败", "重试", retry)
-                    }
-                    lines == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                    lines.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        MusicMessage("这首歌暂无歌词")
-                    }
-                    else -> {
-                        val focus = with(LocalDensity.current) { focusOffset.toDp() }
-                        val topSpace = (focus - 26.dp).coerceAtLeast(0.dp)
-                        val bottomSpace = (maxHeight - focus - 26.dp).coerceAtLeast(0.dp)
-                        LazyColumn(
-                            state = list,
-                            modifier = Modifier.fillMaxSize().nestedScroll(scroll).lyricsViewportFade(),
-                            contentPadding = PaddingValues(top = topSpace, bottom = bottomSpace),
-                            verticalArrangement = Arrangement.spacedBy(9.dp),
-                        ) {
-                            itemsIndexed(lines, key = { index, _ -> index }) { index, lyric ->
-                                LyricLine(
-                                    lyric = lyric,
-                                    active = index == (requestedLine ?: active),
-                                    guide = browsing && (settledLine ?: selectedLine) == index,
-                                    showTime = browsing && settledLine == index,
-                                    canSeek = state.canSeek,
-                                    seek = { jumpToLine(index) },
-                                    modifier = Modifier.animateItem(
-                                        fadeInSpec = null,
-                                        placementSpec = if (browsing) null else tween(LYRIC_TRANSITION_MS),
-                                        fadeOutSpec = null,
-                                    ),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+            MusicLyricsViewport(
+                lines = lines,
+                active = active,
+                notice = notice,
+                error = error,
+                retry = retry,
+                canSeek = state.canSeek,
+                seek = seek,
+                browsing = browsing,
+                onBrowsingChange = { browsing = it },
+                modifier = Modifier.weight(1f),
+            )
             Row(
                 Modifier.fillMaxWidth().padding(bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -221,6 +139,125 @@ internal fun MusicLyricsPage(
                     enabled = favoritesEnabled,
                     tint = if (favorite) colors.primary else colors.onSurfaceVariant,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun MusicLyricsViewport(
+    lines: List<MusicLyric>?,
+    active: Int,
+    notice: String?,
+    error: Boolean,
+    retry: () -> Unit,
+    canSeek: Boolean,
+    seek: (Long) -> Unit,
+    browsing: Boolean,
+    onBrowsingChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+    swipeMotion: TrackSwipeMotion? = null,
+) {
+    val list = rememberLazyListState()
+    var positioned by remember { mutableStateOf(false) }
+    var requestedLine by remember { mutableStateOf<Int?>(null) }
+    var settledLine by remember { mutableStateOf<Int?>(null) }
+    var focusOffset by remember { mutableIntStateOf(0) }
+    val selectedLine by remember {
+        derivedStateOf {
+            val layout = list.layoutInfo
+            val focus = layout.viewportStartOffset + focusOffset
+            layout.visibleItemsInfo.minByOrNull { lyric -> abs(lyric.offset + lyric.size / 2f - focus) }?.index
+        }
+    }
+    val changeBrowsing by rememberUpdatedState(onBrowsingChange)
+    val scroll = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (source == NestedScrollSource.UserInput && available.y != 0f) changeBrowsing(true)
+                return Offset.Zero
+            }
+        }
+    }
+    LaunchedEffect(browsing, list.isScrollInProgress) {
+        // Anchor the selected line before adding its time button so text reflow can't move the selection.
+        settledLine = if (browsing && !list.isScrollInProgress) selectedLine else null
+    }
+    fun jumpToLine(index: Int) {
+        val lyric = lines?.getOrNull(index) ?: return
+        if (!canSeek) return
+        requestedLine = index
+        changeBrowsing(false)
+        seek(lyric.startMs)
+    }
+
+    val targetLine = requestedLine ?: active.coerceAtLeast(0)
+    LaunchedEffect(browsing, targetLine, lines?.size, focusOffset) {
+        if (browsing || lines.isNullOrEmpty() || focusOffset == 0) return@LaunchedEffect
+        if (positioned) list.animateScrollToItem(targetLine)
+        else {
+            list.scrollToItem(targetLine)
+            positioned = true
+        }
+    }
+    LaunchedEffect(active, requestedLine) {
+        if (requestedLine != null && requestedLine == active) requestedLine = null
+    }
+    LaunchedEffect(requestedLine) {
+        if (requestedLine != null) {
+            delay(1600)
+            requestedLine = null
+        }
+    }
+
+    BoxWithConstraints(
+        modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+            val height = coordinates.size.height
+            val screenFocus = coordinates.findRootCoordinates().size.height * LYRIC_FOCUS_FRACTION
+            focusOffset = (screenFocus - coordinates.positionInRoot().y)
+                .coerceIn(height * 0.15f, height * 0.5f)
+                .roundToInt()
+        },
+    ) {
+        // Keep the scroll anchor in a fixed viewport while the lyrics are moving with the cover.
+        val viewportHeight = maxHeight
+        val slide = if (swipeMotion == null) Modifier else Modifier.graphicsLayer { translationY = swipeMotion.offset }
+        Box(Modifier.fillMaxSize().then(slide)) {
+            when {
+                error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    MusicMessage("歌词加载失败", "重试", retry)
+                }
+                notice != null || lines?.isEmpty() == true -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    MusicMessage(notice ?: "这首歌的歌词正在补充")
+                }
+                lines == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                else -> {
+                    val focus = with(LocalDensity.current) { focusOffset.toDp() }
+                    val topSpace = (focus - 26.dp).coerceAtLeast(0.dp)
+                    val bottomSpace = (viewportHeight - focus - 26.dp).coerceAtLeast(0.dp)
+                    LazyColumn(
+                        state = list,
+                        modifier = Modifier.fillMaxSize().nestedScroll(scroll).lyricsViewportFade(),
+                        contentPadding = PaddingValues(top = topSpace, bottom = bottomSpace),
+                        verticalArrangement = Arrangement.spacedBy(9.dp),
+                    ) {
+                        itemsIndexed(lines, key = { index, _ -> index }) { index, lyric ->
+                            LyricLine(
+                                lyric = lyric,
+                                active = index == (requestedLine ?: active),
+                                guide = browsing && (settledLine ?: selectedLine) == index,
+                                showTime = browsing && settledLine == index,
+                                canSeek = canSeek,
+                                seek = { jumpToLine(index) },
+                                modifier = Modifier.animateItem(
+                                    fadeInSpec = null,
+                                    placementSpec = if (browsing) null else tween(LYRIC_TRANSITION_MS),
+                                    fadeOutSpec = null,
+                                ),
+                            )
+                        }
+                    }
+                }
             }
         }
     }

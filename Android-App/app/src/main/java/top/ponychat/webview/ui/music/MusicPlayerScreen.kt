@@ -38,6 +38,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -98,6 +99,8 @@ private data class LyricPreview(val index: Int, val lines: List<String>)
 @Composable
 internal fun MusicPlayerScreen(
     model: MusicPlayerViewModel,
+    landscape: Boolean,
+    onLandscapeChange: (Boolean) -> Unit,
     close: () -> Unit,
     openSearch: () -> Unit,
     openAlbum: (String) -> Unit,
@@ -125,6 +128,13 @@ internal fun MusicPlayerScreen(
     val messages = CustomToast.current
     val scope = rememberCoroutineScope()
     val swipeMotion = remember { TrackSwipeMotion() }
+    val swipe = if (item == null) Modifier else Modifier.swipeToChangeTrack(item.id, model, swipeMotion, scope)
+    val artworkActions = if (item == null) Modifier else Modifier.semantics {
+        customActions = listOf(
+            CustomAccessibilityAction("下一首") { model.skipTrack(item.id, forward = true) },
+            CustomAccessibilityAction("上一首") { model.skipTrack(item.id, forward = false) },
+        )
+    }
     LaunchedEffect(syncError) {
         syncError?.takeIf { it.mutation }?.let { messages.showSnackbar(it.message) }
     }
@@ -132,8 +142,9 @@ internal fun MusicPlayerScreen(
     val tint = MusicArtworkTint(item?.artwork, scheme.secondaryContainer)
     val currentLyrics = lyrics.takeIf { it.trackId == item?.id }
     val lines = currentLyrics?.lines
+    val lyricsNotice = (currentLyrics?.status ?: item?.lyricsStatus)?.notice
     val activeLyric = lines?.indexOfLast { it.startMs <= state.positionMs } ?: -1
-    val background = if (showLyrics) {
+    val background = if (showLyrics || landscape) {
         Brush.verticalGradient(
             0f to lerp(tint, scheme.background, 0.26f),
             0.64f to lerp(tint, scheme.background, 0.84f),
@@ -144,6 +155,24 @@ internal fun MusicPlayerScreen(
         Modifier.fillMaxSize().background(background)
             .statusBarsPadding().navigationBarsPadding(),
     ) {
+        if (landscape) {
+            MusicLandscapePlayer(
+                state = state,
+                lines = lines,
+                active = activeLyric,
+                notice = lyricsNotice,
+                error = currentLyrics?.failed == true,
+                retryLyrics = model::retryLyrics,
+                seek = model::seek,
+                togglePlayback = model::toggle,
+                close = close,
+                returnToPortrait = { onLandscapeChange(false) },
+                swipeMotion = swipeMotion,
+                artworkGestures = swipe.then(artworkActions),
+                modifier = Modifier.align(Alignment.TopCenter),
+            )
+            return@BoxWithConstraints
+        }
         val page = Modifier.align(Alignment.TopCenter).widthIn(max = 570.dp)
         if (showLyrics && item != null) {
             MusicLyricsPage(
@@ -151,6 +180,7 @@ internal fun MusicPlayerScreen(
                 item = item,
                 lines = lines,
                 active = activeLyric,
+                notice = lyricsNotice,
                 error = currentLyrics?.failed == true,
                 retry = model::retryLyrics,
                 favorite = favorite,
@@ -165,7 +195,6 @@ internal fun MusicPlayerScreen(
             return@BoxWithConstraints
         }
         val needsScroll = maxHeight < 530.dp || LocalFontScale.current > 1.35f
-        val swipe = if (item == null) Modifier else Modifier.swipeToChangeTrack(item.id, model, swipeMotion, scope)
         val content = if (needsScroll) {
             page.fillMaxWidth().verticalScroll(rememberScrollState())
         } else {
@@ -182,6 +211,20 @@ internal fun MusicPlayerScreen(
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.titleMedium,
                 )
+                if (item != null) {
+                    PonyIconButton(
+                        onClick = { onLandscapeChange(true) },
+                        icon = Icons.Default.StayCurrentLandscape,
+                        contentDescription = "横屏播放",
+                    )
+                    PonyIconButton(
+                        onClick = { addSong = true },
+                        enabled = library != null,
+                        icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+                        contentDescription = "加到歌单",
+                        tint = scheme.onSurfaceVariant,
+                    )
+                }
                 PonyIconButton(onClick = openSearch, icon = Icons.Default.Search, contentDescription = "搜索音乐")
             }
             if (item == null) {
@@ -203,14 +246,9 @@ internal fun MusicPlayerScreen(
                 trackId = item.id,
                 artwork = item.artwork,
                 preview = lyricPreview,
-                lyricsAvailable = item.hasLyrics,
+                lyricsNotice = if (currentLyrics?.failed == true) "歌词暂时加载失败" else lyricsNotice,
                 motion = swipeMotion,
-                modifier = artworkStage.semantics {
-                    customActions = listOf(
-                        CustomAccessibilityAction("下一首") { model.skipTrack(item.id, forward = true) },
-                        CustomAccessibilityAction("上一首") { model.skipTrack(item.id, forward = false) },
-                    )
-                },
+                modifier = artworkStage.then(artworkActions),
             ) { showLyrics = true }
 
             val titleStyle = MaterialTheme.typography.headlineSmall
@@ -220,12 +258,12 @@ internal fun MusicPlayerScreen(
             } + 7.dp
             Row(
                 Modifier.fillMaxWidth().padding(top = 15.dp).heightIn(min = metadataHeight),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
                     Text(item.title, style = titleStyle, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    val subtitle = listOf(item.artist, item.album).filter(String::isNotBlank).distinct().joinToString(" · ")
-                    if (subtitle.isNotBlank()) {
+                    if (item.album.isNotBlank()) {
                         val albumId = item.albumId
                         Row(
                             Modifier.clickable(enabled = albumId != null, onClickLabel = "打开专辑") {
@@ -234,12 +272,12 @@ internal fun MusicPlayerScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                subtitle, Modifier.weight(1f, fill = false), color = scheme.onSurfaceVariant, style = subtitleStyle,
+                                item.album, Modifier.weight(1f, fill = false), color = scheme.onSurfaceVariant, style = subtitleStyle,
                                 maxLines = 1, overflow = TextOverflow.Ellipsis,
                             )
                             if (albumId != null) {
                                 Icon(
-                                    Icons.AutoMirrored.Filled.KeyboardArrowRight, "打开专辑",
+                                    Icons.AutoMirrored.Filled.KeyboardArrowRight, null,
                                     Modifier.size(18.dp), tint = scheme.onSurfaceVariant,
                                 )
                             }
@@ -251,14 +289,8 @@ internal fun MusicPlayerScreen(
                     onClick = ::toggleFavorite,
                     icon = if (favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                     contentDescription = if (favorite) "取消收藏" else "收藏",
+                    size = 48.dp,
                     tint = if (favorite) Primary else scheme.onSurfaceVariant,
-                )
-                PonyIconButton(
-                    onClick = { addSong = true },
-                    enabled = library != null,
-                    icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-                    contentDescription = "加到歌单",
-                    tint = scheme.onSurfaceVariant,
                 )
             }
             MusicProgress(state, model::seek)
@@ -315,7 +347,7 @@ internal fun MusicPlayerScreen(
     if (addSong && item != null) AddSongDialog(item.id, library, model) { addSong = false }
 }
 
-private class TrackSwipeMotion {
+internal class TrackSwipeMotion {
     var offset by mutableFloatStateOf(0f)
     val moving by derivedStateOf { offset != 0f }
     var stageHeight = 0f
@@ -388,7 +420,7 @@ private fun Modifier.swipeToChangeTrack(
     }
 }
 
-private fun Modifier.trackSwipeEdgeFade(motion: TrackSwipeMotion): Modifier = graphicsLayer {
+internal fun Modifier.trackSwipeEdgeFade(motion: TrackSwipeMotion): Modifier = graphicsLayer {
     clip = true
     compositingStrategy = if (motion.moving) CompositingStrategy.Offscreen else CompositingStrategy.Auto
 }.drawWithCache {
@@ -410,7 +442,7 @@ private fun NowPlayingArtwork(
     trackId: String,
     artwork: String?,
     preview: LyricPreview,
-    lyricsAvailable: Boolean,
+    lyricsNotice: String?,
     motion: TrackSwipeMotion,
     modifier: Modifier,
     openLyrics: () -> Unit,
@@ -457,7 +489,16 @@ private fun NowPlayingArtwork(
                                     .padding(top = lyricPadding.calculateTopPadding()),
                             )
                         }
-                    } else if (lyricsAvailable) {
+                    } else if (lyricsNotice != null) {
+                        Text(
+                            lyricsNotice,
+                            modifier = Modifier.fillMaxWidth()
+                                .clickable(onClickLabel = "打开歌词页面", onClick = openLyrics)
+                                .padding(top = if (showPreview) lyricPadding.calculateTopPadding() else 4.dp),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
                         TextButton(onClick = openLyrics, modifier = Modifier.align(Alignment.TopStart)) { Text("查看歌词") }
                     }
                 }

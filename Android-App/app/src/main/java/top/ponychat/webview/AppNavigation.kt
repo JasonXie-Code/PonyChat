@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Build
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContentScope
@@ -79,6 +80,7 @@ import top.ponychat.webview.ui.character.CharacterProfileScreen
 import top.ponychat.webview.ui.character.CharacterListScreen
 import top.ponychat.webview.ui.character.CharacterViewModel
 import top.ponychat.webview.ui.common.PonyHomeBottomBar
+import top.ponychat.webview.ui.common.findActivity
 import top.ponychat.webview.ui.music.MusicPlayerScreen
 import top.ponychat.webview.ui.music.MusicSearchScreen
 import top.ponychat.webview.ui.music.MusicPlayerViewModel
@@ -159,6 +161,18 @@ fun AppNavigation(
     val authViewModel: AuthViewModel = viewModel()
     val characterViewModel: CharacterViewModel = viewModel()
     val musicModel: MusicPlayerViewModel = viewModel()
+    var musicPlayerLandscape by remember(prefs) { mutableStateOf(prefs.musicPlayerLandscape) }
+    val hostActivity = context.findActivity()
+    val orientation = if (currentRoute == Routes.MUSIC_PLAYER && musicPlayerLandscape) {
+        ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+    } else {
+        ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+    }
+    SideEffect {
+        if (hostActivity != null && hostActivity.requestedOrientation != orientation) {
+            hostActivity.requestedOrientation = orientation
+        }
+    }
     val scope = rememberCoroutineScope()
     var openPlayerJob by remember { mutableStateOf<Job?>(null) }
     fun openMusic() {
@@ -658,15 +672,24 @@ fun AppNavigation(
         composable(
             Routes.MUSIC_PLAYER,
             enterTransition = {
-                slideInVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) { fullHeight -> fullHeight }
+                if (musicPlayerLandscape) EnterTransition.None
+                else slideInVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) { fullHeight -> fullHeight }
             },
-            popEnterTransition = { fadeIn(tween(700)) },
+            popEnterTransition = {
+                if (musicPlayerLandscape) EnterTransition.None else fadeIn(tween(700))
+            },
             popExitTransition = {
-                slideOutVertically(animationSpec = tween(280, easing = FastOutSlowInEasing)) { fullHeight -> fullHeight }
+                if (musicPlayerLandscape) ExitTransition.None
+                else slideOutVertically(animationSpec = tween(280, easing = FastOutSlowInEasing)) { fullHeight -> fullHeight }
             },
         ) { entry ->
             MusicPlayerScreen(
                 musicModel,
+                landscape = musicPlayerLandscape,
+                onLandscapeChange = { enabled ->
+                    musicPlayerLandscape = enabled
+                    prefs.musicPlayerLandscape = enabled
+                },
                 close = { navController.popPage(entry) },
                 openSearch = { navController.navigate(Routes.MUSIC_SEARCH) { launchSingleTop = true } },
                 openAlbum = { id ->

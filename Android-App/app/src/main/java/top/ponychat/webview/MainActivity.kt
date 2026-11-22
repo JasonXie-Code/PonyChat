@@ -5,7 +5,6 @@ import android.app.AlertDialog
 import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -220,11 +219,6 @@ open class MainActivity : ComponentActivity() {
                 resources.getBoolean(R.bool.device_home_enabled),
             )
             LaunchedEffect(deviceExperience) {
-                requestedOrientation = if (deviceExperience) {
-                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                } else {
-                    ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                }
                 WindowCompat.getInsetsController(window, window.decorView).apply {
                     if (deviceExperience) {
                         systemBarsBehavior =

@@ -38,7 +38,7 @@ internal data class MusicItem(
     val artist: String,
     val artwork: String?,
     val durationMs: Long,
-    val hasLyrics: Boolean,
+    val lyricsStatus: MusicLyricsStatus,
 )
 
 internal data class MusicPlayerState(
@@ -83,6 +83,7 @@ internal data class MusicLyricsState(
     val trackId: String? = null,
     val lines: List<MusicLyric>? = null,
     val failed: Boolean = false,
+    val status: MusicLyricsStatus? = null,
 )
 
 internal data class MusicResumeTarget(
@@ -97,7 +98,7 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
     val playerState = mutablePlayer.asStateFlow()
     private val mutableLyrics = MutableStateFlow(MusicLyricsState())
     val lyrics = mutableLyrics.asStateFlow()
-    private val lyricsCache = LruCache<String, List<MusicLyric>>(8)
+    private val lyricsCache = LruCache<String, MusicLyricsState>(8)
     private var lyricsJob: Job? = null
     private val mutableCatalog = MutableStateFlow(MusicCatalogState())
     val catalog = mutableCatalog.asStateFlow()
@@ -185,7 +186,7 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
     suspend fun awaitCurrentLyrics() {
         combine(playerState, lyrics) { playback, loaded ->
             val track = playback.item
-            track?.hasLyrics != true ||
+            track?.lyricsStatus != MusicLyricsStatus.AVAILABLE ||
                 (loaded.trackId == track.id && (loaded.lines != null || loaded.failed))
         }.first { it }
     }
@@ -195,23 +196,30 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
     private fun preloadLyrics(item: MusicItem?, retry: Boolean = false) {
         if (!retry && mutableLyrics.value.trackId == item?.id) return
         lyricsJob?.cancel()
-        if (item?.hasLyrics != true) {
-            mutableLyrics.value = MusicLyricsState(item?.id, emptyList())
+        if (item == null || item.lyricsStatus != MusicLyricsStatus.AVAILABLE) {
+            mutableLyrics.value = MusicLyricsState(item?.id, emptyList(), status = item?.lyricsStatus)
             return
         }
         val cached = lyricsCache.get(item.id)
-        mutableLyrics.value = MusicLyricsState(item.id, cached)
+        mutableLyrics.value = cached ?: MusicLyricsState(item.id)
         if (cached != null) return
         lyricsJob = viewModelScope.launch {
-            val lines = try {
-                withTimeoutOrNull(6_000) { MusicSite.api.lyrics(item.id).lines }
+            val lyrics = try {
+                withTimeoutOrNull(6_000) { MusicSite.api.lyrics(item.id) }
             } catch (failure: CancellationException) {
                 throw failure
             } catch (_: Exception) {
                 null
             }
-            if (lines != null) lyricsCache.put(item.id, lines)
-            mutableLyrics.value = MusicLyricsState(item.id, lines, failed = lines == null)
+            if (lyrics == null) {
+                mutableLyrics.value = MusicLyricsState(item.id, failed = true)
+            } else {
+                val status = lyrics.resolvedStatus
+                val lines = if (status == MusicLyricsStatus.AVAILABLE) lyrics.lines else emptyList()
+                val loaded = MusicLyricsState(item.id, lines, status = status)
+                lyricsCache.put(item.id, loaded)
+                mutableLyrics.value = loaded
+            }
         }
     }
 
@@ -479,7 +487,7 @@ private fun MusicSong.mediaItem(album: MusicAlbum?): MediaItem? {
     val uri = MusicSite.mediaUri(src) ?: return null
     val details = Bundle().apply {
         putLong("duration", ((duration ?: 0.0) * 1000).toLong())
-        putBoolean("lyrics", lyricsStatus == "available")
+        putString("lyricsStatus", resolvedLyricsStatus.apiValue)
         putString("albumId", albumId)
     }
     val metadata = MediaMetadata.Builder()
@@ -500,5 +508,8 @@ private fun MediaItem.toMusicItem() = MusicItem(
     artist = mediaMetadata.artist?.toString().orEmpty(),
     artwork = mediaMetadata.artworkUri?.toString(),
     durationMs = mediaMetadata.extras?.getLong("duration") ?: 0,
-    hasLyrics = mediaMetadata.extras?.getBoolean("lyrics") == true,
+    lyricsStatus = MusicLyricsStatus.fromApi(
+        mediaMetadata.extras?.getString("lyricsStatus")
+            ?: "available".takeIf { mediaMetadata.extras?.getBoolean("lyrics") == true },
+    ),
 )
