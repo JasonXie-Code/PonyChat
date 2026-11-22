@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.28",
+  "version_code": 454,
+  "package": "top.ponychat.webview",
+  "sha256": "879afb0d25f39c619733bed12c50d9dd0be005f7d372c78b5eaec8732e8a6c94",
+  "bytes": 15191244,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.28-454-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "音乐播放器优化了歌词排版和切换动画。封面歌词根据屏幕空间显示 2 至 4 行，完整歌词的长句切换更平稳。\n播放器从底部展开和收起，提前加载歌词，并根据实际播放状态显示标题。底部导航栏颜色与播放器背景协调。\n调整聊天入口、游戏入口和角色列表，优化聊天显示设置与创造模式会话体验。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.28-454-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}
