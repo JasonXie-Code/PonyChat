@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="在 24 款原创像素小马中比较轮廓，收藏你喜欢的造型。">
+  <meta name="theme-color" content="#f6f3e9">
+  <title>像素小马工坊</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="pony-art.js" defer></script>
+  <script src="cat-art.js" defer></script>
+  <script src="dog-art.js" defer></script>
+  <script src="studio.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <a class="identity" href="#top">
+        <span class="brand-icon" aria-hidden="true"></span>
+        <span>像素小马工坊<small lang="en">PIXEL PONY STUDIO</small></span>
+      </a>
+      <button class="saved-toggle" id="saved-toggle" type="button" aria-pressed="false">
+        <span class="heart" aria-hidden="true">♡</span> 收藏 <span class="saved-count" id="saved-count">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="shell" id="top">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <h1 id="hero-title">挑一匹你喜欢的<span>像素小马</span></h1>
+        <p>24 款原创造型，三种灵感。<br>看看哪种耳朵、轮廓和尾巴最合你眼缘。</p>
+        <div class="hero-actions">
+          <a class="hero-action" href="#styles">开始挑选</a>
+          <a class="reference-action" href="g4/">G4 降采样对照</a>
+        </div>
+      </div>
+      <div class="hero-art" id="hero-art" aria-hidden="true">
+        <div class="hero-plinth" data-hero="cat"></div>
+        <div class="hero-plinth hero-main" data-hero="pony"></div>
+        <div class="hero-plinth" data-hero="dog"></div>
+      </div>
+    </section>
+
+    <section class="collection" id="styles" aria-labelledby="gallery-title">
+      <div class="collection-heading">
+        <h2 id="gallery-title">小马图鉴</h2>
+        <p class="visible-count" id="visible-count" aria-live="polite"></p>
+      </div>
+      <div class="filters" id="filters" role="group" aria-label="按灵感筛选小马"></div>
+      <div class="gallery" id="gallery"></div>
+      <div class="empty" id="empty" hidden>
+        <p>点款式右上角的爱心，就能在这里并排查看。</p>
+        <button class="text-button" id="show-all" type="button">查看全部小马</button>
+      </div>
+      <noscript><p>开启 JavaScript 后即可浏览小马和收藏款式。</p></noscript>
+    </section>
+  </main>
+
+  <dialog class="preview" id="preview" aria-labelledby="preview-title" aria-describedby="preview-description">
+    <div class="preview-layout">
+      <div class="preview-art" id="preview-art"></div>
+      <div class="preview-info">
+        <button class="preview-close" id="preview-close" type="button" aria-label="关闭大图">×</button>
+        <p class="group-tag" id="preview-group"></p>
+        <h2 id="preview-title"></h2>
+        <p id="preview-description"></p>
+        <div class="swatches" id="preview-swatches" aria-hidden="true"></div>
+        <button class="preview-save" id="preview-save" type="button" aria-pressed="false"></button>
+        <div class="preview-nav">
+          <button class="text-button" id="previous" type="button">上一款</button>
+          <span id="preview-position"></span>
+          <button class="text-button" id="next" type="button">下一款</button>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>

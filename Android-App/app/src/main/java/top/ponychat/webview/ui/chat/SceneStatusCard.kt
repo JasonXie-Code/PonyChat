@@ -20,15 +20,17 @@ internal fun SceneStatusCard(
     characterName: String,
     preview: ConversationSceneResponse? = null,
 ) {
-    val api = remember(prefs.effectiveApiBase(), prefs.username) {
+    val baseUrl = prefs.effectiveApiBase()
+    val username = prefs.username
+    val api = remember(baseUrl, username) {
         NetworkClient.createApiService(prefs)
     }
-    var scene by remember(characterId, conversationId) { mutableStateOf<ConversationSceneResponse?>(null) }
-    var loading by remember(characterId, conversationId) { mutableStateOf(preview == null && !conversationId.isNullOrBlank() && characterId.isNotBlank()) }
-    var error by remember(characterId, conversationId) { mutableStateOf<String?>(null) }
-    var completedRevision by remember(characterId, conversationId) { mutableStateOf(0) }
+    var scene by remember(baseUrl, username, characterId, conversationId) { mutableStateOf<ConversationSceneResponse?>(null) }
+    var loading by remember(baseUrl, username, characterId, conversationId) { mutableStateOf(preview == null && !conversationId.isNullOrBlank() && characterId.isNotBlank()) }
+    var error by remember(baseUrl, username, characterId, conversationId) { mutableStateOf<String?>(null) }
+    var completedRevision by remember(baseUrl, username, characterId, conversationId) { mutableStateOf(0) }
 
-    LaunchedEffect(characterId, conversationId, preview) {
+    LaunchedEffect(baseUrl, username, characterId, conversationId, preview) {
         if (preview != null) return@LaunchedEffect
         ChatEventBus.completedFlow.collect { event ->
             if (event.characterId == characterId && event.mode == "normal" &&
@@ -38,7 +40,7 @@ internal fun SceneStatusCard(
         }
     }
 
-    LaunchedEffect(api, characterId, conversationId, preview, completedRevision) {
+    LaunchedEffect(baseUrl, username, characterId, conversationId, preview, completedRevision) {
         if (preview != null) return@LaunchedEffect
         if (characterId.isBlank() || conversationId.isNullOrBlank()) return@LaunchedEffect
         loading = true

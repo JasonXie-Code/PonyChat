@@ -214,10 +214,10 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     /**
-     * @param listEntryMode 角色列表顶栏当前选中的模式；仅走「完整初始化」分支时才会写入 VM 与 prefs。
+     * @param listEntryMode 当前聊天页的模式。
      * 若为 null（如 ChatScreen 兜底调用），完整初始化时沿用 [prefs.chatMode]。
      * 早退路径（同角色正在生成 / 已加载会话）仅在**当前 VM 模式与本次要进入的模式一致**时生效；
-     * 若在列表中切换了 聊天/游戏/锁分 后再进同一角色，必须走完整初始化，否则会错显示上一模式的对话。
+     * 若请求的模式不同，必须走完整初始化，避免沿用上一模式的对话。
      */
     fun initWithCharacter(character: Character, listEntryMode: String? = null) {
         if (!character.supportsCharacterVoice()) {
@@ -283,12 +283,17 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             character = character,
             isLoadingHistory = true,
             messages = emptyList(),
-            inputText = "",
+            inputText = if (currentCharacterId == incomingCharacterId && currentState.mode == modeToApply) {
+                currentState.inputText
+            } else {
+                ""
+            },
             isStreaming = false,
             error = null,
             conversationId = null,
             galgameScore = null,
-            galgameVictoryCelebrationAck = false
+            galgameVictoryCelebrationAck = false,
+            galgameVictoryPending = false,
         )
         sentMessages.clear()
         val characterId = character.id?.takeIf { it.isNotBlank() }
@@ -1041,7 +1046,6 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     error = null,
                     errorDebug = null
                 )
-                checkAndAutoSummarize()
                 localCache.saveConversation(
                     username = username,
                     characterId = characterId,

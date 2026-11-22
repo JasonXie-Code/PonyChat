@@ -34,6 +34,12 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 原生音乐播放器的个人曲库
+CREATE TABLE IF NOT EXISTS user_music (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    data TEXT NOT NULL
+);
+
 -- 角色表
 CREATE TABLE IF NOT EXISTS characters (
     id TEXT PRIMARY KEY,

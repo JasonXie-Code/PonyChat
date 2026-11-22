@@ -40,6 +40,7 @@
 
     <!-- 🎮 [聊天陪玩] 屏幕截图服务所需权限 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <!-- 悬浮窗（弹幕叠加层 + 悬浮按钮）：需用户在设置中手动授权 -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
@@ -136,6 +137,15 @@
             android:name=".CompanionService"
             android:exported="false"
             android:foregroundServiceType="mediaProjection|microphone" />
+
+        <service
+            android:name=".ui.music.MusicPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
 
         <!-- 保持在线：WebSocket 与消息推送 -->
         <service

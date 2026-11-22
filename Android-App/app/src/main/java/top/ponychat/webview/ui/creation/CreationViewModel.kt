@@ -60,7 +60,7 @@ class CreationViewModel(private val prefs: AppPreferences, private val character
 
     fun input(value: String) { mutable.update { it.copy(input = value) } }
     fun load(id: String? = null) = viewModelScope.launch {
-        if (mutable.value.sending || mutable.value.deleting) return@launch
+        if (mutable.value.sending || mutable.value.deleting || mutable.value.saving) return@launch
         val cached = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
             val history = repository.cache.history(characterId)
             val selected = id ?: prefs.getCreationSessionId(characterId).takeIf { saved -> history.any { it.id == saved } } ?: history.firstOrNull()?.id
@@ -73,15 +73,14 @@ class CreationViewModel(private val prefs: AppPreferences, private val character
                 val history = repository.history(characterId)
                 val selected = id ?: prefs.getCreationSessionId(characterId).takeIf { saved -> history.any { it.id == saved } }
                     ?: history.firstOrNull()?.id
-                var session = selected?.let { repository.load(it) } ?: repository.create(characterId)
-                prefs.setCreationSessionId(characterId, session.id)
+                val session = selected?.let { repository.load(it) }
+                if (session != null) prefs.setCreationSessionId(characterId, session.id)
                 retryId = null
-                mutable.update { it.copy(session = session,
-                    history = if (selected == null) listOf(CreationHistory(session.id, session.title)) + history else history,
-                    loading = false, alignReplyRequestId = null, contextUsage = session.contextUsage) }
+                mutable.update { it.copy(session = session, history = history,
+                    loading = false, alignReplyRequestId = null, contextUsage = session?.contextUsage) }
                 session
             }
-            var session = loaded
+            var session = loaded ?: return@launch
             while (session.busy) {
                 delay(2000)
                 session = repository.load(session.id)
@@ -94,16 +93,27 @@ class CreationViewModel(private val prefs: AppPreferences, private val character
             "正在显示本地缓存，暂时未能同步会话。联网后可以刷新，已缓存的内容仍可阅读。" else e.message) } }
     }
 
-    fun newSession() = viewModelScope.launch {
-        if (mutable.value.sending || mutable.value.deleting || mutable.value.session?.busy == true) return@launch
+    fun newSession(clearInput: Boolean = true) = viewModelScope.launch {
+        val state = mutable.value
+        if (state.loading || state.sending || state.deleting || state.saving || state.session?.busy == true) return@launch
+        mutable.update { it.copy(saving = true, error = null) }
         try {
-            val session = repository.create(characterId)
-            prefs.setCreationSessionId(characterId, session.id)
-            mutable.update { it.copy(session = session, input = "", error = null, alignReplyRequestId = null, contextUsage = session.contextUsage,
-                history = listOf(CreationHistory(session.id, session.title)) + it.history.filterNot { item -> item.id == session.id }) }
-            retryId = null
+            createSession(clearInput)
             runCatching { repository.history(characterId) }.onSuccess { history -> mutable.update { it.copy(history = history) } }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) { mutable.update { it.copy(error = e.message) } }
+        finally { mutable.update { it.copy(saving = false) } }
+    }
+
+    private suspend fun createSession(clearInput: Boolean): CreationSession {
+        val session = repository.create(characterId)
+        prefs.setCreationSessionId(characterId, session.id)
+        retryId = null
+        mutable.update { it.copy(session = session, input = if (clearInput) "" else it.input,
+            error = null, alignReplyRequestId = null, contextUsage = session.contextUsage,
+            history = listOf(CreationHistory(session.id, session.title)) + it.history.filterNot { item -> item.id == session.id }) }
+        return session
     }
 
     fun configure(title: String, instructions: String, setting: String?, onSaved: () -> Unit) = viewModelScope.launch {
@@ -234,12 +244,27 @@ class CreationViewModel(private val prefs: AppPreferences, private val character
         continueStory: Boolean = false,
         onSubmitted: () -> Unit = {}) = viewModelScope.launch {
         val snapshot = mutable.value
-        val session = snapshot.session ?: return@launch
-        if (continueStory && (regenerate || editMessageId != null || session.messages.lastOrNull()?.role != "assistant")) return@launch
+        val existingSession = snapshot.session
+        if (continueStory && (regenerate || editMessageId != null || existingSession?.messages?.lastOrNull()?.role != "assistant")) return@launch
         val effectiveRegenerate = regenerate || (!continueStory && editMessageId == null && editedText == null &&
-            snapshot.input.isBlank() && session.messages.lastOrNull()?.role == "user")
+            snapshot.input.isBlank() && existingSession?.messages?.lastOrNull()?.role == "user")
         val text = editedText ?: if (effectiveRegenerate || continueStory) "" else snapshot.input
-        if (snapshot.loading || snapshot.sending || snapshot.deleting || snapshot.saving || snapshot.switchingVersion || session.busy || (!effectiveRegenerate && !continueStory && text.isBlank())) return@launch
+        if (snapshot.loading || snapshot.sending || snapshot.deleting || snapshot.saving || snapshot.switchingVersion ||
+            existingSession?.busy == true || (!effectiveRegenerate && !continueStory && text.isBlank())) return@launch
+        val session = existingSession ?: run {
+            if (effectiveRegenerate || editMessageId != null || snapshot.error != null) return@launch
+            mutable.update { it.copy(saving = true) }
+            try {
+                createSession(clearInput = false)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                mutable.update { it.copy(error = e.message ?: "新建创作失败，请重试。") }
+                return@launch
+            } finally {
+                mutable.update { it.copy(saving = false) }
+            }
+        }
         val id = if (editMessageId == null && retryText == text && retryRegenerate == effectiveRegenerate && retryContinue == continueStory) retryId ?: UUID.randomUUID().toString()
             else UUID.randomUUID().toString()
         retryId = id; retryText = text; retryRegenerate = effectiveRegenerate; retryContinue = continueStory

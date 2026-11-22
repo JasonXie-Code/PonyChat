@@ -51,7 +51,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -83,9 +82,9 @@ import top.ponychat.webview.data.prefs.AppPreferences
 import top.ponychat.webview.ui.common.PonyAlertDialog
 import top.ponychat.webview.ui.common.PonyAvatar
 import top.ponychat.webview.ui.common.PonyDangerCountdownConfirmDialog
+import top.ponychat.webview.ui.common.PonyHomeBottomBar
 import top.ponychat.webview.ui.common.PonyTopBar
 import top.ponychat.webview.ui.common.PonyTopSearchBar
-import top.ponychat.webview.ui.common.SystemNavigationBarColorEffect
 import top.ponychat.webview.util.formatErrorForDisplay
 import top.ponychat.webview.ui.common.adaptivePopupMenuAccentColor
 import top.ponychat.webview.ui.common.adaptivePopupMenuBorder
@@ -149,6 +148,9 @@ fun CharacterListScreen(
     onNavigateToEdit: (Character) -> Unit = {},
     showDeviceHomeAction: Boolean = false,
     onNavigateToDeviceHome: () -> Unit = {},
+    onNavigateToGames: () -> Unit = {},
+    onNavigateToMusic: () -> Unit = {},
+    musicMiniPlayer: @Composable () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
@@ -160,15 +162,8 @@ fun CharacterListScreen(
     var showTopMenu by remember { mutableStateOf(false) }
     var showQrScan by remember { mutableStateOf(false) }
     var qrScanResult by remember { mutableStateOf<String?>(null) }
-    var selectedMode by remember {
-        mutableStateOf(
-            when (prefs.chatMode.ifBlank { "normal" }) {
-                "normal", "creation", "galgame", "galgame_lock" -> prefs.chatMode.ifBlank { "normal" }
-                else -> "normal"
-            }
-        )
-    }
-    // 每次从聊天页返回或切换模式时递增，强制排序重算（prefs 时间戳不是 Snapshot State，无法被 derivedStateOf 自动感知）
+    val listMode = "normal"
+    // 每次从聊天页返回时重新读取 prefs 中的时间戳并排序。
     var sortRevision by remember { mutableIntStateOf(0) }
     // 从设置页返回时刷新排序/置顶偏好
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -185,32 +180,20 @@ fun CharacterListScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val bottomNavigationColor = MaterialTheme.colorScheme.surface
-    SystemNavigationBarColorEffect(
-        color = bottomNavigationColor,
-        useDarkIcons = bottomNavigationColor.luminance() > 0.5f
-    )
-
-    LaunchedEffect(selectedMode) {
-        sortRevision++
-        val isGalgameMode = selectedMode == "galgame" || selectedMode == "galgame_lock"
-        viewModel.loadMyCharacters(silent = true, resetGalgameFetch = isGalgameMode)
-    }
-
     // 模式专属时间戳映射：角色 stableId → 毫秒时间戳。
     // 作为 Compose State 派生，确保 backfillRevision / sortRevision 变化后 LazyColumn 条目能感知到
     // SharedPreferences 中的最新值并触发重组（直接在 items lambda 里读 prefs 不受 snapshot 系统追踪）。
-    val modeLastChatMsMap by remember(state.characters, sortRevision, state.backfillRevision, state.listEventRevision, selectedMode) {
+    val modeLastChatMsMap by remember(state.characters, sortRevision, state.backfillRevision, state.listEventRevision) {
         derivedStateOf {
             state.characters.associate { c ->
-                c.stableId() to prefs.getModeLastChatTime(c.stableId(), selectedMode)
+                c.stableId() to prefs.getModeLastChatTime(c.stableId(), listMode)
             }
         }
     }
     val localCache = remember { LocalCacheStore(context.applicationContext) }
     /** 当前模式下各角色最近一条助手摘要（无消息则为空 → 卡片回退简介行） */
     var modeListSubtitleMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
-    LaunchedEffect(state.characters, sortRevision, state.backfillRevision, state.listEventRevision, selectedMode) {
+    LaunchedEffect(state.characters, sortRevision, state.backfillRevision, state.listEventRevision) {
         val u = prefs.username.trim()
         val chars = state.characters
         modeListSubtitleMap = if (u.isEmpty() || chars.isEmpty()) {
@@ -219,12 +202,12 @@ fun CharacterListScreen(
             withContext(Dispatchers.IO) {
                 chars.associate { c ->
                     val id = c.stableId()
-                    val conv = localCache.loadLatestConversation(u, id, selectedMode)
+                    val conv = localCache.loadLatestConversation(u, id, listMode)
                     val fromConv = GalgameNotificationPreview
-                        .listRowSnippetFromLastAssistant(conv?.messages.orEmpty(), selectedMode)
+                        .listRowSnippetFromLastAssistant(conv?.messages.orEmpty(), listMode)
                         .trim()
                     val fromPrefs = GalgameNotificationPreview.stripMarkdownForListPreview(
-                        prefs.getModeLastChatSnippet(id, selectedMode).trim(),
+                        prefs.getModeLastChatSnippet(id, listMode).trim(),
                     )
                     id to fromPrefs.ifBlank { fromConv }
                 }
@@ -232,10 +215,10 @@ fun CharacterListScreen(
         }
     }
     // 排序 + 置顶后的列表
-    // modeLastChatMsMap 变化（回填完成或模式切换）时同步触发重算，确保排序与展示时间戳始终一致
+    // 回填完成后同步重算排序与展示时间戳。
     val displayedChars by remember(
         state.characters, state.characterSort, state.pinnedCharacterIds, searchQuery,
-        selectedMode, sortRevision, state.backfillRevision, state.listEventRevision, modeLastChatMsMap,
+        sortRevision, state.backfillRevision, state.listEventRevision, modeLastChatMsMap,
         modeListSubtitleMap,
     ) {
         derivedStateOf {
@@ -383,66 +366,13 @@ fun CharacterListScreen(
             }
         },
         bottomBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 4.dp
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                ) {
-                    // 在“底栏顶部 ~ 系统导航栏顶部”的可视区域内居中对齐内容
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(58.dp)
-                            .align(Alignment.TopCenter)
-                            .padding(horizontal = 20.dp, vertical = 2.dp),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        val canUseLockMode =
-                            prefs.membershipType == "developer" || prefs.membershipType == "admin"
-                        CompactModeNavItem(
-                            selected = selectedMode == "normal",
-                            icon = Icons.Filled.ChatBubbleOutline,
-                            label = "聊天",
-                            onClick = {
-                                selectedMode = "normal"
-                                prefs.chatMode = "normal"
-                            }
-                        )
-                        CompactModeNavItem(
-                            selected = selectedMode == "creation",
-                            icon = Icons.Filled.AutoAwesome,
-                            label = "创造",
-                            onClick = { selectedMode = "creation"; prefs.chatMode = "creation" }
-                        )
-                        CompactModeNavItem(
-                            selected = selectedMode == "galgame" || selectedMode == "galgame_lock",
-                            icon = Icons.Filled.SportsEsports,
-                            label = "游戏",
-                            onClick = {
-                                selectedMode = "galgame"
-                                prefs.chatMode = "galgame"
-                            },
-                            onLongClick = {
-                                if (!canUseLockMode) {
-                                    scope.launch {
-                                        snackbarHostState.showSnackbar("锁分模式需要开发者或管理员账号")
-                                    }
-                                } else {
-                                    selectedMode = "galgame_lock"
-                                    prefs.chatMode = "galgame_lock"
-                                    vibrateForOneSecond(context)
-                                    scope.launch { snackbarHostState.showSnackbar("已切换锁分模式") }
-                                }
-                            }
-                        )
-                    }
-                }
-            }
+            PonyHomeBottomBar(
+                selectedTab = "chat",
+                openChatList = {},
+                openGames = onNavigateToGames,
+                openMusic = onNavigateToMusic,
+                miniPlayer = musicMiniPlayer,
+            )
         },
     ) { paddingValues ->
         val lazyListState = rememberLazyListState()
@@ -814,11 +744,11 @@ fun CharacterListScreen(
                         showDragHandle = canDrag,
                         dragHandleModifier = dragHandleModifier,
                         isDragging = isDragging,
-                        unreadCount = state.unreadMap["${character.stableId()}#$selectedMode"] ?: 0,
+                        unreadCount = state.unreadMap["${character.stableId()}#$listMode"] ?: 0,
                         modeLastChatMs = modeLastChatMsMap[character.stableId()] ?: 0L,
                         listSubtitleLine = modeListSubtitleMap[character.stableId()].orEmpty(),
                         currentUsername = prefs.username.trim(),
-                        onClick = { onCharacterSelected(character, selectedMode) },
+                        onClick = { onCharacterSelected(character, listMode) },
                         onEdit = { onNavigateToEdit(character) },
                         onDelete = { viewModel.deleteCharacter(character) },
                         onDuplicate = { viewModel.duplicateCharacter(character) },

@@ -171,6 +171,9 @@ class CreationModeInstrumentedTest {
                 }
             }
             click("云杉")
+            click("设置")
+            click("创造模式")
+            click("返回")
             await(first)
             longPress(first)
             await("复制"); await("选择文字"); await("删除"); await("编辑")
@@ -257,6 +260,7 @@ class CreationModeInstrumentedTest {
         prefs.username = "admin"; prefs.authToken = token
         prefs.debugMode = true; prefs.activeApiBase = "http://10.0.2.2:5017"
         prefs.chatMode = "normal"; prefs.isDarkTheme = true
+        prefs.membershipType = "admin"
         NetworkClient.bindPreferences(prefs)
         ActivityScenario.launch(DialogPreviewActivity::class.java).use { scenario ->
             scenario.onActivity { activity ->
@@ -268,10 +272,33 @@ class CreationModeInstrumentedTest {
                 }
             } }
             await("云杉", 45)
-            await("聊天"); await("创造"); await("游戏")
+            await("聊天"); await("游戏"); await("音乐")
+            assertNull(find("创造"))
+            click("游戏")
+            awaitGone("云杉")
+            click("聊天")
+            await("云杉")
             screenshot("creation-navigation.png")
-            click("创造")
             click("云杉")
+            click("设置")
+            click("锁分模式")
+            click("返回")
+            await("Galgame 锁分模式")
+            click("设置")
+            click("游戏模式")
+            click("返回")
+            await("Galgame 模式")
+            click("设置")
+            click("普通对话")
+            click("返回")
+            await("历史对话")
+            click("设置")
+            click("创造模式")
+            await("对话模式")
+            click("普通对话")
+            await("对话模式")
+            click("创造模式")
+            click("返回")
             await("创造模式")
             click("新建创作")
             await("设置你的创作风格")

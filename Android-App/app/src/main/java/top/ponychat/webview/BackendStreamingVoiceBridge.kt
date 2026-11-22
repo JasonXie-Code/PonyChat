@@ -342,6 +342,7 @@ class BackendStreamingVoiceBridge(
         recordingThread = thread(start = true, name = "BackendVoiceRecordThread") {
             val readBuffer = ByteArray(bufferSize)
             try {
+                top.ponychat.webview.ui.music.MusicSpeechInterruption.pauseMusic()
                 record.startRecording()
                 while (isRunning && isSocketReady && !stopRequested) {
                     val readBytes = record.read(readBuffer, 0, readBuffer.size)

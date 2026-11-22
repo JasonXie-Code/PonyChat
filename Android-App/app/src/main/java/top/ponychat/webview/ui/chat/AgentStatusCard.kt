@@ -41,7 +41,7 @@ internal fun AgentStatusCard(
     Column {
         AgentStatusContent(snapshot, "$username/$characterId/$mode/${conversationId.orEmpty()}", mode)
         afterStatus()
-        ConversationActivityContent(snapshot, mode)
+        if (mode == "normal") ConversationActivityContent(snapshot, mode)
     }
 }
 

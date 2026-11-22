@@ -1,6 +1,8 @@
 package top.ponychat.webview.ui.creation
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -9,16 +11,33 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import top.ponychat.webview.data.prefs.AppPreferences
+import top.ponychat.webview.ui.chat.ConversationModeOptions
 import top.ponychat.webview.ui.theme.ScaledSwitch
 
 @Composable
-internal fun CreationDisplaySettings(prefs: AppPreferences, onBack: () -> Unit, onChanged: () -> Unit) {
+internal fun CreationDisplaySettings(
+    prefs: AppPreferences,
+    onBack: () -> Unit,
+    onModeSelected: ((String) -> Unit)? = null,
+    onChanged: () -> Unit,
+) {
     val feedback = creationHapticAction()
     var dark by remember { mutableStateOf(prefs.isDarkTheme) }
     var scale by remember { mutableFloatStateOf(prefs.fontScale) }
     var timestamp by remember { mutableStateOf(prefs.showTimestamp) }
     CreationPage("对话设置", onBack) {
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(16.dp)) {
+            if (onModeSelected != null) {
+                Text("对话模式", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
+                CreationCard {
+                    ConversationModeOptions(
+                        currentMode = "creation",
+                        canUseLockMode = prefs.membershipType in setOf("developer", "admin"),
+                        onModeSelected = { mode -> if (mode != "creation") onModeSelected(mode) },
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+            }
             Text("显示", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(bottom = 12.dp))
             CreationCard {
                 Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {

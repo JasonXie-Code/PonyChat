@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="选一匹小马，在开着暖灯的冬日山谷里散步。">
+  <meta name="theme-color" content="#eeedf5">
+  <title>冬日小马谷 · Winter Pony Valley</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="art.js" defer></script>
+  <script src="world.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">❄</div>
+        <div>
+          <p class="wordmark" lang="en">WINTER PONY VALLEY</p>
+          <h1>冬日小马谷</h1>
+        </div>
+      </div>
+      <p class="edition">漫游试玩</p>
+    </header>
+
+    <div class="game">
+      <div class="toolbar">
+        <div class="toolbar-title"><span class="compass" aria-hidden="true">✧</span><span>谷地漫游</span></div>
+        <div class="toolbar-actions">
+          <button id="snow-toggle" type="button" aria-pressed="true"><span aria-hidden="true">❄</span> 飘雪</button>
+          <button id="reset" type="button"><span aria-hidden="true">↶</span> 返回广场</button>
+        </div>
+      </div>
+      <div class="game-body">
+        <section class="stage" aria-label="可探索地图">
+          <canvas id="view" tabindex="0" aria-label="冬日小马谷，按方向键、WASD 或点击地图移动">请使用支持 Canvas 的浏览器打开地图。</canvas>
+          <div class="location" aria-hidden="true"><span class="pin"></span><span id="location">铃灯广场</span></div>
+          <div class="map-help" aria-hidden="true"><span class="desktop-click">点击地图前往</span><span class="touch-click">轻触地图前往</span></div>
+        </section>
+
+        <aside class="sidebar" aria-label="小马与地图">
+          <section>
+            <h2>选择小马</h2>
+            <div class="roster" id="roster"></div>
+            <noscript>请开启 JavaScript 来控制小马。</noscript>
+          </section>
+          <section class="map-panel">
+            <h2>谷地地图</h2>
+            <div class="minimap-frame">
+              <canvas id="minimap" width="240" height="155" role="img" aria-label="谷地全景图，金色标记代表你的位置"></canvas>
+              <span class="north" aria-hidden="true">北</span>
+            </div>
+            <p class="map-caption"><span class="map-dot"></span><span id="map-location" aria-live="polite">铃灯广场</span></p>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <footer class="controls" id="controls">
+      <span class="key-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span class="or">或</span><kbd class="arrow-keys">↑ ← ↓ →</kbd><span>移动</span></span>
+      <span class="click-help"><span class="target-icon" aria-hidden="true">◎</span> <span class="desktop-click">点击地图前往</span><span class="touch-click">轻触地图前往</span></span>
+    </footer>
+  </main>
+</body>
+</html>

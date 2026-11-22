@@ -32,6 +32,8 @@ data class ChatUiState(
     val galgameScore: Int? = null,
     /** 服务端持久：已向用户展示过满分庆祝弹窗 */
     val galgameVictoryCelebrationAck: Boolean = false,
+    /** 当前生成的游戏回合达到满分，可以展示庆祝弹窗。 */
+    val galgameVictoryPending: Boolean = false,
     /** 游戏/锁分 SSE 分步生成时顶部栏副标题文案，非生成中为 null */
     val galgameStreamingStep: String? = null,
     /** 历史对话排序：timestamp(活跃时间) | created(创建时间) | length(对话字数) */

@@ -23,7 +23,7 @@ from .routes import (
     auth, chat, characters, models_api, admin,
     galgame, system, status, character_hall, invite_codes, proactive, proactive_tasks, memory, quick_messages,
     companion_chat, companion_agent, web_public, messages, assets,
-    data_export, drive, mlp_database, relationship, minigames, derpibooru_search,
+    data_export, drive, mlp_database, relationship, minigames, derpibooru_search, my_music,
 )
 from .websocket import manager
 from .routes import creation
@@ -48,6 +48,7 @@ def _file_response_with_etag(file_path: str):
 
 # 包含核心业务路由
 app.include_router(auth.router)
+app.include_router(my_music.router)
 app.include_router(chat.router)
 app.include_router(creation.router)
 app.include_router(characters.router)

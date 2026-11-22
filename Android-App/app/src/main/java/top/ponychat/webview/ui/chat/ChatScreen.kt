@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import kotlinx.coroutines.FlowPreview
 import top.ponychat.webview.data.model.Character
 import top.ponychat.webview.data.prefs.AppPreferences
@@ -27,7 +28,9 @@ fun ChatScreen(
     onNavigateToSettings: () -> Unit = {},
     onNavigateToProactiveTasks: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
-    onThemeChanged: (Boolean) -> Unit = {}
+    onThemeChanged: (Boolean) -> Unit = {},
+    onModeSelected: (String) -> Unit,
+    showDisplaySettingsState: MutableState<Boolean>,
 ) {
     val navigate = rememberChatNavigation()
     ChatScreenContent(
@@ -42,6 +45,8 @@ fun ChatScreen(
         onNavigateToSettings = { navigate(onNavigateToSettings) },
         onNavigateToProactiveTasks = { navigate(onNavigateToProactiveTasks) },
         onNavigateToHistory = { navigate(onNavigateToHistory) },
-        onThemeChanged = onThemeChanged
+        onThemeChanged = onThemeChanged,
+        onModeSelected = onModeSelected,
+        showDisplaySettingsState = showDisplaySettingsState,
     )
 }

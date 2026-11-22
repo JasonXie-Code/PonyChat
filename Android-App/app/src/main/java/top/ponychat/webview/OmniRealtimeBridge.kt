@@ -266,6 +266,7 @@ class OmniRealtimeBridge(
     fun startVoiceMode() {
         if (!isConnected.get()) return
         if (isVoiceModeActive) return
+        top.ponychat.webview.ui.music.MusicSpeechInterruption.pauseMusic()
         isVoiceModeActive = true
         stopMicRequested = false
         frameMode = FrameMode.ACTIVE

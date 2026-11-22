@@ -198,6 +198,7 @@ class CompanionTtsBridge(
         currentSpeakId = speakId
         currentPcmProcessor = MobileVoiceEffect.newPcmProcessor(SAMPLE_RATE)
         currentTotalFrames.set(0)
+        top.ponychat.webview.ui.music.MusicSpeechInterruption.pauseMusic()
         track.play()
 
         Log.i(TAG, "startSentencePlayback: id=${speakId.take(8)} text=${text.take(20)}")

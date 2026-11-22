@@ -233,6 +233,7 @@ fun ChatDisplaySettingsScreen(
     scenePreview: top.ponychat.webview.data.model.ConversationSceneResponse? = null,
     sceneUserName: String = prefs.nickname.ifBlank { prefs.username },
     sceneCharacterName: String = "",
+    onModeSelected: ((String) -> Unit)? = null,
 ) {
     // ── 重组诊断：若频繁出现说明 List<ModelInfo> 等不稳定参数导致无法 skip ──
     if (top.ponychat.webview.BuildConfig.DEBUG) {
@@ -267,6 +268,18 @@ fun ChatDisplaySettingsScreen(
                 modifier = Modifier
                     .padding(paddingValues)
             ) {
+            if (onModeSelected != null) {
+                item {
+                    SectionTitle("对话模式")
+                    SettingsCard {
+                        ConversationModeOptions(
+                            currentMode = currentMode,
+                            canUseLockMode = prefs.membershipType in setOf("developer", "admin"),
+                            onModeSelected = onModeSelected,
+                        )
+                    }
+                }
+            }
             // ==================== 显示设置 ====================
             item {
             SectionTitle("显示")
@@ -364,11 +377,13 @@ fun ChatDisplaySettingsScreen(
 
             } // end item 显示设置
 
-            item {
-                AgentStatusCard(prefs, currentCharacterId, currentMode, debugConversationId) {
-                    if (currentMode == "normal") {
-                        SceneStatusCard(prefs, currentCharacterId, debugConversationId,
-                            sceneUserName, sceneCharacterName, scenePreview)
+            if (currentMode in setOf("normal", "galgame", "galgame_lock")) {
+                item {
+                    AgentStatusCard(prefs, currentCharacterId, currentMode, debugConversationId) {
+                        if (currentMode == "normal") {
+                            SceneStatusCard(prefs, currentCharacterId, debugConversationId,
+                                sceneUserName, sceneCharacterName, scenePreview)
+                        }
                     }
                 }
             }

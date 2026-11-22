@@ -38,8 +38,8 @@ android {
         applicationId = "top.ponychat.webview"
         minSdk = 24
         targetSdk = 34
-        versionCode = 451
-        versionName = "6.1.25"
+        versionCode = 454
+        versionName = "6.1.28"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
@@ -155,6 +155,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-gif:2.7.0")
     implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-session:1.3.1")
 
     // Baseline Profile installer — 应用安装时自动编译 baseline-prof.txt 中的热路径，消除 JIT 冷启动卡顿
     implementation("androidx.profileinstaller:profileinstaller:1.3.1")

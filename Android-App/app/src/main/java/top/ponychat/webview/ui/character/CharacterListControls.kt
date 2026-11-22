@@ -8,9 +8,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -38,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -108,14 +108,12 @@ internal fun PullRefreshIndicator(
 internal fun LazyListState.isAtRefreshTop(): Boolean =
     !canScrollBackward || (firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset <= 2)
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun RowScope.CompactModeNavItem(
     selected: Boolean,
     icon: ImageVector,
     label: String,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null
 ) {
     val animatedColor by animateColorAsState(
         targetValue = if (selected) Primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(0.6f),
@@ -132,10 +130,7 @@ internal fun RowScope.CompactModeNavItem(
         modifier = Modifier
             .weight(1f)
             .fillMaxHeight()
-            .combinedClickable(
-                onClick = { onClick() },
-                onLongClick = onLongClick
-            )
+            .selectable(selected = selected, role = Role.Tab, onClick = onClick)
             .padding(vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {

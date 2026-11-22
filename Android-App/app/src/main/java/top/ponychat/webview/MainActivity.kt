@@ -73,6 +73,7 @@ val CustomToast = compositionLocalOf<SnackbarHostState> { error("No SnackbarHost
 open class MainActivity : ComponentActivity() {
 
     private lateinit var prefs: AppPreferences
+    private var openMusicPlayer by mutableStateOf(false)
     private val companionRuntimeClient by lazy { CompanionRuntimeClient(applicationContext) }
 
     companion object {
@@ -266,6 +267,8 @@ open class MainActivity : ComponentActivity() {
                                 key(deviceExperience) {
                                     AppNavigation(
                                         prefs = prefs,
+                                        openMusicPlayer = openMusicPlayer,
+                                        onMusicPlayerOpened = { openMusicPlayer = false },
                                         isDeviceExperience = deviceExperience,
                                         isCompanionRuntimeReady = runtimeState is CompanionRuntimeState.Ready,
                                         companionRuntimeStatus = runtimeState.statusText(),
@@ -389,6 +392,10 @@ open class MainActivity : ComponentActivity() {
     }
 
     private fun consumeChatNavigationIntent(intent: Intent?, allowNavigation: Boolean = true) {
+        if (intent?.action == top.ponychat.webview.ui.music.MusicPlaybackService.OPEN_PLAYER) {
+            if (allowNavigation) openMusicPlayer = true
+            intent.action = null
+        }
         val characterId = intent?.getStringExtra("open_character_id")?.takeIf { it.isNotBlank() }
         val mode = intent?.getStringExtra("open_mode")
         intent?.removeExtra("open_character_id")

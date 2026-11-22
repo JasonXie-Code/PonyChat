@@ -242,6 +242,7 @@ private object ChatVoicePlaybackCoordinator {
         }
         return runCatching {
             active.seekTo(currentPositionMs.toInt().coerceIn(0, safeDuration.toInt()))
+            top.ponychat.webview.ui.music.MusicSpeechInterruption.pauseMusic()
             active.start()
             currentIsPlaying = true
             true

@@ -1,5 +1,7 @@
 package top.ponychat.webview
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
@@ -9,19 +11,28 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -31,6 +42,7 @@ import androidx.activity.ComponentActivity
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -43,6 +55,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.shape.RoundedCornerShape
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -65,9 +78,16 @@ import top.ponychat.webview.ui.character.MyPublishedHallScreen
 import top.ponychat.webview.ui.character.CharacterProfileScreen
 import top.ponychat.webview.ui.character.CharacterListScreen
 import top.ponychat.webview.ui.character.CharacterViewModel
+import top.ponychat.webview.ui.common.PonyHomeBottomBar
+import top.ponychat.webview.ui.music.MusicMiniPlayer
+import top.ponychat.webview.ui.music.MusicPlayerScreen
+import top.ponychat.webview.ui.music.MusicSearchScreen
+import top.ponychat.webview.ui.music.MusicPlayerViewModel
+import top.ponychat.webview.ui.music.MusicScreen
 import top.ponychat.webview.ui.chat.ChatScreen
 import top.ponychat.webview.ui.creation.CreationChatScreen
 import top.ponychat.webview.ui.chat.ChatViewModel
+import top.ponychat.webview.ui.chat.clearFailedChatRoundIfNeeded
 import top.ponychat.webview.ui.chat.ConversationHistoryScreen
 import top.ponychat.webview.ui.chat.MemoryScreen
 import top.ponychat.webview.ui.chat.ProactiveTasksScreen
@@ -89,12 +109,15 @@ object Routes {
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val CHARACTER_LIST = "character_list"
+    const val GAMES = "games"
+    const val MUSIC = "music"
+    const val MUSIC_PLAYER = "music_player"
+    const val MUSIC_SEARCH = "music_search"
     const val CHARACTER_HALL = "character_hall"
     const val CHARACTER_HALL_MY_PUBLISHED = "character_hall_my_published"
     const val CHARACTER_PROFILE = "character_profile"
     const val CHARACTER_EDIT = "character_edit"
     const val CHAT = "chat"
-    const val CREATION = "creation"
     const val HISTORY = "history"
     const val MEMORY = "memory"
     const val PROACTIVE_TASKS = "proactive_tasks"
@@ -107,6 +130,10 @@ object Routes {
     const val BOORU_SEARCH = "booru_search"
 
 }
+
+private const val CHAT_CHARACTER_ID = "chatCharacterId"
+private const val CHAT_MODE = "chatMode"
+private const val LEGACY_CREATION_ROUTE = "creation"
 
 @Composable
 fun AppNavigation(
@@ -122,7 +149,9 @@ fun AppNavigation(
         Routes.LOGIN
     } else {
         Routes.CHARACTER_LIST
-    }
+    },
+    openMusicPlayer: Boolean = false,
+    onMusicPlayerOpened: () -> Unit = {},
 ) {
     val navController = rememberNavController()
     val context = LocalContext.current
@@ -130,34 +159,112 @@ fun AppNavigation(
     val currentRoute = backStackEntry?.destination?.route
     val authViewModel: AuthViewModel = viewModel()
     val characterViewModel: CharacterViewModel = viewModel()
-    // 每个角色拥有独立的 Activity 级 ViewModel，切换角色时各自的生成互不干扰
-    fun getChatVm(characterId: String): ChatViewModel {
+    val musicModel: MusicPlayerViewModel = viewModel()
+    val scope = rememberCoroutineScope()
+    var openPlayerJob by remember { mutableStateOf<Job?>(null) }
+    fun openMusic() {
+        val fromGames = navController.currentDestination?.route == Routes.GAMES
+        navController.navigate(Routes.MUSIC) {
+            if (fromGames) popUpTo(Routes.GAMES) { inclusive = true }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+    fun openGames() {
+        val fromMusic = navController.currentDestination?.route == Routes.MUSIC
+        navController.navigate(Routes.GAMES) {
+            if (fromMusic) {
+                popUpTo(Routes.MUSIC) {
+                    inclusive = true
+                    saveState = true
+                }
+            }
+            launchSingleTop = true
+        }
+    }
+    fun openChatList() {
+        val fromMusic = navController.currentDestination?.route == Routes.MUSIC
+        if (!navController.popBackStack(Routes.CHARACTER_LIST, inclusive = false, saveState = fromMusic)) {
+            navController.navigate(Routes.CHARACTER_LIST) { launchSingleTop = true }
+        }
+    }
+    fun openPlayer() {
+        val source = navController.currentBackStackEntry ?: return
+        openPlayerJob?.cancel()
+        openPlayerJob = scope.launch {
+            musicModel.awaitCurrentLyrics()
+            if (navController.currentBackStackEntry === source) {
+                navController.navigate(Routes.MUSIC_PLAYER) { launchSingleTop = true }
+            }
+        }
+    }
+    LaunchedEffect(currentRoute) {
+        if (currentRoute in listOf(Routes.CHARACTER_LIST, Routes.MUSIC, Routes.MUSIC_PLAYER)) musicModel.connect()
+    }
+    LaunchedEffect(openMusicPlayer, currentRoute) {
+        if (!openMusicPlayer || currentRoute == null) return@LaunchedEffect
+        onMusicPlayerOpened()
+        if (!prefs.isLoggedIn() || currentRoute == Routes.MUSIC_PLAYER) return@LaunchedEffect
+        if (currentRoute == Routes.MUSIC_SEARCH && navController.popBackStack(Routes.MUSIC_PLAYER, inclusive = false)) {
+            return@LaunchedEffect
+        }
+        if (currentRoute != Routes.MUSIC) openMusic()
+        openPlayer()
+    }
+    // 各账号、角色和模式独立保存输入、消息与生成状态。
+    fun getChatVm(characterId: String, mode: String): ChatViewModel {
         val activity = context as ComponentActivity
         return ViewModelProvider(activity, activity.defaultViewModelProviderFactory)
-            .get("chat_$characterId", ChatViewModel::class.java)
+            .get("chat:${prefs.username}:$characterId:$mode", ChatViewModel::class.java)
     }
 
-    var selectedCharacter by remember { mutableStateOf<Character?>(null) }
-    var selectedCharacterId by rememberSaveable { mutableStateOf<String?>(null) }
-    fun selectCharacter(character: Character?) {
-        selectedCharacter = character
-        selectedCharacterId = character?.id
+    val openedCharacters = remember { mutableStateMapOf<String, Character>() }
+    val characterState by characterViewModel.state.collectAsStateWithLifecycle()
+    fun chatCharacter(characterId: String): Character? =
+        openedCharacters[characterId] ?: characterState.characters.firstOrNull { it.id == characterId }
+
+    fun openChat(character: Character, mode: String = "normal", fromNotification: Boolean = false) {
+        val characterId = character.id?.takeIf(String::isNotBlank) ?: return
+        val initialMode = when (mode) {
+            "creation", "galgame", "galgame_lock" -> mode
+            else -> "normal"
+        }
+        openedCharacters[characterId] = character
+        prefs.lastCharacterId = characterId
+        prefs.chatMode = initialMode
+        navController.navigate(Routes.CHAT) {
+            if (fromNotification) {
+                popUpTo(Routes.CHARACTER_LIST) { inclusive = false }
+                launchSingleTop = true
+            }
+        }
+        navController.currentBackStackEntry?.savedStateHandle?.apply {
+            set(CHAT_CHARACTER_ID, characterId)
+            set(CHAT_MODE, initialMode)
+        }
+    }
+    fun openChatDetail(route: String, chatEntry: NavBackStackEntry) {
+        navController.navigate(route)
+        navController.currentBackStackEntry?.savedStateHandle?.apply {
+            set(CHAT_CHARACTER_ID, chatEntry.savedStateHandle.get<String>(CHAT_CHARACTER_ID) ?: prefs.lastCharacterId)
+            set(CHAT_MODE, chatEntry.savedStateHandle.get<String>(CHAT_MODE) ?: prefs.chatMode)
+        }
     }
     var profileCharacter by remember { mutableStateOf<Character?>(null) }
     var editingCharacter by remember { mutableStateOf<Character?>(null) }
     var isCreatingCharacter by remember { mutableStateOf(false) }
     var lastBackPressAt by remember { mutableLongStateOf(0L) }
     val snackbarHostState = CustomToast.current
-    val scope = rememberCoroutineScope()
 
     var showUpgradeDialog by remember { mutableStateOf(false) }
     var forceUpgradeDlState by remember { mutableStateOf<ApkDownloadState>(ApkDownloadState.Idle) }
 
     fun clearAccountScopedUiState() {
-        selectCharacter(null)
+        openedCharacters.clear()
         profileCharacter = null
         editingCharacter = null
         isCreatingCharacter = false
+        navController.clearBackStack(Routes.MUSIC)
         characterViewModel.resetForAccountChange()
     }
 
@@ -332,15 +439,7 @@ fun AppNavigation(
             }
             val char = characterViewModel.state.value.characters.find { it.id == navTarget.characterId }
             if (char != null) {
-                selectCharacter(char)
-                val vm = getChatVm(char.id ?: "default")
-                // 使用通知携带的 mode，确保游戏/锁分通知能正确进入对应模式
-                vm.initWithCharacter(char, navTarget.mode)
-                navController.navigate(Routes.CHAT) {
-                    // 若已在某个 CHAT 页则替换，避免叠加多个 CHAT 路由
-                    popUpTo(Routes.CHARACTER_LIST) { inclusive = false }
-                    launchSingleTop = true
-                }
+                openChat(char, navTarget.mode, fromNotification = true)
             }
             ProactiveNavTarget.clear()
         }
@@ -379,7 +478,15 @@ fun AppNavigation(
 
     NavHost(
         navController = navController,
-        startDestination = startDestination
+        startDestination = startDestination,
+        exitTransition = {
+            if (targetState.destination.route == Routes.MUSIC_PLAYER) ExitTransition.KeepUntilTransitionsFinished
+            else fadeOut(tween(700))
+        },
+        popEnterTransition = {
+            if (initialState.destination.route == Routes.MUSIC_PLAYER) EnterTransition.None else fadeIn(tween(700))
+        },
+        popExitTransition = { fadeOut(tween(700)) },
     ) {
         composable(Routes.LOGIN) {
             LoginScreen(
@@ -425,7 +532,6 @@ fun AppNavigation(
         }
 
         composable(Routes.DEVICE_HOME) {
-            val characterState by characterViewModel.state.collectAsState()
             val activeCharacter = characterState.characters.firstOrNull {
                 it.id == prefs.lastCharacterId
             }
@@ -440,13 +546,7 @@ fun AppNavigation(
                         if (activeCharacter == null) {
                             navController.navigate(Routes.DEVICE_CHARACTER_PICKER)
                         } else {
-                            selectCharacter(activeCharacter)
-                            if (prefs.chatMode == "creation") navController.navigate(Routes.CREATION)
-                            else {
-                                getChatVm(activeCharacter.id ?: "default")
-                                    .initWithCharacter(activeCharacter, prefs.chatMode)
-                                navController.navigate(Routes.CHAT)
-                            }
+                            openChat(activeCharacter)
                         }
                     } else {
                         navController.navigate(Routes.LOGIN)
@@ -467,7 +567,6 @@ fun AppNavigation(
         }
 
         composable(Routes.DEVICE_CHARACTER_PICKER) { entry ->
-            val characterState by characterViewModel.state.collectAsState()
             DeviceCharacterPickerScreen(
                 characters = characterState.characters,
                 activeCharacterId = prefs.lastCharacterId,
@@ -478,7 +577,6 @@ fun AppNavigation(
                     val characterId = character.id?.takeIf(String::isNotBlank)
                         ?: return@DeviceCharacterPickerScreen
                     prefs.lastCharacterId = characterId
-                    selectCharacter(character)
                     if (!navController.popBackStack(Routes.DEVICE_HOME, inclusive = false)) {
                         navController.navigate(Routes.DEVICE_HOME) { launchSingleTop = true }
                     }
@@ -490,17 +588,10 @@ fun AppNavigation(
             CharacterListScreen(
                 viewModel = characterViewModel,
                 prefs = prefs,
-                onCharacterSelected = { character, mode ->
-                    selectCharacter(character)
-                    if (mode == "creation") {
-                        prefs.lastCharacterId = character.id.orEmpty()
-                        navController.navigate(Routes.CREATION)
-                    } else {
-                        val vm = getChatVm(character.id ?: "default")
-                        vm.initWithCharacter(character, mode)
-                        navController.navigate(Routes.CHAT)
-                    }
-                },
+                onNavigateToGames = ::openGames,
+                onNavigateToMusic = ::openMusic,
+                musicMiniPlayer = { MusicMiniPlayer(musicModel, ::openPlayer) },
+                onCharacterSelected = { character, _ -> openChat(character) },
                 onNavigateToSettings = {
                     navController.navigate(Routes.SETTINGS)
                 },
@@ -531,17 +622,65 @@ fun AppNavigation(
             )
         }
 
-        composable(Routes.CREATION) { entry ->
-            val character = selectedCharacter
-            if (character != null) CreationChatScreen(character, prefs,
-                onBack = { navController.popPage(entry) },
-                onCharacterProfile = {
-                    profileCharacter = character
-                    navController.navigate(Routes.CHARACTER_PROFILE)
+        composable(Routes.GAMES) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                containerColor = MaterialTheme.colorScheme.background,
+                bottomBar = {
+                    PonyHomeBottomBar(
+                        selectedTab = "games",
+                        openChatList = ::openChatList,
+                        openGames = {},
+                        openMusic = ::openMusic,
+                    )
                 },
-                onUserProfile = { navController.navigate(Routes.SETTINGS) },
-                onThemeChanged = onThemeChanged, onFontScaleChanged = onFontScaleChanged)
-            else LaunchedEffect(Unit) { navController.navigate(Routes.CHARACTER_LIST) { popUpTo(Routes.CREATION) { inclusive = true } } }
+            ) { padding ->
+                Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    Text("游戏内容开发中", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        composable(Routes.MUSIC) {
+            val albumRequests = remember(it) { it.savedStateHandle.getStateFlow<String?>("musicAlbum", null) }
+            val requestedAlbum by albumRequests.collectAsStateWithLifecycle()
+            MusicScreen(
+                musicModel, ::openPlayer, prefs, requestedAlbum,
+                onAlbumRequestHandled = { it.savedStateHandle["musicAlbum"] = null },
+            ) {
+                PonyHomeBottomBar(
+                    selectedTab = "music",
+                    openChatList = ::openChatList,
+                    openGames = ::openGames,
+                    openMusic = {},
+                )
+            }
+        }
+
+        composable(
+            Routes.MUSIC_PLAYER,
+            enterTransition = {
+                slideInVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) { fullHeight -> fullHeight }
+            },
+            popEnterTransition = { fadeIn(tween(700)) },
+            popExitTransition = {
+                slideOutVertically(animationSpec = tween(280, easing = FastOutSlowInEasing)) { fullHeight -> fullHeight }
+            },
+        ) { entry ->
+            MusicPlayerScreen(
+                musicModel,
+                close = { navController.popPage(entry) },
+                openSearch = { navController.navigate(Routes.MUSIC_SEARCH) { launchSingleTop = true } },
+                openAlbum = { id ->
+                    navController.popPage(entry)
+                    if (navController.currentBackStackEntry?.destination?.route != Routes.MUSIC) openMusic()
+                    navController.currentBackStackEntry?.savedStateHandle?.set("musicAlbum", id)
+                },
+            )
+        }
+
+        composable(Routes.MUSIC_SEARCH) { entry ->
+            MusicSearchScreen(musicModel) { navController.popPage(entry) }
         }
 
         composable(Routes.CHARACTER_HALL) { entry ->
@@ -550,7 +689,7 @@ fun AppNavigation(
                 prefs = prefs,
                 onNavigateBack = { navController.popPage(entry) },
                 onNavigateToMyPublished = { navController.navigate(Routes.CHARACTER_HALL_MY_PUBLISHED) },
-                onCharacterSelected = { character, mode ->
+                onCharacterSelected = { character, _ ->
                     profileCharacter = character
                     navController.navigate(Routes.CHARACTER_PROFILE)
                 }
@@ -582,20 +721,14 @@ fun AppNavigation(
                     viewModel = characterViewModel,
                     prefs = prefs,
                     onNavigateBack = { navController.popPage(entry) },
-                    onStartChat = { target, mode ->
+                    onStartChat = { target, _ ->
                         val localTarget = characterViewModel.state.value.characters.firstOrNull {
                             it.id == target.id ||
                                 (target.sourceId?.isNotBlank() == true && it.id == target.sourceId) ||
                                 (it.sourceId?.isNotBlank() == true && it.sourceId == target.id) ||
                                 (it.contentHash?.isNotBlank() == true && it.contentHash == target.contentHash)
                         } ?: target
-                        selectCharacter(localTarget)
-                        if (mode == "creation") navController.navigate(Routes.CREATION)
-                        else {
-                            val vm = getChatVm(localTarget.id ?: "default")
-                            vm.initWithCharacter(localTarget, mode)
-                            navController.navigate(Routes.CHAT)
-                        }
+                        openChat(localTarget)
                     },
                     onEditSettings = { target ->
                         isCreatingCharacter = false
@@ -617,99 +750,131 @@ fun AppNavigation(
             )
         }
 
+        val renderChat: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit = { entry ->
+            val characterId by entry.savedStateHandle
+                .getStateFlow(CHAT_CHARACTER_ID, prefs.lastCharacterId).collectAsStateWithLifecycle()
+            val initialMode = if (entry.destination.route == LEGACY_CREATION_ROUTE) "creation" else prefs.chatMode
+            val mode by entry.savedStateHandle
+                .getStateFlow(CHAT_MODE, initialMode).collectAsStateWithLifecycle()
+            val character = chatCharacter(characterId)
+            if (character == null) {
+                LaunchedEffect(entry, characterId) {
+                    if (characterId.isNotBlank()) kotlinx.coroutines.delay(3000)
+                    if (chatCharacter(characterId) == null && navController.currentBackStackEntry === entry) {
+                        navController.popPage(entry)
+                    }
+                }
+            } else {
+                val vm = if (mode == "creation") null else remember(characterId, mode) {
+                    getChatVm(characterId, mode)
+                }
+                val activeVm by rememberUpdatedState(vm)
+                // 切换模式时仍在同一个聊天页，离页清理只在聊天页退出时执行。
+                DisposableEffect(entry) {
+                    onDispose { activeVm?.clearFailedChatRoundIfNeeded() }
+                }
+                val onModeSelected: (String) -> Unit = { nextMode ->
+                    if (navController.currentBackStackEntry === entry && nextMode != mode) {
+                        prefs.chatMode = nextMode
+                        entry.savedStateHandle[CHAT_MODE] = nextMode
+                    }
+                }
+                val showDisplaySettingsState = rememberSaveable(characterId) { mutableStateOf(false) }
+                key(characterId, mode) {
+                    if (vm == null) {
+                        CreationChatScreen(
+                            character = character,
+                            prefs = prefs,
+                            onBack = { navController.popPage(entry) },
+                            onCharacterProfile = {
+                                profileCharacter = character
+                                navController.navigate(Routes.CHARACTER_PROFILE)
+                            },
+                            onUserProfile = { navController.navigate(Routes.SETTINGS) },
+                            onThemeChanged = onThemeChanged,
+                            onFontScaleChanged = onFontScaleChanged,
+                            onModeSelected = onModeSelected,
+                            showDisplaySettingsState = showDisplaySettingsState,
+                        )
+                    } else {
+                        var initialized by remember { mutableStateOf(false) }
+                        LaunchedEffect(character) {
+                            vm.initWithCharacter(character, mode)
+                            initialized = true
+                        }
+                        if (initialized) ChatScreen(
+                            viewModel = vm,
+                            character = character,
+                            allCharacters = characterState.characters,
+                            prefs = prefs,
+                            onNavigateBack = { navController.popPage(entry) },
+                            onNavigateToEditCharacter = {
+                                profileCharacter = character
+                                navController.navigate(Routes.CHARACTER_PROFILE)
+                            },
+                            onNavigateToCharacterProfile = { target ->
+                                profileCharacter = target
+                                navController.navigate(Routes.CHARACTER_PROFILE)
+                            },
+                            characterHome = { returnToChat ->
+                                CharacterProfileScreen(
+                                    character = character,
+                                    viewModel = characterViewModel,
+                                    prefs = prefs,
+                                    embedded = true,
+                                    onNavigateBack = returnToChat,
+                                    onStartChat = { _, _ -> returnToChat() },
+                                    onEditSettings = { target ->
+                                        isCreatingCharacter = false
+                                        editingCharacter = target
+                                        navController.navigate(Routes.CHARACTER_EDIT)
+                                    },
+                                    onAddFromHall = { characterViewModel.addCharacterFromHall(it) },
+                                )
+                            },
+                            onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
+                            onNavigateToProactiveTasks = { openChatDetail(Routes.PROACTIVE_TASKS, entry) },
+                            onNavigateToHistory = { openChatDetail(Routes.HISTORY, entry) },
+                            onThemeChanged = onThemeChanged,
+                            onModeSelected = onModeSelected,
+                            showDisplaySettingsState = showDisplaySettingsState,
+                        )
+                    }
+                }
+            }
+        }
         composable(
             Routes.CHAT,
             enterTransition = { EnterTransition.None },
             exitTransition = { fadeOut(animationSpec = tween(180)) },
             popEnterTransition = { fadeIn(animationSpec = tween(220)) },
-            popExitTransition = { fadeOut(animationSpec = tween(180)) }
-        ) { entry ->
-            val character = selectedCharacter
-            if (character == null) {
-                // 优先恢复当前页面保存的角色 ID，旧偏好仅用于没有页面状态的冷启动。
-                LaunchedEffect(Unit) {
-                    val lastId = selectedCharacterId ?: prefs.lastCharacterId
-                    val lastMode = prefs.chatMode
-                    if (lastId.isBlank()) {
-                        navController.navigate(Routes.CHARACTER_LIST) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                        return@LaunchedEffect
-                    }
-                    if (characterViewModel.state.value.characters.isEmpty()) {
-                        characterViewModel.loadMyCharacters()
-                    }
-                    var waited = 0
-                    while (characterViewModel.state.value.characters.isEmpty() && waited < 30) {
-                        kotlinx.coroutines.delay(100)
-                        waited++
-                    }
-                    val char = characterViewModel.state.value.characters.find { it.id == lastId }
-                    if (char != null) {
-                        selectCharacter(char)
-                        getChatVm(char.id ?: "default").initWithCharacter(char, lastMode)
-                    } else {
-                        navController.navigate(Routes.CHARACTER_LIST) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
-                }
-            } else {
-                val vm = remember(character.id) { getChatVm(character.id ?: "default") }
-                ChatScreen(
-                    viewModel = vm,
-                    character = character,
-                    allCharacters = characterViewModel.state.value.characters,
-                    prefs = prefs,
-                    onNavigateBack = { navController.popPage(entry) },
-                    onNavigateToEditCharacter = {
-                        profileCharacter = character
-                        navController.navigate(Routes.CHARACTER_PROFILE)
-                    },
-                    onNavigateToCharacterProfile = { target ->
-                        profileCharacter = target
-                        navController.navigate(Routes.CHARACTER_PROFILE)
-                    },
-                    characterHome = { returnToChat ->
-                        CharacterProfileScreen(
-                            character = character,
-                            viewModel = characterViewModel,
-                            prefs = prefs,
-                            embedded = true,
-                            onNavigateBack = returnToChat,
-                            onStartChat = { _, _ -> returnToChat() },
-                            onEditSettings = { target ->
-                                isCreatingCharacter = false
-                                editingCharacter = target
-                                navController.navigate(Routes.CHARACTER_EDIT)
-                            },
-                            onAddFromHall = { characterViewModel.addCharacterFromHall(it) },
-                        )
-                    },
-                    onNavigateToSettings = { navController.navigate(Routes.SETTINGS) },
-                    onNavigateToProactiveTasks = { navController.navigate(Routes.PROACTIVE_TASKS) },
-                    onNavigateToHistory = { navController.navigate(Routes.HISTORY) },
-                    onThemeChanged = onThemeChanged,
-                )
-            }
-        }
+            popExitTransition = { fadeOut(animationSpec = tween(180)) },
+            content = renderChat,
+        )
+        // 从旧版本恢复导航栈时，原创造页面也使用同一个聊天界面。
+        composable(LEGACY_CREATION_ROUTE, content = renderChat)
 
         composable(Routes.HISTORY) { entry ->
-            val character = selectedCharacter
+            val characterId = entry.savedStateHandle.get<String>(CHAT_CHARACTER_ID) ?: prefs.lastCharacterId
+            val mode = entry.savedStateHandle.get<String>(CHAT_MODE) ?: prefs.chatMode
+            val character = chatCharacter(characterId)
             if (character != null) {
-                val vm = remember(character.id) { getChatVm(character.id ?: "default") }
+                val vm = remember(characterId, mode) { getChatVm(characterId, mode) }
+                LaunchedEffect(vm, character) {
+                    if (vm.state.value.character == null) vm.initWithCharacter(character, mode)
+                }
                 ConversationHistoryScreen(
                     viewModel = vm,
                     character = character,
                     prefs = prefs,
                     onNavigateBack = { navController.popPage(entry) },
-                    onNavigateToMemory = { navController.navigate(Routes.MEMORY) }
+                    onNavigateToMemory = { openChatDetail(Routes.MEMORY, entry) }
                 )
             }
         }
 
         composable(Routes.PROACTIVE_TASKS) { entry ->
-            val character = selectedCharacter
+            val character = chatCharacter(entry.savedStateHandle.get<String>(CHAT_CHARACTER_ID) ?: prefs.lastCharacterId)
             if (character != null) {
                 ProactiveTasksScreen(
                     character = character,
@@ -720,7 +885,7 @@ fun AppNavigation(
         }
 
         composable(Routes.MEMORY) { entry ->
-            val character = selectedCharacter
+            val character = chatCharacter(entry.savedStateHandle.get<String>(CHAT_CHARACTER_ID) ?: prefs.lastCharacterId)
             if (character != null) {
                 MemoryScreen(
                     character = character,

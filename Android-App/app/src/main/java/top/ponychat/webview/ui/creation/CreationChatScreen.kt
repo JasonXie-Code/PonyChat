@@ -3,6 +3,7 @@ package top.ponychat.webview.ui.creation
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.activity.compose.BackHandler
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalDensity
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -49,7 +51,9 @@ import androidx.compose.ui.graphics.compositeOver
 @Composable
 fun CreationChatScreen(character: Character, prefs: AppPreferences, onBack: () -> Unit,
     onCharacterProfile: () -> Unit = {}, onUserProfile: () -> Unit = {},
-    onThemeChanged: (Boolean) -> Unit = {}, onFontScaleChanged: (Float) -> Unit = {}) {
+    onThemeChanged: (Boolean) -> Unit = {}, onFontScaleChanged: (Float) -> Unit = {},
+    onModeSelected: ((String) -> Unit)? = null,
+    showDisplaySettingsState: MutableState<Boolean> = rememberSaveable { mutableStateOf(false) }) {
     val id = character.id.orEmpty()
     val vm: CreationViewModel = viewModel(key = "creation-${prefs.username}-$id", factory = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST") override fun <T : ViewModel> create(modelClass: Class<T>): T = CreationViewModel(prefs, id) as T
@@ -67,22 +71,46 @@ fun CreationChatScreen(character: Character, prefs: AppPreferences, onBack: () -
     var preferenceRevision by remember { mutableIntStateOf(0) }
     val appearance = remember(preferenceRevision) { Triple(prefs.isDarkTheme, prefs.fontScale, prefs.showTimestamp) }
     top.ponychat.webview.ui.theme.PonyChatTheme(darkTheme = appearance.first, fontScale = appearance.second) {
+    if (showDisplaySettingsState.value) {
+        val closeSettings = { showDisplaySettingsState.value = false }
+        BackHandler(onBack = closeSettings)
+        CreationDisplaySettings(prefs, closeSettings, onModeSelected) {
+            preferenceRevision++
+            onThemeChanged(prefs.isDarkTheme)
+            onFontScaleChanged(prefs.fontScale)
+        }
+        return@PonyChatTheme
+    }
     NavHost(navController = navigation, startDestination = "conversation") {
         composable("conversation") {
             val state by vm.state.collectAsState()
+            val scope = rememberCoroutineScope()
+            val openSettings: () -> Unit = {
+                if (state.session != null) {
+                    navigation.navigate("settings") { launchSingleTop = true }
+                } else if (!state.loading && state.error == null) {
+                    scope.launch {
+                        vm.newSession(clearInput = false).join()
+                        if (vm.state.value.session != null && navigation.currentDestination?.route == "conversation") {
+                            navigation.navigate("settings") { launchSingleTop = true }
+                        }
+                    }
+                }
+            }
             CreationStreamingHaptics(state.streamVibrating, prefs)
             CreationChatContent(character.name.orEmpty(), state, onBack, vm::input, { vm.send() }, { vm.send(true) },
                 { vm.newSession() }, { vm.load(it) }, vm::stop,
                 character.avatar.orEmpty(), prefs.avatar, prefs.username, prefs.effectiveApiBase(),
-                { navigation.navigate("history") }, { navigation.navigate("settings") }, { navigation.navigate("settings") },
+                { navigation.navigate("history") }, openSettings, openSettings,
                 onCharacterProfile, onUserProfile, { vm.deleteMessage(it) }, { navigation.navigate("edit/$it") },
                 { vm.previousReplyVersion() }, { vm.nextReplyVersion() },
-                onDisplaySettings = { navigation.navigate("display") }, showTimestamp = appearance.third,
+                onDisplaySettings = { showDisplaySettingsState.value = true }, showTimestamp = appearance.third,
                 onContinue = { vm.continueStory() })
         }
         composable("display") {
-            CreationDisplaySettings(prefs, { navigation.popBackStack() }) {
-                preferenceRevision++; onThemeChanged(prefs.isDarkTheme); onFontScaleChanged(prefs.fontScale)
+            LaunchedEffect(Unit) {
+                navigation.popBackStack()
+                showDisplaySettingsState.value = true
             }
         }
         composable("history") {
@@ -252,7 +280,7 @@ fun CreationChatContent(characterName: String, state: CreationUiState, onBack: (
                     isStreaming = busy, voiceState = VoiceState.Idle, imageAttachments = emptyList(),
                     onPickImage = {}, onPickCamera = {}, onRemoveAttachment = {},
                     allowEmptySend = session?.messages?.lastOrNull()?.role == "user",
-                    mode = "creation", quotaExceeded = state.loading || session == null,
+                    mode = "creation", quotaExceeded = state.loading || (session == null && state.error != null),
                     dismissPanelsSignal = dismissPanelsSignal, onPanelActiveChanged = { inputPanelActive = it },
                     showToolbar = true, onStopGeneration = if (state.sending) ({ feedback(onStop) }) else null,
                     onCreationContextClick = { feedback(onContext) }, onCreationSettingsClick = { feedback(onSettings) })
@@ -292,7 +320,7 @@ fun CreationChatContent(characterName: String, state: CreationUiState, onBack: (
                                 Text("让想象自由展开", style = MaterialTheme.typography.headlineSmall)
                                 Text("和$characterName 一起写故事、聊想法，或创造一个新世界。", modifier = Modifier.padding(top = 12.dp),
                                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                PonyButton("设置你的创作风格", onClick = { feedback(onSettings) }, enabled = session != null,
+                                PonyButton("设置你的创作风格", onClick = { feedback(onSettings) }, enabled = !busy && (session != null || state.error == null),
                                     style = PonyButtonStyle.Secondary, modifier = Modifier.width(240.dp).padding(top = 20.dp))
                             }
                         }

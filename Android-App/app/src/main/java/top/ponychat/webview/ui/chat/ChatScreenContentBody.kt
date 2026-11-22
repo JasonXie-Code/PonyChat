@@ -75,7 +75,6 @@ import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -203,7 +202,9 @@ internal fun ChatScreenContentBody(
     onNavigateToSettings: () -> Unit = {},
     onNavigateToProactiveTasks: () -> Unit = {},
     onNavigateToHistory: () -> Unit = {},
-    onThemeChanged: (Boolean) -> Unit = {}
+    onThemeChanged: (Boolean) -> Unit = {},
+    onModeSelected: (String) -> Unit,
+    showDisplaySettingsState: MutableState<Boolean>,
 ) {
     val state by viewModel.state.collectAsState()
     // 加载遮罩：不再绑定 conversationId 作为 key——当 conversationId 从 null 变为服务端值时，
@@ -363,13 +364,6 @@ internal fun ChatScreenContentBody(
     val autoFollowTailDistancePx = with(LocalDensity.current) { ChatAutoFollowTailDistance.toPx() }
     val scrollNaturalBottomPaddingPx = with(LocalDensity.current) { 8.dp.toPx().roundToInt() }
     val scrollBottomAnchorTolerancePx = with(LocalDensity.current) { 2.dp.toPx() }
-
-    // 退出聊天界面时：若上一轮请求失败，移除顶部错误提示与本轮失败配对的用户/助手气泡（与再次发送时的清理一致）
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.clearFailedChatRoundIfNeeded()
-        }
-    }
 
     val lifecycleOwnerChat = LocalLifecycleOwner.current
     val activeCharId = character.id?.takeIf { it.isNotBlank() }.orEmpty()
@@ -539,7 +533,6 @@ internal fun ChatScreenContentBody(
     }
 
     var voiceBridge by remember { mutableStateOf<BackendStreamingVoiceBridge?>(null) }
-    val showDisplaySettingsState = rememberSaveable { mutableStateOf(false) }
     val pendingImages = remember { mutableStateListOf<String>() }
     var previewImageUrl by remember { mutableStateOf<String?>(null) }
     var previewImages by remember { mutableStateOf<List<String>>(emptyList()) }
@@ -929,16 +922,16 @@ internal fun ChatScreenContentBody(
         }
     }
 
-    // 胜利庆祝：分数 100 且服务端未 victory_ack 时弹出；展示时 POST 持久化（重装同账号不重复）
+    // 只有新完成的回合触发庆祝；浏览已有满分历史不回写进度。
     var showVictoryCelebration by remember(character.id) { mutableStateOf(false) }
     var victoryCelebrationPreviewOnly by remember(character.id) { mutableStateOf(false) }
-    LaunchedEffect(galgameScore, state.galgameVictoryCelebrationAck) {
+    LaunchedEffect(galgameScore, state.galgameVictoryCelebrationAck, state.galgameVictoryPending) {
         if (galgameScore == null || galgameScore < 100) {
             showVictoryCelebration = false
             victoryCelebrationPreviewOnly = false
             return@LaunchedEffect
         }
-        if (!state.galgameVictoryCelebrationAck) {
+        if (state.galgameVictoryPending && !state.galgameVictoryCelebrationAck) {
             delay(800)
             victoryCelebrationPreviewOnly = false
             showVictoryCelebration = true
@@ -1095,6 +1088,7 @@ internal fun ChatScreenContentBody(
         galgameScore = galgameScore,
         viewModel = viewModel,
         onThemeChanged = onThemeChanged,
+        onModeSelected = onModeSelected,
         onPrefsSavedFromDisplaySettings = { updatedPrefs ->
             currentFontScale = updatedPrefs.fontScale
             currentShowTimestamp = updatedPrefs.showTimestamp

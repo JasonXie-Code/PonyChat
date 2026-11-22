@@ -12,6 +12,14 @@ class AppPreferences(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    internal var musicAlbumGrid: Boolean
+        get() = prefs.getBoolean("music_album_grid", false)
+        set(value) = prefs.edit { putBoolean("music_album_grid", value) }
+
+    internal var musicResumeSnapshot: String?
+        get() = prefs.getString("music_resume_snapshot", null)
+        set(value) = prefs.edit { putString("music_resume_snapshot", value) }
+
     init {
         // 从旧版本升级且已登录/有用户名：视为已完成首次引导，避免强弹一批权限
         if (!prefs.contains(KEY_INITIAL_STARTUP_PERMISSIONS_DONE)) {
@@ -617,6 +625,16 @@ class AppPreferences(context: Context) {
         } catch (e: Exception) {
             false
         }
+    }
+
+    internal fun observeAccountChanges(onChange: () -> Unit): () -> Unit {
+        val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            when (key) {
+                KEY_USERNAME, KEY_AUTH_TOKEN, KEY_ACTIVE_API_BASE, KEY_DEBUG_MODE, null -> onChange()
+            }
+        }
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+        return { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
     }
 
     fun logout() {

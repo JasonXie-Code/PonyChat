@@ -27,12 +27,13 @@ internal fun ChatScreenDisplaySettingsAndVitalsOverlays(
     galgameScore: Int?,
     viewModel: ChatViewModel,
     onThemeChanged: (Boolean) -> Unit,
+    onModeSelected: (String) -> Unit,
     onPrefsSavedFromDisplaySettings: (AppPreferences) -> Unit,
     onDebugTriggerVictory: () -> Unit,
     onDebugResetVictory: () -> Unit,
 ) {
     // ==================== 显示设置页面（淡入淡出动画） ====================
-    val displaySettingsTransition = remember { MutableTransitionState(false) }
+    val displaySettingsTransition = remember { MutableTransitionState(showDisplaySettingsState.value) }
     displaySettingsTransition.targetState = showDisplaySettingsState.value
     val isDisplaySettingsInWindow =
         displaySettingsTransition.currentState || displaySettingsTransition.targetState
@@ -65,6 +66,7 @@ internal fun ChatScreenDisplaySettingsAndVitalsOverlays(
             onThemeChanged = onThemeChanged,
             onSave = onPrefsSavedFromDisplaySettings,
             currentMode = state.mode,
+            onModeSelected = onModeSelected,
             currentCharacterId = state.character?.id.orEmpty(),
             characterSupportsVoice = state.character?.supportsCharacterVoice() == true,
             sceneCharacterName = state.character?.displayName().orEmpty(),

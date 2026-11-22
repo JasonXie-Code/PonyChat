@@ -151,7 +151,7 @@ fun ChatViewModel.postGalgameVictoryAck() {
     val mode = _state.value.mode
     if (!mode.startsWith("galgame")) return
     if (_state.value.galgameVictoryCelebrationAck) return
-    _state.value = _state.value.copy(galgameVictoryCelebrationAck = true)
+    _state.value = _state.value.copy(galgameVictoryCelebrationAck = true, galgameVictoryPending = false)
     viewModelScope.launch(Dispatchers.IO) {
         charRepo.postGalgameVictoryAck(prefs.username, characterId, mode).onFailure { err ->
             DebugLog.w(TAG, "postGalgameVictoryAck: ${err.message}", err)
@@ -983,6 +983,8 @@ internal suspend fun ChatViewModel.applyGalgameSuccessFromResultMap(gal: Map<Str
         _state.value = _state.value.copy(
             messages = msgs,
             galgameScore = adjustedScore,
+            galgameVictoryPending = adjustedScore == 100 &&
+                (_state.value.galgameScore != 100 || _state.value.galgameVictoryPending),
             isStreaming = false,
             galgameStreamingStep = null,
             lockCharVitals = if (mode == "galgame_lock") newVitals else _state.value.lockCharVitals,

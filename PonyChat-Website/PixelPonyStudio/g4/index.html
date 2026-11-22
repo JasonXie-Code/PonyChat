@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="对照《小马宝莉》G4 六位主角的原图与 128 到 16 像素降采样结果。">
+  <meta name="theme-color" content="#f4f2e9">
+  <title>小马宝莉 G4 · 降采样对照</title>
+  <link rel="stylesheet" href="compare.css">
+  <script src="compare.js" defer></script>
+</head>
+<body>
+  <header class="header">
+    <div class="shell header-inner">
+      <a class="home" href="../">像素小马工坊</a>
+      <span class="current">G4 降采样对照</span>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="intro" aria-labelledby="title">
+      <div class="intro-text">
+        <h1 id="title">G4 六主角<br><span>降采样对照</span></h1>
+        <p>同一张角色图从 128×128 缩到 16×16，放大后并排看轮廓、眼睛和鬃毛还剩多少细节。</p>
+      </div>
+      <div class="hero-samples" id="hero-samples" aria-hidden="true"></div>
+    </section>
+
+    <div class="toolbar">
+      <fieldset class="modes">
+        <legend>采样方式</legend>
+        <div class="segment">
+          <label><input type="radio" name="method" value="area" checked><span>区域平均</span></label>
+          <label><input type="radio" name="method" value="nearest"><span>最近邻</span></label>
+        </div>
+      </fieldset>
+      <label class="size-toggle"><input id="actual-size" type="checkbox"> 按原生像素显示</label>
+    </div>
+    <p class="mode-description" id="mode-description" aria-live="polite">区域平均把覆盖到的颜色合在一起，边缘会更平滑。</p>
+
+    <nav class="shortcuts" id="shortcuts" aria-label="跳转到角色"></nav>
+    <div class="comparison" id="comparison" aria-busy="true"></div>
+    <noscript><p>请开启 JavaScript 查看降采样对照。</p></noscript>
+
+    <footer class="source">
+      <p>素材为呆站（Derpibooru）收录的 Hasbro G4 全身单人图。实验以站内大图为输入，每行的「原图」可打开对应图帖。</p>
+    </footer>
+  </main>
+</body>
+</html>
