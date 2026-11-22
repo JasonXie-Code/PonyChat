@@ -46,6 +46,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import top.ponychat.webview.ui.common.AvatarCropDialog
 import top.ponychat.webview.ui.common.PonyAvatar
+import top.ponychat.webview.ui.common.PonyTextField
 import top.ponychat.webview.util.formatErrorForDisplay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -214,7 +215,7 @@ fun RegisterScreen(
                 Spacer(Modifier.height(32.dp))
 
                 // 用户名
-                PonyTextField(
+                RegistrationTextField(
                     value = username,
                     onValueChange = { username = it; localError = null; viewModel.clearRegisterError() },
                     label = "用户名",
@@ -225,7 +226,7 @@ fun RegisterScreen(
                 Spacer(Modifier.height(16.dp))
 
                 // 密码
-                PonyTextField(
+                RegistrationTextField(
                     value = password,
                     onValueChange = { password = it; localError = null; viewModel.clearRegisterError() },
                     label = "密码",
@@ -239,7 +240,7 @@ fun RegisterScreen(
                 Spacer(Modifier.height(16.dp))
 
                 // 确认密码
-                PonyTextField(
+                RegistrationTextField(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it; localError = null; viewModel.clearRegisterError() },
                     label = "确认密码",
@@ -323,7 +324,7 @@ fun RegisterScreen(
                 Spacer(Modifier.height(16.dp))
 
                 // 邀请码
-                PonyTextField(
+                RegistrationTextField(
                     value = inviteCode,
                     onValueChange = { inviteCode = it; localError = null; viewModel.clearRegisterError() },
                     label = "邀请码",
@@ -429,7 +430,7 @@ fun RegisterScreen(
 }
 
 @Composable
-private fun PonyTextField(
+private fun RegistrationTextField(
     value: String,
     onValueChange: (String) -> Unit,
     label: String,
@@ -441,16 +442,12 @@ private fun PonyTextField(
     onImeAction: (() -> Unit)? = null,
     bringIntoViewDelay: Long = 0L
 ) {
-    OutlinedTextField(
+    PonyTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = if (hint.isNotEmpty()) ({ Text(hint, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(0.5f)) }) else null,
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusAwareBringIntoView(delayMillis = bringIntoViewDelay),
-        shape = RoundedCornerShape(16.dp),
+        label = label,
+        hint = hint,
+        modifier = Modifier.focusAwareBringIntoView(delayMillis = bringIntoViewDelay),
         visualTransformation = if (isPassword && !passwordVisible)
             PasswordVisualTransformation() else VisualTransformation.None,
         keyboardOptions = KeyboardOptions(
@@ -469,13 +466,6 @@ private fun PonyTextField(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }) else null,
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-            focusedLabelColor = Primary,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
-            focusedContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-        )
     )
 }
 

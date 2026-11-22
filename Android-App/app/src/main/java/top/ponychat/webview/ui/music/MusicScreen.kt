@@ -174,7 +174,7 @@ internal fun MusicScreen(
     val collectionArtwork = if (favoritesPage) favoriteArtwork else albumArtwork
     val showCollectionBackground = album != null || (favoritesPage && collectionArtwork != null)
     val background = if (!showCollectionBackground) Modifier else {
-        val tint = MusicArtworkTint(collectionArtwork, colors.surfaceVariant)
+        val tint = rememberMusicArtworkPalette(collectionArtwork, colors.surfaceVariant).tint
         Modifier.background(
             Brush.verticalGradient(
                 0f to tint,

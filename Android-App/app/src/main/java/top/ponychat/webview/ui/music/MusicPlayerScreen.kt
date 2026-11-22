@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -41,9 +40,9 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.StayCurrentLandscape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -58,10 +57,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
@@ -71,13 +72,16 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.first
@@ -90,6 +94,7 @@ import top.ponychat.webview.ui.common.SystemNavigationBarColorEffect
 import top.ponychat.webview.ui.theme.LocalFontScale
 import top.ponychat.webview.ui.theme.Primary
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private const val LYRIC_PREVIEW_MIN_LINES = 2
 private const val LYRIC_PREVIEW_MAX_LINES = 4
@@ -119,6 +124,7 @@ internal fun MusicPlayerScreen(
         if (item != null) model.updateLibrary(MusicCommand("favorite", songId = item.id, enabled = !favorite))
     }
     var showLyrics by rememberSaveable { mutableStateOf(false) }
+    var lyricsPageReady by remember(showLyrics) { mutableStateOf(false) }
     var showQueue by rememberSaveable { mutableStateOf(false) }
     var addSong by rememberSaveable { mutableStateOf(false) }
     var playbackErrorDismissed by rememberSaveable(item?.id, state.error) { mutableStateOf(false) }
@@ -145,20 +151,26 @@ internal fun MusicPlayerScreen(
         syncError?.takeIf { it.mutation }?.let { messages.showSnackbar(it.message) }
     }
     BackHandler(enabled = showLyrics && !showQueue && !addSong) { showLyrics = false }
-    val tint = MusicArtworkTint(item?.artwork, scheme.secondaryContainer)
+    val artworkPalette = rememberMusicArtworkPalette(item?.artwork, scheme.secondaryContainer)
+    val tint = artworkPalette.tint
     val currentLyrics = lyrics.takeIf { it.trackId == item?.id }
     val lines = currentLyrics?.lines
     val lyricsNotice = (currentLyrics?.status ?: item?.lyricsStatus)?.notice
     val activeLyric = lines?.indexOfLast { it.startMs <= state.positionMs } ?: -1
-    val background = if (showLyrics || landscape) {
+    val background = if (lyricsPageReady || landscape) {
         Brush.verticalGradient(
             0f to lerp(tint, scheme.background, 0.26f),
             0.64f to lerp(tint, scheme.background, 0.84f),
             1f to scheme.background,
         )
     } else Brush.verticalGradient(listOf(tint, scheme.background, scheme.background))
+    val ambient = if (item == null) Modifier else Modifier.musicPlayerAmbient(
+        colors = artworkPalette.glowColors,
+        background = scheme.background,
+        playing = state.playing,
+    )
     BoxWithConstraints(
-        Modifier.fillMaxSize().background(background)
+        Modifier.fillMaxSize().background(background).then(ambient)
             .statusBarsPadding().navigationBarsPadding(),
     ) {
         if (landscape) {
@@ -170,7 +182,6 @@ internal fun MusicPlayerScreen(
                 error = currentLyrics?.failed == true,
                 retryLyrics = model::retryLyrics,
                 seek = model::seek,
-                togglePlayback = ::togglePlayback,
                 close = close,
                 returnToPortrait = { onLandscapeChange(false) },
                 swipeMotion = swipeMotion,
@@ -196,9 +207,13 @@ internal fun MusicPlayerScreen(
                 seek = model::seek,
                 toggleFavorite = ::toggleFavorite,
                 openQueue = { showQueue = true },
-                modifier = page.fillMaxSize(),
+                onViewportReady = { lyricsPageReady = true },
+                modifier = page.fillMaxSize().zIndex(1f).graphicsLayer {
+                    alpha = if (lyricsPageReady) 1f else 0f
+                },
             )
-            return@BoxWithConstraints
+            // Keep the cover visible until the lyrics list knows its initial anchor.
+            if (lyricsPageReady) return@BoxWithConstraints
         }
         val needsScroll = maxHeight < 530.dp || LocalFontScale.current > 1.35f
         val content = if (needsScroll) {
@@ -222,13 +237,14 @@ internal fun MusicPlayerScreen(
                         onClick = { onLandscapeChange(true) },
                         icon = Icons.Default.StayCurrentLandscape,
                         contentDescription = "横屏播放",
+                        iconSize = 22.dp,
                     )
                     PonyIconButton(
                         onClick = { addSong = true },
                         enabled = library != null,
                         icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                         contentDescription = "加到歌单",
-                        tint = scheme.onSurfaceVariant,
+                        tint = if (library != null) LocalContentColor.current else scheme.onSurfaceVariant,
                     )
                 }
                 PonyIconButton(onClick = openSearch, icon = Icons.Default.Search, contentDescription = "搜索音乐")
@@ -238,10 +254,11 @@ internal fun MusicPlayerScreen(
                 return@Column
             }
             val previewLines = remember(lines) { lines.orEmpty().filter { it.originalText.isNotBlank() } }
-            val previewIndex = previewLines.indexOfLast { it.startMs <= state.positionMs }.coerceAtLeast(0)
+            val previewIndex = previewLines.indexOfLast { it.startMs <= state.positionMs }
             val lyricPreview = remember(previewLines, previewIndex) {
-                val end = minOf(previewIndex + LYRIC_PREVIEW_MAX_LINES, previewLines.size)
-                LyricPreview(previewIndex, previewLines.subList(previewIndex, end).map(MusicLyric::originalText))
+                val start = previewIndex.coerceAtLeast(0)
+                val end = minOf(start + LYRIC_PREVIEW_MAX_LINES, previewLines.size)
+                LyricPreview(previewIndex, previewLines.subList(start, end).map(MusicLyric::originalText))
             }
             val artworkStage = if (needsScroll) {
                 Modifier.height(260.dp).then(swipe)
@@ -254,6 +271,7 @@ internal fun MusicPlayerScreen(
                 preview = lyricPreview,
                 lyricsNotice = if (currentLyrics?.failed == true) "歌词暂时加载失败" else lyricsNotice,
                 motion = swipeMotion,
+                lyricGestures = swipe,
                 modifier = artworkStage.then(artworkActions),
             ) { showLyrics = true }
 
@@ -459,6 +477,7 @@ private fun NowPlayingArtwork(
     preview: LyricPreview,
     lyricsNotice: String?,
     motion: TrackSwipeMotion,
+    lyricGestures: Modifier,
     modifier: Modifier,
     openLyrics: () -> Unit,
 ) {
@@ -492,7 +511,12 @@ private fun NowPlayingArtwork(
                 MusicArtwork(artwork, Modifier.align(Alignment.TopCenter).offset(y = coverTop).size(coverSize), corner = 25)
             }
             if (lyricsSpace > 0.dp) {
-                Box(Modifier.fillMaxWidth().height(lyricsSpace).offset(y = previewTop)) {
+                Box(
+                    Modifier.fillMaxWidth().height(lyricsSpace).offset(y = previewTop)
+                        .clickable(onClickLabel = "查看完整歌词", onClick = openLyrics)
+                        // Let the swipe detector see the down before clickable consumes it.
+                        .then(lyricGestures),
+                ) {
                     if (showPreview && preview.lines.isNotEmpty()) {
                         key(trackId) {
                             NowPlayingLyricPreview(
@@ -500,21 +524,23 @@ private fun NowPlayingArtwork(
                                 currentStyle = currentStyle,
                                 maxLines = maxLines,
                                 modifier = Modifier.fillMaxSize()
-                                    .clickable(onClickLabel = "查看完整歌词", onClick = openLyrics)
                                     .padding(top = lyricPadding.calculateTopPadding()),
                             )
                         }
                     } else if (lyricsNotice != null) {
                         Text(
                             lyricsNotice,
-                            modifier = Modifier.fillMaxWidth()
-                                .clickable(onClickLabel = "打开歌词页面", onClick = openLyrics)
-                                .padding(top = if (showPreview) lyricPadding.calculateTopPadding() else 4.dp),
+                            modifier = Modifier.padding(top = if (showPreview) lyricPadding.calculateTopPadding() else 4.dp),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     } else {
-                        TextButton(onClick = openLyrics, modifier = Modifier.align(Alignment.TopStart)) { Text("查看歌词") }
+                        Text(
+                            "查看歌词",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
                     }
                 }
             }
@@ -530,79 +556,76 @@ private fun NowPlayingLyricPreview(
     modifier: Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
-    val upcomingStyle = MaterialTheme.typography.headlineLarge.toSpanStyle().copy(
-        fontWeight = FontWeight.Normal,
-        color = colors.onSurfaceVariant,
-    )
+    val measurer = rememberTextMeasurer()
     var displayed by remember { mutableStateOf(preview) }
-    var layout by remember { mutableStateOf<TextLayoutResult?>(null) }
-    val offset = remember { Animatable(0f) }
-    val edgeReveal = remember { Animatable(0f) }
-    val fading by remember { derivedStateOf { offset.value != 0f || edgeReveal.value > 0f } }
+    var outgoing by remember { mutableStateOf<String?>(null) }
+    val scroll = remember { Animatable(1f) }
     LaunchedEffect(preview) {
-        edgeReveal.snapTo(0f)
-        val previousLayout = layout
-        var enterFromBelow = 0f
-        if (preview.index == displayed.index + 1 && previousLayout != null) {
-            val nextCueStart = displayed.lines.first().length + 1
-            val lastLine = previousLayout.lineCount - 1
-            // Use the measured row so a wrapped cue scrolls by all of its visible lines.
-            if (nextCueStart < previousLayout.getLineEnd(lastLine, visibleEnd = true)) {
-                val nextRow = previousLayout.getLineForOffset(nextCueStart)
-                offset.animateTo(-previousLayout.getLineTop(nextRow), tween(230, easing = FastOutSlowInEasing))
-                edgeReveal.snapTo(1f)
-            } else {
-                enterFromBelow = previousLayout.size.height.toFloat()
-                offset.animateTo(-enterFromBelow, tween(140, easing = FastOutSlowInEasing))
-            }
+        if (preview == displayed) return@LaunchedEffect
+        if (displayed.index >= 0 && preview.index == displayed.index + 1) {
+            scroll.snapTo(0f)
+            outgoing = displayed.lines.firstOrNull()
+            displayed = preview
+            scroll.animateTo(1f, tween(280, easing = FastOutSlowInEasing))
+        } else {
+            scroll.snapTo(1f)
+            displayed = preview
         }
-        displayed = preview
-        offset.snapTo(enterFromBelow)
-        if (enterFromBelow > 0f) offset.animateTo(0f, tween(160, easing = FastOutSlowInEasing))
-        if (edgeReveal.value > 0f) edgeReveal.animateTo(0f, tween(120, easing = FastOutSlowInEasing))
+        outgoing = null
     }
-    val text = remember(displayed, upcomingStyle) {
-        buildAnnotatedString {
-            append(displayed.lines.first())
-            withStyle(upcomingStyle) {
-                displayed.lines.drop(1).forEach { line ->
-                    append('\n')
-                    append(line)
+    val upcomingColor = colors.onSurfaceVariant
+    val activeColor = colors.onSurface
+    Box(modifier
+        .semantics { text = AnnotatedString(displayed.lines.joinToString("\n")) }
+        .graphicsLayer {
+            compositingStrategy = if (outgoing != null) CompositingStrategy.Offscreen else CompositingStrategy.Auto
+        }.drawWithCache {
+            val constraints = Constraints(maxWidth = size.width.roundToInt())
+            val lineHeight = currentStyle.lineHeight.toPx()
+            val viewportHeight = minOf(size.height, lineHeight * maxLines)
+            val lightFirst = displayed.index in 0..preview.index
+            val previous = outgoing?.let {
+                measurer.measure(it, currentStyle, overflow = TextOverflow.Ellipsis,
+                    maxLines = maxLines, constraints = constraints)
+            }
+            // Both states share the same font metrics. Only the color changes while a cue slides.
+            val rows = buildList {
+                var remaining = maxLines
+                for (line in displayed.lines) {
+                    if (remaining <= 0) break
+                    val row = measurer.measure(line, currentStyle, overflow = TextOverflow.Ellipsis,
+                        maxLines = remaining, constraints = constraints)
+                    add(row)
+                    remaining -= row.lineCount
                 }
             }
-        }
-    }
-    Box(
-        modifier.graphicsLayer {
-            clip = true
-            compositingStrategy = if (fading) CompositingStrategy.Offscreen else CompositingStrategy.Auto
-        }.drawWithCache {
-            val edgeHeight = minOf(22.dp.toPx(), size.height / 3)
-            val edge = edgeHeight / size.height.coerceAtLeast(1f)
+            val edge = (22.dp.toPx() / viewportHeight.coerceAtLeast(1f)).coerceAtMost(0.25f)
             val mask = Brush.verticalGradient(
-                0f to Color.Black,
-                edge to Color.Transparent,
-                (1f - edge) to Color.Transparent,
-                1f to Color.Black,
+                0f to Color.Black, edge to Color.Transparent,
+                (1f - edge) to Color.Transparent, 1f to Color.Black,
+                endY = viewportHeight.coerceAtLeast(1f),
             )
-            onDrawWithContent {
-                drawContent()
-                val motionFade = (abs(offset.value) / edgeHeight.coerceAtLeast(1f)).coerceAtMost(1f)
-                val strength = maxOf(motionFade, edgeReveal.value)
-                if (strength > 0f) drawRect(mask, alpha = strength, blendMode = BlendMode.DstOut)
+            onDrawBehind {
+                val fraction = scroll.value
+                val leavingHeight = (previous?.lineCount ?: 0) * lineHeight
+                var top = leavingHeight * (1f - fraction)
+                clipRect(bottom = viewportHeight) {
+                    if (previous != null) {
+                        drawText(previous, color = lerp(activeColor, upcomingColor, fraction),
+                            topLeft = Offset(0f, top - leavingHeight))
+                    }
+                    rows.forEachIndexed { index, row ->
+                        val color = if (index == 0 && lightFirst) lerp(upcomingColor, activeColor, fraction)
+                            else upcomingColor
+                        drawText(row, color = color, topLeft = Offset(0f, top))
+                        top += row.lineCount * lineHeight
+                    }
+                    if (previous != null) {
+                        val strength = 4f * fraction * (1f - fraction)
+                        drawRect(mask, alpha = strength, blendMode = BlendMode.DstOut)
+                    }
+                }
             }
         },
-    ) {
-        Text(
-            text = text,
-            // Measure the full line budget before clipping to the fixed viewport.
-            modifier = Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true)
-                .graphicsLayer { translationY = offset.value },
-            style = currentStyle,
-            color = colors.onSurface,
-            maxLines = maxLines,
-            overflow = TextOverflow.Ellipsis,
-            onTextLayout = { layout = it },
-        )
-    }
+    )
 }

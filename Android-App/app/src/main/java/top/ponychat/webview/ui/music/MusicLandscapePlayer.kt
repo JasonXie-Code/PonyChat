@@ -1,17 +1,20 @@
 package top.ponychat.webview.ui.music
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.displayCutoutPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.StayCurrentPortrait
@@ -33,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import top.ponychat.webview.ui.common.PonyIconButton
+import top.ponychat.webview.ui.theme.LocalFontScale
 
 @Composable
 internal fun MusicLandscapePlayer(
@@ -43,97 +47,96 @@ internal fun MusicLandscapePlayer(
     error: Boolean,
     retryLyrics: () -> Unit,
     seek: (Long) -> Unit,
-    togglePlayback: () -> Unit,
     close: () -> Unit,
     returnToPortrait: () -> Unit,
     swipeMotion: TrackSwipeMotion,
     artworkGestures: Modifier,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.widthIn(max = 1080.dp).fillMaxSize().padding(horizontal = 24.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            PonyIconButton(onClick = close, icon = Icons.Default.KeyboardArrowDown, contentDescription = "收起播放器")
-            Text(
-                if (state.playing) "正在播放" else "已暂停",
-                Modifier.weight(1f),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            PonyIconButton(
-                onClick = returnToPortrait,
-                icon = Icons.Default.StayCurrentPortrait,
-                contentDescription = "切回竖屏",
-            )
-        }
-        val item = state.item
-        if (item == null) {
-            MusicMessage("还没有正在播放的歌曲", "返回曲库", close)
-            return@Column
-        }
+    val colors = MaterialTheme.colorScheme
+    val orientationButtonSize = 44.dp
+    val lyricsEndPadding = orientationButtonSize * LocalFontScale.current + 8.dp
+    val item = state.item
+    Box(
+        modifier.widthIn(max = 1080.dp).fillMaxSize()
+            .displayCutoutPadding().padding(start = 22.dp, top = 6.dp, end = 22.dp, bottom = 8.dp),
+    ) {
         Row(
-            Modifier.weight(1f).fillMaxWidth()
+            Modifier.fillMaxSize()
                 .onSizeChanged { swipeMotion.stageHeight = it.height.toFloat() },
-            horizontalArrangement = Arrangement.spacedBy(28.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            BoxWithConstraints(Modifier.weight(0.42f).fillMaxHeight(), contentAlignment = Alignment.Center) {
-                val titleStyle = MaterialTheme.typography.titleLarge
-                val albumStyle = MaterialTheme.typography.bodyMedium
-                val textHeight = with(LocalDensity.current) {
-                    titleStyle.lineHeight.toDp() + if (item.album.isNotBlank()) albumStyle.lineHeight.toDp() else 0.dp
+            Column(Modifier.weight(0.31f).fillMaxHeight()) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    PonyIconButton(
+                        onClick = close,
+                        icon = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "收起播放器",
+                        size = 44.dp,
+                    )
+                    Text(
+                        if (state.playing) "正在播放" else "已暂停",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                 }
-                val metadataHeight = maxOf(textHeight, 44.dp)
-                val spacing = minOf(18.dp, maxHeight * 0.06f)
-                val coverSize = minOf(maxWidth, (maxHeight - metadataHeight - spacing * 3).coerceAtLeast(0.dp), 320.dp)
-                val groupWidth = maxOf(coverSize, minOf(maxWidth, 168.dp))
-                Column(
-                    Modifier.width(groupWidth).fillMaxHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.SpaceEvenly,
-                ) {
-                    Box(
-                        Modifier.size(coverSize)
-                            .then(artworkGestures).trackSwipeEdgeFade(swipeMotion),
-                    ) {
-                        MusicArtwork(
-                            item.artwork,
-                            Modifier.fillMaxSize().graphicsLayer { translationY = swipeMotion.offset },
-                            corner = 22,
-                        )
-                    }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                item.title,
-                                style = titleStyle,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            if (item.album.isNotBlank()) {
+                if (item != null) {
+                    val titleStyle = MaterialTheme.typography.headlineLarge
+                    val albumStyle = MaterialTheme.typography.bodyMedium
+                    val metadataHeight = with(LocalDensity.current) {
+                        titleStyle.lineHeight.toDp() * 2 + albumStyle.lineHeight.toDp()
+                    } + 3.dp
+                    val coverPadding = 8.dp
+                    BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+                        val coverSize = minOf(maxWidth, (maxHeight - metadataHeight - coverPadding * 2).coerceAtLeast(0.dp), 244.dp)
+                        val artworkInset = if (coverSize > 0.dp) (maxWidth - coverSize) / 2 else 0.dp
+                        Column(Modifier.fillMaxSize().padding(start = artworkInset)) {
+                            Box(
+                                Modifier.weight(1f).fillMaxWidth().padding(vertical = coverPadding),
+                                contentAlignment = Alignment.CenterStart,
+                            ) {
+                                if (coverSize > 0.dp) {
+                                    Box(Modifier.size(coverSize).then(artworkGestures).trackSwipeEdgeFade(swipeMotion)) {
+                                        MusicArtwork(
+                                            item.artwork,
+                                            Modifier.fillMaxSize().graphicsLayer { translationY = swipeMotion.offset },
+                                            corner = 18,
+                                        )
+                                    }
+                                }
+                            }
+                            Column(Modifier.fillMaxWidth().heightIn(min = metadataHeight)) {
                                 Text(
-                                    item.album,
-                                    style = albumStyle,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
+                                    item.title,
+                                    style = titleStyle,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
+                                if (item.album.isNotBlank()) {
+                                    Text(
+                                        item.album,
+                                        modifier = Modifier.padding(top = 3.dp),
+                                        style = albumStyle,
+                                        color = colors.onSurfaceVariant,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
-                        MusicPlayButton(state, togglePlayback, size = 44.dp)
                     }
                 }
             }
-            key(item.id) {
-                var browsing by remember { mutableStateOf(false) }
-                Box(
-                    Modifier.weight(0.58f).fillMaxHeight().padding(top = 6.dp, bottom = 12.dp)
-                        .trackSwipeEdgeFade(swipeMotion),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(Modifier.widthIn(max = 400.dp).fillMaxSize()) {
+            Box(
+                Modifier.weight(0.69f).fillMaxHeight().padding(end = lyricsEndPadding)
+                    .trackSwipeEdgeFade(swipeMotion),
+                contentAlignment = Alignment.Center,
+            ) {
+                if (item == null) {
+                    MusicMessage("还没有正在播放的歌曲", "返回曲库", close)
+                } else key(item.id) {
+                    var browsing by remember { mutableStateOf(false) }
+                    Column(Modifier.fillMaxSize()) {
                         MusicLyricsViewport(
                             lines = lines,
                             active = active,
@@ -146,6 +149,7 @@ internal fun MusicLandscapePlayer(
                             onBrowsingChange = { browsing = it },
                             modifier = Modifier.weight(1f),
                             swipeMotion = swipeMotion,
+                            compactSpacing = true,
                         )
                         if (browsing) {
                             TextButton(
@@ -157,5 +161,12 @@ internal fun MusicLandscapePlayer(
                 }
             }
         }
+        PonyIconButton(
+            onClick = returnToPortrait,
+            icon = Icons.Default.StayCurrentPortrait,
+            contentDescription = "切回竖屏",
+            modifier = Modifier.align(Alignment.TopEnd).background(colors.surfaceVariant, CircleShape),
+            size = orientationButtonSize,
+        )
     }
 }

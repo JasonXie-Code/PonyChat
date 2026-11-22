@@ -25,6 +25,8 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -44,7 +46,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -78,6 +79,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -93,16 +95,20 @@ import kotlinx.coroutines.withContext
 import top.ponychat.webview.ui.common.PonyIconButton
 import top.ponychat.webview.ui.common.PonyAlertDialog
 import top.ponychat.webview.ui.common.PonyConfirmDialog
+import top.ponychat.webview.ui.common.PonyTextField
 import top.ponychat.webview.ui.theme.Primary
 import java.util.Locale
 import java.util.UUID
+import kotlin.math.abs
 import kotlin.math.sin
 
+internal data class MusicArtworkPalette(val tint: Color, val glowColors: List<Color>)
+
 @Composable
-internal fun MusicArtworkTint(url: String?, base: Color): Color {
+internal fun rememberMusicArtworkPalette(url: String?, base: Color): MusicArtworkPalette {
     val context = LocalContext.current
-    val artworkColor by produceState<Color?>(null, url) {
-        value = null
+    val hues by produceState<List<Int>>(emptyList(), url) {
+        value = emptyList()
         if (url == null) return@produceState
         val result = context.imageLoader.execute(
             ImageRequest.Builder(context).data(url).size(32).allowHardware(false).build()
@@ -121,14 +127,23 @@ internal fun MusicArtworkTint(url: String?, base: Color): Color {
                     buckets[bucket] += hsv[1] * hsv[2]
                 }
             }
-            val dominant = buckets.indices.maxByOrNull { buckets[it] } ?: 0
-            if (buckets[dominant] < 5f) null
-            else Color.hsv(dominant * 30f + 15f, 0.61f, 0.76f)
+            buildList {
+                for (bucket in buckets.indices.sortedByDescending { buckets[it] }) {
+                    if (size == 3 || buckets[bucket] < 5f) break
+                    // Neighboring hue buckets would produce nearly identical lights.
+                    if (none { abs(it - bucket) !in 2..10 }) add(bucket)
+                }
+            }
         }
     }
-    val tint = artworkColor ?: MaterialTheme.colorScheme.primary
+    val scheme = MaterialTheme.colorScheme
+    val tint = hues.firstOrNull()?.let { Color.hsv(it * 30f + 15f, 0.61f, 0.76f) } ?: scheme.primary
     val animated by animateColorAsState(lerp(base, tint, 0.22f), label = "musicArtworkTint")
-    return animated
+    val fallback = listOf(scheme.primary, scheme.tertiary, scheme.secondary)
+    val glows = List(fallback.size) { index ->
+        hues.getOrNull(index)?.let { Color.hsv(it * 30f + 15f, 0.55f, 0.94f) } ?: fallback[index]
+    }
+    return MusicArtworkPalette(animated, glows)
 }
 
 @Composable
@@ -314,19 +329,23 @@ internal fun PlaylistNameDialog(
     onSave: (String) -> Unit,
 ) {
     var name by rememberSaveable(initial) { mutableStateOf(initial.orEmpty()) }
+    val saveName = { if (name.isNotBlank()) onSave(name.trim()) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (initial == null) "新建歌单" else "重命名歌单") },
         text = {
-            OutlinedTextField(
-                name, { name = it.take(80) }, label = { Text("歌单名称") },
-                singleLine = true, modifier = Modifier.fillMaxWidth(),
+            PonyTextField(
+                value = name,
+                onValueChange = { name = it.take(80) },
+                label = "歌单名称",
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { saveName() }),
                 trailingIcon = if (name.isNotEmpty()) {
-                    { IconButton(onClick = { name = "" }) { Icon(Icons.Default.Close, "清空名称") } }
+                    { PonyIconButton(onClick = { name = "" }, icon = Icons.Default.Close, contentDescription = "清空名称") }
                 } else null,
             )
         },
-        confirmButton = { TextButton(enabled = name.isNotBlank(), onClick = { onSave(name.trim()) }) { Text("保存") } },
+        confirmButton = { TextButton(enabled = name.isNotBlank(), onClick = saveName) { Text("保存") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("取消") } },
     )
 }

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -43,26 +44,35 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.text
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -92,6 +102,7 @@ internal fun MusicLyricsPage(
     seek: (Long) -> Unit,
     toggleFavorite: () -> Unit,
     openQueue: () -> Unit,
+    onViewportReady: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
@@ -121,6 +132,7 @@ internal fun MusicLyricsPage(
                 seek = seek,
                 browsing = browsing,
                 onBrowsingChange = { browsing = it },
+                onViewportReady = onViewportReady,
                 modifier = Modifier.weight(1f),
             )
             Row(
@@ -157,16 +169,79 @@ internal fun MusicLyricsViewport(
     onBrowsingChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     swipeMotion: TrackSwipeMotion? = null,
+    compactSpacing: Boolean = false,
+    onViewportReady: () -> Unit = {},
 ) {
-    val list = rememberLazyListState()
-    var positioned by remember { mutableStateOf(false) }
+    var focusOffset by remember { mutableIntStateOf(0) }
+    val ready = focusOffset > 0
+    val notifyReady by rememberUpdatedState(onViewportReady)
+    LaunchedEffect(ready) {
+        if (ready) notifyReady()
+    }
+    BoxWithConstraints(
+        modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+            val height = coordinates.size.height
+            val screenFocus = coordinates.findRootCoordinates().size.height * LYRIC_FOCUS_FRACTION
+            focusOffset = (screenFocus - coordinates.positionInRoot().y)
+                .coerceIn(height * 0.15f, height * 0.5f)
+                .roundToInt()
+        },
+    ) {
+        // Measure the anchor on the fixed viewport, outside the cover's swipe animation.
+        val viewportHeight = maxHeight
+        val slide = if (swipeMotion == null) Modifier else Modifier.graphicsLayer { translationY = swipeMotion.offset }
+        Box(Modifier.fillMaxSize().then(slide)) {
+            when {
+                error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    MusicMessage("歌词加载失败", "重试", retry)
+                }
+                notice != null || lines?.isEmpty() == true -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    MusicMessage(notice ?: "这首歌的歌词正在补充")
+                }
+                lines == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                ready -> {
+                    val focus = with(LocalDensity.current) { focusOffset.toDp() }
+                    val inset = if (compactSpacing) 6.dp else 26.dp
+                    TimedLyricsList(
+                        lines = lines,
+                        active = active,
+                        canSeek = canSeek,
+                        seek = seek,
+                        browsing = browsing,
+                        onBrowsingChange = onBrowsingChange,
+                        focusOffset = focusOffset,
+                        padding = PaddingValues(
+                            top = (focus - inset).coerceAtLeast(0.dp),
+                            bottom = (viewportHeight - focus - inset).coerceAtLeast(0.dp),
+                        ),
+                        compactSpacing = compactSpacing,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimedLyricsList(
+    lines: List<MusicLyric>,
+    active: Int,
+    canSeek: Boolean,
+    seek: (Long) -> Unit,
+    browsing: Boolean,
+    onBrowsingChange: (Boolean) -> Unit,
+    focusOffset: Int,
+    padding: PaddingValues,
+    compactSpacing: Boolean,
+) {
+    val list = rememberLazyListState(initialFirstVisibleItemIndex = active.coerceIn(lines.indices))
     var requestedLine by remember { mutableStateOf<Int?>(null) }
     var settledLine by remember { mutableStateOf<Int?>(null) }
-    var focusOffset by remember { mutableIntStateOf(0) }
+    val currentFocusOffset by rememberUpdatedState(focusOffset)
     val selectedLine by remember {
         derivedStateOf {
             val layout = list.layoutInfo
-            val focus = layout.viewportStartOffset + focusOffset
+            val focus = layout.viewportStartOffset + currentFocusOffset
             layout.visibleItemsInfo.minByOrNull { lyric -> abs(lyric.offset + lyric.size / 2f - focus) }?.index
         }
     }
@@ -184,21 +259,16 @@ internal fun MusicLyricsViewport(
         settledLine = if (browsing && !list.isScrollInProgress) selectedLine else null
     }
     fun jumpToLine(index: Int) {
-        val lyric = lines?.getOrNull(index) ?: return
         if (!canSeek) return
         requestedLine = index
         changeBrowsing(false)
-        seek(lyric.startMs)
+        seek(lines[index].startMs)
     }
 
-    val targetLine = requestedLine ?: active.coerceAtLeast(0)
-    LaunchedEffect(browsing, targetLine, lines?.size, focusOffset) {
-        if (browsing || lines.isNullOrEmpty() || focusOffset == 0) return@LaunchedEffect
-        if (positioned) list.animateScrollToItem(targetLine)
-        else {
-            list.scrollToItem(targetLine)
-            positioned = true
-        }
+    val targetLine = (requestedLine ?: active).coerceIn(lines.indices)
+    LaunchedEffect(browsing, targetLine) {
+        if (browsing) return@LaunchedEffect
+        list.animateScrollToItem(targetLine)
     }
     LaunchedEffect(active, requestedLine) {
         if (requestedLine != null && requestedLine == active) requestedLine = null
@@ -210,55 +280,22 @@ internal fun MusicLyricsViewport(
         }
     }
 
-    BoxWithConstraints(
-        modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
-            val height = coordinates.size.height
-            val screenFocus = coordinates.findRootCoordinates().size.height * LYRIC_FOCUS_FRACTION
-            focusOffset = (screenFocus - coordinates.positionInRoot().y)
-                .coerceIn(height * 0.15f, height * 0.5f)
-                .roundToInt()
-        },
+    LazyColumn(
+        state = list,
+        modifier = Modifier.fillMaxSize().nestedScroll(scroll).lyricsViewportFade(),
+        contentPadding = padding,
+        verticalArrangement = Arrangement.spacedBy(if (compactSpacing) 5.dp else 9.dp),
     ) {
-        // Keep the scroll anchor in a fixed viewport while the lyrics are moving with the cover.
-        val viewportHeight = maxHeight
-        val slide = if (swipeMotion == null) Modifier else Modifier.graphicsLayer { translationY = swipeMotion.offset }
-        Box(Modifier.fillMaxSize().then(slide)) {
-            when {
-                error -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    MusicMessage("歌词加载失败", "重试", retry)
-                }
-                notice != null || lines?.isEmpty() == true -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    MusicMessage(notice ?: "这首歌的歌词正在补充")
-                }
-                lines == null -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                else -> {
-                    val focus = with(LocalDensity.current) { focusOffset.toDp() }
-                    val topSpace = (focus - 26.dp).coerceAtLeast(0.dp)
-                    val bottomSpace = (viewportHeight - focus - 26.dp).coerceAtLeast(0.dp)
-                    LazyColumn(
-                        state = list,
-                        modifier = Modifier.fillMaxSize().nestedScroll(scroll).lyricsViewportFade(),
-                        contentPadding = PaddingValues(top = topSpace, bottom = bottomSpace),
-                        verticalArrangement = Arrangement.spacedBy(9.dp),
-                    ) {
-                        itemsIndexed(lines, key = { index, _ -> index }) { index, lyric ->
-                            LyricLine(
-                                lyric = lyric,
-                                active = index == (requestedLine ?: active),
-                                guide = browsing && (settledLine ?: selectedLine) == index,
-                                showTime = browsing && settledLine == index,
-                                canSeek = canSeek,
-                                seek = { jumpToLine(index) },
-                                modifier = Modifier.animateItem(
-                                    fadeInSpec = null,
-                                    placementSpec = if (browsing) null else tween(LYRIC_TRANSITION_MS),
-                                    fadeOutSpec = null,
-                                ),
-                            )
-                        }
-                    }
-                }
-            }
+        itemsIndexed(lines, key = { index, _ -> index }) { index, lyric ->
+            LyricLine(
+                lyric = lyric,
+                active = index == (requestedLine ?: active),
+                guide = browsing && (settledLine ?: selectedLine) == index,
+                showTime = browsing && settledLine == index,
+                canSeek = canSeek,
+                seek = { jumpToLine(index) },
+                compactSpacing = compactSpacing,
+            )
         }
     }
 }
@@ -301,23 +338,20 @@ private fun LyricLine(
     showTime: Boolean,
     canSeek: Boolean,
     seek: () -> Unit,
-    modifier: Modifier = Modifier,
+    compactSpacing: Boolean,
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(12.dp)
-    val targetScale = if (active) ACTIVE_LYRIC_SCALE else 1f
-    val lyricScale = animateFloatAsState(
-        targetValue = targetScale,
-        animationSpec = tween(LYRIC_TRANSITION_MS),
-        label = "lyric size",
-    )
     val lyricStyle = MaterialTheme.typography.titleLarge
-    val textStart = if (LocalLayoutDirection.current == LayoutDirection.Rtl) 1f else 0f
+    val lyricLineHeight = if (compactSpacing) lyricStyle.lineHeight else 30.sp
+    val translationStyle = if (compactSpacing) MaterialTheme.typography.bodyMedium
+        else MaterialTheme.typography.bodyLarge.copy(lineHeight = 23.sp)
+    val verticalPadding = if (compactSpacing) 6.dp else 10.dp
     Row(
-        modifier.fillMaxWidth().clip(shape)
+        Modifier.fillMaxWidth().clip(shape)
             .background(if (guide) colors.primary.copy(alpha = 0.11f) else Color.Transparent)
             .clickable(enabled = canSeek, onClickLabel = "跳到 ${formatMusicTime(lyric.startMs)}", onClick = seek)
-            .padding(start = 3.dp, top = 10.dp, bottom = 10.dp, end = 7.dp),
+            .padding(start = 3.dp, top = verticalPadding, bottom = verticalPadding, end = 7.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -327,25 +361,17 @@ private fun LyricLine(
         )
         val main = lyric.originalText
         val translation = lyric.zh?.takeIf { it.isNotBlank() && it != main }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            Text(
-                main,
-                // Measure the final typography once so the text cannot rewrap on animation frames.
-                modifier = Modifier.fillMaxWidth().clipToBounds().graphicsLayer {
-                    val scale = lyricScale.value / targetScale
-                    scaleX = scale
-                    scaleY = scale
-                    // A shrinking line must stay clear of the translation below it.
-                    alpha = if (active) 1f else 1f - (scale - 1f) * 0.7f
-                    transformOrigin = TransformOrigin(textStart, 0f)
-                },
-                style = lyricStyle.copy(fontSize = lyricStyle.fontSize * targetScale, lineHeight = 30.sp * targetScale),
-                fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-                color = if (active || guide) colors.onSurface else colors.onSurfaceVariant,
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(if (compactSpacing) 3.dp else 5.dp)) {
+            AnimatedLyricText(
+                value = main,
+                style = lyricStyle.copy(lineHeight = lyricLineHeight),
+                active = active,
+                normalColor = if (guide) colors.onSurface else colors.onSurfaceVariant,
+                activeColor = colors.onSurface,
             )
             if (translation != null) Text(
                 translation,
-                style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 23.sp),
+                style = translationStyle,
                 color = colors.onSurfaceVariant,
             )
         }
@@ -360,6 +386,72 @@ private fun LyricLine(
             }
         }
     }
+}
+
+@Composable
+private fun AnimatedLyricText(
+    value: String,
+    style: TextStyle,
+    active: Boolean,
+    normalColor: Color,
+    activeColor: Color,
+) {
+    val emphasis = animateFloatAsState(
+        targetValue = if (active) 1f else 0f,
+        animationSpec = tween(LYRIC_TRANSITION_MS),
+        label = "lyric emphasis",
+    )
+    val measurer = rememberTextMeasurer(cacheSize = 2)
+    val lyric = remember(value) { AnnotatedString(value) }
+    val plainStyle = style.copy(fontWeight = FontWeight.Normal)
+    val boldStyle = style.copy(
+        fontWeight = FontWeight.Bold,
+        fontSize = style.fontSize * ACTIVE_LYRIC_SCALE,
+        lineHeight = style.lineHeight * ACTIVE_LYRIC_SCALE,
+    )
+    fun measure(width: Int, emphasized: Boolean) = measurer.measure(
+        lyric,
+        style = if (emphasized) boldStyle else plainStyle,
+        constraints = Constraints.fixedWidth(width),
+    )
+    Spacer(Modifier.fillMaxWidth()
+        .semantics { text = lyric }
+        .layout { child, constraints ->
+            val width = constraints.maxWidth
+            val plainHeight = measure(width, emphasized = false).size.height
+            val boldHeight = measure(width, emphasized = true).size.height
+            val height = constraints.constrainHeight(
+                (plainHeight + (boldHeight - plainHeight) * emphasis.value).roundToInt(),
+            )
+            val content = child.measure(Constraints.fixed(width, height))
+            layout(width, height) { content.placeRelative(0, 0) }
+        }
+        .drawWithCache {
+            val width = size.width.roundToInt()
+            val plain = measure(width, emphasized = false)
+            val bold = measure(width, emphasized = true)
+            val rtl = layoutDirection == LayoutDirection.Rtl
+            val pivot = Offset(if (rtl) size.width else 0f, 0f)
+            val plainWidth = (0 until plain.lineCount).maxOfOrNull { index ->
+                if (rtl) size.width - plain.getLineLeft(index) else plain.getLineRight(index)
+            } ?: 0f
+            onDrawBehind {
+                val fraction = emphasis.value
+                val fontScale = 1f + (ACTIVE_LYRIC_SCALE - 1f) * fraction
+                val plainScale = minOf(fontScale, size.width / plainWidth.coerceAtLeast(1f),
+                    size.height / plain.size.height.coerceAtLeast(1))
+                val boldScale = minOf(fontScale / ACTIVE_LYRIC_SCALE,
+                    size.height / bold.size.height.coerceAtLeast(1))
+                // Keep one layout visible and switch when the wrapped bold version can be
+                // drawn at the same size. Both versions fit the space assigned to this row.
+                val useBold = fraction == 1f || (fraction > 0f && boldScale * ACTIVE_LYRIC_SCALE >= plainScale)
+                val scale = if (useBold) boldScale else plainScale
+                scale(scale, scale, pivot) {
+                    drawText(if (useBold) bold else plain, color = lerp(normalColor, activeColor, fraction))
+                }
+            }
+        },
+    )
 }
 
 private fun Modifier.lyricsViewportFade(): Modifier = graphicsLayer {
