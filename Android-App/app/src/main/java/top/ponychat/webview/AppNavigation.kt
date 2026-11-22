@@ -82,6 +82,7 @@ import top.ponychat.webview.ui.character.CharacterViewModel
 import top.ponychat.webview.ui.common.PonyHomeBottomBar
 import top.ponychat.webview.ui.common.findActivity
 import top.ponychat.webview.ui.music.MusicPlayerScreen
+import top.ponychat.webview.ui.music.MusicPlayerIssueDialog
 import top.ponychat.webview.ui.music.MusicSearchScreen
 import top.ponychat.webview.ui.music.MusicPlayerViewModel
 import top.ponychat.webview.ui.music.MusicScreen
@@ -963,6 +964,9 @@ fun AppNavigation(
                 onNavigateBack = { navController.popPage(entry) }
             )
         }
+    }
+    if (currentRoute in listOf(Routes.MUSIC, Routes.MUSIC_PLAYER, Routes.MUSIC_SEARCH)) {
+        MusicPlayerIssueDialog(musicModel)
     }
 }
 

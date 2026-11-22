@@ -79,6 +79,11 @@ internal data class MusicCatalogState(
 
 internal data class MusicSyncIssue(val message: String, val mutation: Boolean)
 
+internal enum class MusicPlayerIssue(val message: String) {
+    CONNECTION("无法连接播放器，请稍后重试"),
+    UNPLAYABLE("这首歌暂时无法播放"),
+}
+
 internal data class MusicLyricsState(
     val trackId: String? = null,
     val lines: List<MusicLyric>? = null,
@@ -104,7 +109,7 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
     val catalog = mutableCatalog.asStateFlow()
     private val mutableSyncError = MutableStateFlow<MusicSyncIssue?>(null)
     val syncError = mutableSyncError.asStateFlow()
-    private val mutablePlayerError = MutableStateFlow<String?>(null)
+    private val mutablePlayerError = MutableStateFlow<MusicPlayerIssue?>(null)
     val playerError = mutablePlayerError.asStateFlow()
     private val mutableSyncing = MutableStateFlow(false)
     val syncing = mutableSyncing.asStateFlow()
@@ -162,7 +167,7 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
                 publish()
             } catch (_: Exception) {
                 future = null
-                mutablePlayerError.value = "无法连接播放器，请重试"
+                mutablePlayerError.value = MusicPlayerIssue.CONNECTION
             }
         }, ContextCompat.getMainExecutor(context))
     }
@@ -182,6 +187,13 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
     }
 
     fun refreshLibrary() = sync()
+
+    fun resolvePlayerIssue(issue: MusicPlayerIssue, retry: Boolean = false) {
+        if (!mutablePlayerError.compareAndSet(issue, null)) return
+        if (issue == MusicPlayerIssue.CONNECTION) {
+            if (retry) connect() else pendingCommand = null
+        }
+    }
 
     suspend fun awaitCurrentLyrics() {
         combine(playerState, lyrics) { playback, loaded ->
@@ -272,7 +284,7 @@ internal class MusicPlayerViewModel(application: Application) : AndroidViewModel
         val items = songs.distinctBy(MusicSong::id).mapNotNull { it.mediaItem(albums[it.albumId]) }
         val index = items.indexOfFirst { it.mediaId == songId }
         if (index < 0) {
-            mutablePlayerError.value = "这首歌暂时无法播放"
+            mutablePlayerError.value = MusicPlayerIssue.UNPLAYABLE
             return
         }
         mutablePlayerError.value = null

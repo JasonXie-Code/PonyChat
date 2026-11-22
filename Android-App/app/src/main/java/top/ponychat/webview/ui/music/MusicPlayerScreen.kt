@@ -84,6 +84,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import top.ponychat.webview.CustomToast
+import top.ponychat.webview.ui.common.PonyConfirmDialog
 import top.ponychat.webview.ui.common.PonyIconButton
 import top.ponychat.webview.ui.common.SystemNavigationBarColorEffect
 import top.ponychat.webview.ui.theme.LocalFontScale
@@ -120,6 +121,11 @@ internal fun MusicPlayerScreen(
     var showLyrics by rememberSaveable { mutableStateOf(false) }
     var showQueue by rememberSaveable { mutableStateOf(false) }
     var addSong by rememberSaveable { mutableStateOf(false) }
+    var playbackErrorDismissed by rememberSaveable(item?.id, state.error) { mutableStateOf(false) }
+    fun togglePlayback() {
+        playbackErrorDismissed = false
+        model.toggle()
+    }
     LaunchedEffect(Unit) {
         model.connect()
         model.refreshLibrary()
@@ -164,7 +170,7 @@ internal fun MusicPlayerScreen(
                 error = currentLyrics?.failed == true,
                 retryLyrics = model::retryLyrics,
                 seek = model::seek,
-                togglePlayback = model::toggle,
+                togglePlayback = ::togglePlayback,
                 close = close,
                 returnToPortrait = { onLandscapeChange(false) },
                 swipeMotion = swipeMotion,
@@ -186,7 +192,7 @@ internal fun MusicPlayerScreen(
                 favorite = favorite,
                 favoritesEnabled = library != null,
                 onBack = { showLyrics = false },
-                togglePlayback = model::toggle,
+                togglePlayback = ::togglePlayback,
                 seek = model::seek,
                 toggleFavorite = ::toggleFavorite,
                 openQueue = { showQueue = true },
@@ -316,7 +322,7 @@ internal fun MusicPlayerScreen(
                     iconSize = 27.dp,
                     tint = if (mode == MusicPlaybackMode.SEQUENTIAL) scheme.onSurfaceVariant else Primary,
                 )
-                MusicPlayButton(state, model::toggle, size = 66.dp)
+                MusicPlayButton(state, ::togglePlayback, size = 66.dp)
                 PonyIconButton(
                     onClick = { showQueue = true },
                     icon = Icons.AutoMirrored.Filled.QueueMusic,
@@ -326,7 +332,6 @@ internal fun MusicPlayerScreen(
                     tint = scheme.onSurfaceVariant,
                 )
             }
-            if (state.error) MusicMessage("暂时无法播放这首歌", "重试", model::toggle)
         }
     }
 
@@ -345,6 +350,16 @@ internal fun MusicPlayerScreen(
         )
     }
     if (addSong && item != null) AddSongDialog(item.id, library, model) { addSong = false }
+    if (item != null && state.error && !playbackErrorDismissed && !showQueue && !addSong) {
+        PonyConfirmDialog(
+            title = "播放失败",
+            message = "暂时无法播放这首歌",
+            confirmText = "重试",
+            dismissText = "关闭",
+            onConfirm = ::togglePlayback,
+            onDismiss = { playbackErrorDismissed = true },
+        )
+    }
 }
 
 internal class TrackSwipeMotion {

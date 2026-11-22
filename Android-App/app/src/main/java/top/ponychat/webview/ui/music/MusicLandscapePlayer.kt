@@ -157,6 +157,5 @@ internal fun MusicLandscapePlayer(
                 }
             }
         }
-        if (state.error) MusicMessage("暂时无法播放这首歌", "重试", togglePlayback)
     }
 }

@@ -91,6 +91,8 @@ import coil.request.SuccessResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import top.ponychat.webview.ui.common.PonyIconButton
+import top.ponychat.webview.ui.common.PonyAlertDialog
+import top.ponychat.webview.ui.common.PonyConfirmDialog
 import top.ponychat.webview.ui.theme.Primary
 import java.util.Locale
 import java.util.UUID
@@ -267,6 +269,29 @@ internal fun MusicMiniPlayer(model: MusicPlayerViewModel, openPlayer: () -> Unit
                 )
             }
         }
+    }
+}
+
+@Composable
+internal fun MusicPlayerIssueDialog(model: MusicPlayerViewModel) {
+    val current by model.playerError.collectAsStateWithLifecycle()
+    val issue = current ?: return
+    val dismiss = { model.resolvePlayerIssue(issue) }
+    when (issue) {
+        MusicPlayerIssue.CONNECTION -> PonyConfirmDialog(
+            title = "播放失败",
+            message = issue.message,
+            confirmText = "重试",
+            dismissText = "关闭",
+            onConfirm = { model.resolvePlayerIssue(issue, retry = true) },
+            onDismiss = dismiss,
+        )
+        MusicPlayerIssue.UNPLAYABLE -> PonyAlertDialog(
+            title = "播放失败",
+            message = issue.message,
+            onDismiss = dismiss,
+            confirmButton = { TextButton(onClick = dismiss) { Text("关闭") } },
+        )
     }
 }
 

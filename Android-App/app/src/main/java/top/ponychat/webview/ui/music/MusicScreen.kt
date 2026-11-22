@@ -144,7 +144,6 @@ internal fun MusicScreen(
     LaunchedEffect(syncError) {
         syncError?.takeIf { it.mutation }?.let { messages.showSnackbar(it.message) }
     }
-    val playerError by model.playerError.collectAsStateWithLifecycle()
     val trackIndicator = remember(model) {
         model.playerState.map { it.item?.id to it.playing }.distinctUntilChanged()
     }
@@ -371,7 +370,6 @@ internal fun MusicScreen(
                     contentPadding = PaddingValues(start = 18.dp, end = 18.dp, bottom = 22.dp),
                     verticalArrangement = Arrangement.spacedBy(7.dp),
                 ) {
-                    if (playerError != null) item { MusicMessage(playerError.orEmpty()) }
                     when {
                         page == null && tab == CATALOG -> {
                             if (catalog == null) catalogFeedback(state, model)
