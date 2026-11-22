@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.31",
+  "version_code": 457,
+  "package": "top.ponychat.webview",
+  "sha256": "e7d897cf38bdb9ba0f9c01a4f9c6cf2f5054ceeb4dcaacf3aade6ed389fc55de",
+  "bytes": 15215820,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.31-457-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "新建和重命名歌单的歌单名称输入框统一使用 PonyChat 样式。\n统一播放页顶部图标的颜色与间距。\n点按封面下方的歌词可打开完整歌词，上滑切到下一首，下滑切到上一首。\n横屏播放使用悬浮切屏按钮，封面居中，歌名和专辑名对齐，双语歌词可用空间更大。\n播放界面默认显示随封面配色的柔光光斑，播放时缓慢移动，暂停时保持静止。\n修复前奏时首句歌词提前高亮、打开完整歌词先显示错误位置，以及长短句切换时原文和译文重叠。\n封面下方的歌词在滚动时平滑切换高亮，换行位置保持稳定。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.31-457-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}
