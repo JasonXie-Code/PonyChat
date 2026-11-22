@@ -1,0 +1,18 @@
+{
+  "version_name": "6.1.30",
+  "version_code": 456,
+  "package": "top.ponychat.webview",
+  "sha256": "7448db9eede451b53ecfe9ff68f008f4009e1be48825b5de16ea88f876c57cc4",
+  "bytes": 15207628,
+  "certificate_sha256": "a91fd0637ac948ed0a6ef86e3e5fdb7868bbb9d011498ef7c0145a41c3de4eb1",
+  "local_apk": "P:\\PonyChat\\Android-App\\releases\\PonyChat-v6.1.30-456-release.apk",
+  "public_url": "https://www.ponychat.org/download/apk",
+  "remote_path": null,
+  "backend_restart": false,
+  "published": true,
+  "release_notes": "新增横屏专注播放。左侧显示封面，右侧同步显示双语歌词。在封面上上下滑动可切歌，收起后再次打开会恢复上次使用的屏幕方向。\n优化横屏封面大小和三处留白，让当前歌词与竖屏在同一高度对齐。\n纯音乐和暂无歌词的曲目会显示对应提示。Pony Town 曲目统一按纯音乐显示。\n播放页歌名下方可点击专辑名进入专辑，「加到歌单」移至顶部。\n播放失败时会弹出提示，可重试或关闭。",
+  "distribution": "local",
+  "local_distribution_path": "P:\\PonyChat\\var\\releases\\PonyChat-v6.1.30-456-release.apk",
+  "app_download_url": "https://39.101.74.217/download/apk",
+  "server_apk_upload": false
+}
